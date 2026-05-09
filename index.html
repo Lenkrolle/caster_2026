@@ -1,0 +1,2090 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Коли що</title>
+<link href="https://fonts.googleapis.com/css2?family=Literata:ital,wght@0,300;0,400;0,600;1,300&family=IBM+Plex+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/megajs@1/dist/main.browser-umd.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #f5f3ef; --surface: #ffffff; --surface2: #f0ede8;
+  --border: #ddd9d2; --text: #1a1814; --muted: #8a8278;
+  --accent: #2a5c45; --accent-light: #d4ede3;
+  --accent2: #c4601a; --accent2-light: #faeada;
+  --warn: #b8860b; --warn-light: #fdf6dc;
+  --danger: #8b2020; --danger-light: #fde8e8;
+  --shadow: 0 1px 4px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04);
+}
+body { background: var(--bg); color: var(--text); font-family: 'IBM Plex Mono', monospace; font-size: 13px; min-height: 100vh; }
+.app { display: flex; height: 100vh; overflow: hidden; }
+
+/* SIDEBAR */
+.sidebar { width: 230px; flex-shrink: 0; background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; overflow-y: auto; }
+.sidebar-logo { padding: 20px 18px 16px; border-bottom: 1px solid var(--border); }
+.logo-text { font-family: 'Literata', serif; font-size: 22px; font-weight: 600; letter-spacing: -.5px; }
+.logo-sub { font-size: 9px; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; margin-top: 2px; }
+.lang-switcher { display: flex; gap: 4px; margin-top: 10px; }
+.lang-btn { font-family: 'IBM Plex Mono', monospace; font-size: 9px; padding: 2px 6px; border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; border-radius: 3px; transition: all .15s; }
+.lang-btn.active, .lang-btn:hover { background: var(--text); color: var(--bg); border-color: var(--text); }
+.sidebar-section { padding: 14px 18px 6px; }
+.sidebar-label { font-size: 9px; letter-spacing: 2.5px; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+.sidebar-nav { list-style: none; }
+.sidebar-nav li a { display: flex; align-items: center; gap: 8px; padding: 7px 10px; border-radius: 6px; color: var(--muted); font-size: 12px; transition: all .15s; cursor: pointer; }
+.sidebar-nav li a:hover, .sidebar-nav li a.active { background: var(--surface2); color: var(--text); }
+.sidebar-nav li a .icon { font-size: 14px; width: 18px; text-align: center; }
+.badge { margin-left: auto; background: var(--accent); color: white; font-size: 9px; padding: 1px 5px; border-radius: 10px; font-weight: 500; }
+.badge.warn { background: var(--warn); }
+.badge.danger { background: var(--danger); }
+.sidebar-footer { margin-top: auto; padding: 14px 18px; border-top: 1px solid var(--border); }
+.user-chip { display: flex; align-items: center; gap: 8px; }
+.s-avatar { width: 28px; height: 28px; border-radius: 50%; color: white; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 500; flex-shrink: 0; }
+.user-name { font-size: 12px; color: var(--text); }
+.user-role { font-size: 10px; color: var(--muted); }
+
+/* MAIN */
+.main { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
+.topbar { padding: 16px 26px; border-bottom: 1px solid var(--border); background: var(--surface); display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.page-title { font-family: 'Literata', serif; font-size: 18px; font-weight: 600; flex: 1; }
+.view-toggle { display: flex; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+.view-btn { font-family: 'IBM Plex Mono', monospace; font-size: 11px; padding: 6px 11px; background: transparent; border: none; cursor: pointer; color: var(--muted); transition: all .15s; }
+.view-btn.active { background: var(--text); color: var(--bg); }
+.search-box { display: flex; align-items: center; gap: 6px; background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; padding: 5px 10px; width: 180px; }
+.search-box input { background: none; border: none; outline: none; font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--text); width: 100%; }
+.search-box input::placeholder { color: var(--muted); }
+.btn { font-family: 'IBM Plex Mono', monospace; font-size: 12px; padding: 6px 13px; border-radius: 6px; border: none; cursor: pointer; transition: all .15s; display: flex; align-items: center; gap: 5px; white-space: nowrap; }
+.btn-primary { background: var(--text); color: var(--bg); }
+.btn-primary:hover { background: #333; }
+.btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+.btn-ghost:hover { background: var(--surface2); color: var(--text); }
+.btn-sm { font-size: 11px; padding: 4px 10px; }
+
+/* FILTERBAR */
+.filterbar { padding: 10px 26px; border-bottom: 1px solid var(--border); background: var(--surface); display: flex; gap: 6px; align-items: center; flex-shrink: 0; flex-wrap: wrap; }
+.filter-chip { font-family: 'IBM Plex Mono', monospace; font-size: 11px; padding: 3px 11px; border: 1px solid var(--border); border-radius: 20px; background: transparent; color: var(--muted); cursor: pointer; transition: all .15s; }
+.filter-chip:hover, .filter-chip.active { background: var(--text); color: var(--bg); border-color: var(--text); }
+
+/* CONTENT */
+.page-content { flex: 1; overflow-y: auto; padding: 22px 26px; display: none; }
+.page-content.active { display: block; }
+
+/* CARDS */
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 9px; padding: 16px 20px; margin-bottom: 9px; cursor: pointer; transition: all .2s; box-shadow: var(--shadow); animation: fadeUp .25s ease both; }
+.card:hover { border-color: #c5c0b8; box-shadow: 0 2px 10px rgba(0,0,0,0.08); }
+@keyframes fadeUp { from { opacity:0; } to { opacity:1; } }
+
+/* STATUS CHIPS */
+.chip { font-size: 10px; padding: 2px 8px; border-radius: 10px; font-weight: 500; display: inline-block; }
+.chip-active { background: var(--accent-light); color: var(--accent); }
+.chip-urgent { background: var(--danger-light); color: var(--danger); }
+.chip-waiting { background: var(--warn-light); color: var(--warn); }
+.chip-done { background: var(--surface2); color: var(--muted); }
+.chip-todo { background: var(--surface2); color: var(--muted); }
+.chip-progress { background: var(--accent-light); color: var(--accent); }
+.chip-review { background: var(--warn-light); color: var(--warn); }
+
+/* STAGE BAR */
+.stage-bar { display: flex; align-items: center; margin: 10px 0 6px; }
+.stage-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--border); flex-shrink: 0; }
+.stage-dot.done { background: var(--accent); }
+.stage-dot.current { background: var(--accent); box-shadow: 0 0 0 3px var(--accent-light); }
+.stage-dot.urgent { background: var(--danger); box-shadow: 0 0 0 3px var(--danger-light); }
+.stage-line { flex: 1; height: 1px; background: var(--border); max-width: 24px; }
+.stage-line.done { background: var(--accent); }
+
+/* MINI AVATARS */
+.mini-avs { display: flex; }
+.mini-av { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--surface); display: flex; align-items: center; justify-content: center; font-size: 8px; font-weight: 500; color: white; margin-right: -5px; }
+
+/* KANBAN */
+.kanban-wrap { display: flex; gap: 14px; padding: 20px 26px; overflow-x: auto; height: 100%; }
+.kanban-col { flex-shrink: 0; width: 270px; display: flex; flex-direction: column; }
+.kanban-col-head { display: flex; align-items: center; gap: 7px; padding: 8px 12px; background: var(--surface); border: 1px solid var(--border); border-bottom: none; border-radius: 7px 7px 0 0; }
+.kanban-col-dot { width: 7px; height: 7px; border-radius: 50%; }
+.kanban-col-title { font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; font-weight: 500; flex: 1; }
+.kanban-col-count { font-size: 10px; background: var(--surface2); color: var(--muted); padding: 1px 6px; border-radius: 8px; }
+.kanban-cards { flex: 1; overflow-y: auto; padding: 8px; border: 1px solid var(--border); border-radius: 0 0 7px 7px; background: var(--surface2); display: flex; flex-direction: column; gap: 7px; }
+.kanban-card { background: var(--surface); border: 1px solid var(--border); border-radius: 7px; padding: 11px 13px; cursor: pointer; transition: all .2s; }
+.kanban-card:hover { border-color: #c5c0b8; transform: translateY(-1px); }
+.kanban-card-title { font-size: 12px; font-weight: 500; margin-bottom: 7px; line-height: 1.4; }
+.kanban-card-foot { display: flex; align-items: center; gap: 7px; }
+.kanban-add-btn { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--muted); background: transparent; border: 1px dashed var(--border); border-radius: 6px; padding: 6px 10px; cursor: pointer; width: 100%; text-align: left; transition: all .15s; }
+.kanban-add-btn:hover { background: var(--surface); color: var(--text); }
+
+/* TIMELINE */
+.timeline { display: flex; flex-direction: column; }
+.tl-item { display: flex; gap: 12px; position: relative; }
+.tl-item::before { content:''; position:absolute; left:14px; top:24px; bottom:-1px; width:1px; background:var(--border); }
+.tl-item:last-child::before { display:none; }
+.tl-dot { width: 10px; height: 10px; border-radius: 50%; border: 2px solid var(--border); background: var(--surface); flex-shrink: 0; margin: 4px 4px 0; }
+.tl-dot.done { background: var(--accent); border-color: var(--accent); }
+.tl-dot.current { background: var(--accent); border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-light); }
+.tl-body { padding-bottom: 18px; flex: 1; }
+.tl-name { font-size: 12px; font-weight: 500; margin-bottom: 2px; }
+.tl-name.current { color: var(--accent); }
+.tl-inst { font-size: 11px; color: var(--muted); margin-bottom: 5px; }
+.tl-result { font-size: 11px; background: var(--surface2); border-radius: 5px; padding: 7px 9px; border-left: 3px solid var(--accent); margin-bottom: 4px; }
+.tl-result.pending { border-left-color: var(--border); color: var(--muted); font-style: italic; }
+.tl-date { font-size: 10px; color: var(--muted); }
+
+/* REMINDERS */
+.rem-card { background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--border); border-radius: 9px; padding: 13px 16px; margin-bottom: 8px; display: flex; align-items: flex-start; gap: 12px; cursor: pointer; transition: all .2s; box-shadow: var(--shadow); animation: fadeUp .25s ease both; }
+.rem-card:hover { box-shadow: 0 2px 10px rgba(0,0,0,0.08); }
+.rem-card.overdue { border-left-color: var(--danger); }
+.rem-card.today { border-left-color: var(--warn); }
+.rem-card.soon { border-left-color: var(--accent2); }
+.rem-card.future { border-left-color: var(--accent); }
+.rem-icon { width: 34px; height: 34px; border-radius: 7px; display: flex; align-items: center; justify-content: center; font-size: 15px; flex-shrink: 0; }
+.rem-icon.overdue { background: var(--danger-light); }
+.rem-icon.today { background: var(--warn-light); }
+.rem-icon.soon { background: var(--accent2-light); }
+.rem-icon.future { background: var(--accent-light); }
+.rem-icon.done-r { background: var(--surface2); }
+.rem-body { flex: 1; min-width: 0; }
+.rem-title { font-size: 12px; font-weight: 500; margin-bottom: 4px; }
+.rem-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 10px; color: var(--muted); }
+.countdown { font-size: 10px; padding: 1px 7px; border-radius: 8px; font-weight: 500; }
+.countdown.overdue { background: var(--danger-light); color: var(--danger); }
+.countdown.today { background: var(--warn-light); color: var(--warn); }
+.countdown.soon { background: var(--accent2-light); color: var(--accent2); }
+.countdown.future { background: var(--accent-light); color: var(--accent); }
+.done-r { opacity: .5; }
+
+/* CALENDAR */
+.cal-wrap { padding: 20px 26px; }
+.cal-header { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+.cal-month-title { font-family: 'Literata', serif; font-size: 18px; font-weight: 600; flex: 1; }
+.cal-nav { background: none; border: 1px solid var(--border); border-radius: 6px; width: 28px; height: 28px; cursor: pointer; font-size: 13px; display: flex; align-items: center; justify-content: center; }
+.cal-nav:hover { background: var(--surface2); }
+.cal-grid { display: grid; grid-template-columns: repeat(7,1fr); gap: 3px; }
+.cal-dn { text-align: center; font-size: 9px; letter-spacing: 1px; color: var(--muted); padding: 5px 0; text-transform: uppercase; }
+.cal-cell { min-height: 80px; background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 6px; cursor: pointer; transition: all .15s; }
+.cal-cell:hover { border-color: #c5c0b8; }
+.cal-cell.other { background: var(--surface2); opacity: .5; }
+.cal-cell.today-c { border-color: var(--warn); border-width: 2px; }
+.cal-date-num { font-size: 10px; font-weight: 500; color: var(--muted); margin-bottom: 4px; }
+.today-c .cal-date-num { color: var(--warn); }
+.cal-ev { font-size: 9px; padding: 1px 5px; border-radius: 3px; margin-bottom: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cal-ev.overdue { background: var(--danger-light); color: var(--danger); }
+.cal-ev.today { background: var(--warn-light); color: var(--warn); }
+.cal-ev.soon { background: var(--accent2-light); color: var(--accent2); }
+.cal-ev.future { background: var(--accent-light); color: var(--accent); }
+
+/* SECTION HEADERS */
+.sec-head { display: flex; align-items: center; gap: 8px; margin: 18px 0 10px; }
+.sec-title { font-size: 9px; letter-spacing: 2.5px; text-transform: uppercase; color: var(--muted); white-space: nowrap; }
+.sec-count { font-size: 9px; background: var(--surface2); color: var(--muted); padding: 1px 6px; border-radius: 8px; }
+.sec-line { flex: 1; height: 1px; background: var(--border); }
+
+/* PRIORITY DOT */
+.pri-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.pri-dot.high { background: var(--danger); }
+.pri-dot.medium { background: var(--warn); }
+.pri-dot.low { background: var(--accent); }
+
+/* CHECK BTN */
+.check-btn { width: 20px; height: 20px; border-radius: 50%; border: 2px solid var(--border); background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 10px; color: white; transition: all .15s; flex-shrink: 0; }
+.check-btn:hover { border-color: var(--accent); }
+.check-btn.checked { background: var(--accent); border-color: var(--accent); }
+
+/* MODAL */
+.overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.28); backdrop-filter: blur(4px); z-index: 100; display: flex; align-items: flex-start; justify-content: flex-end; animation: fadeIn .2s ease; }
+@keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+.modal { width: 480px; max-width: 100vw; height: 100vh; background: var(--surface); overflow-y: auto; animation: slideR .22s ease; box-shadow: -4px 0 28px rgba(0,0,0,0.1); }
+@keyframes slideR { from { transform:translateX(30px); opacity:0; } to { transform:translateX(0); opacity:1; } }
+.modal-head { padding: 20px 24px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; position: sticky; top: 0; background: var(--surface); z-index: 1; }
+.modal-head-title { font-family: 'Literata', serif; font-size: 15px; font-weight: 600; flex: 1; }
+.modal-close { background: none; border: none; font-size: 17px; color: var(--muted); cursor: pointer; padding: 3px 7px; border-radius: 4px; }
+.modal-close:hover { background: var(--surface2); color: var(--text); }
+.modal-body { padding: 20px 24px; }
+.modal-sec { margin-bottom: 20px; }
+.modal-sec-title { font-size: 9px; letter-spacing: 2.5px; text-transform: uppercase; color: var(--muted); margin-bottom: 9px; }
+.form-group { margin-bottom: 11px; }
+.form-label { font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; display: block; }
+.form-input, .form-select, .form-ta { width: 100%; font-family: 'IBM Plex Mono', monospace; font-size: 12px; padding: 7px 11px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); color: var(--text); outline: none; transition: border-color .15s; }
+.form-input:focus, .form-select:focus, .form-ta:focus { border-color: var(--accent); }
+.form-ta { resize: vertical; min-height: 65px; }
+.form-row { display: flex; gap: 9px; }
+.form-row .form-group { flex: 1; }
+
+/* STATUS OPTIONS */
+.status-opts { display: flex; gap: 7px; flex-wrap: wrap; }
+.status-opt { font-family: 'IBM Plex Mono', monospace; font-size: 11px; padding: 4px 12px; border: 1px solid var(--border); border-radius: 20px; background: transparent; color: var(--muted); cursor: pointer; transition: all .15s; }
+.status-opt.active { background: var(--text); color: var(--bg); border-color: var(--text); }
+
+/* NOTIFY OPTIONS */
+.notify-opts { display: flex; flex-direction: column; gap: 7px; }
+.notify-opt { display: flex; align-items: center; gap: 9px; padding: 9px 11px; border: 1px solid var(--border); border-radius: 7px; cursor: pointer; transition: all .15s; }
+.notify-opt.sel { border-color: var(--accent); background: var(--accent-light); }
+.notify-opt input[type=checkbox] { accent-color: var(--accent); }
+
+/* COMMENTS */
+.comment-list { display: flex; flex-direction: column; gap: 9px; margin-bottom: 10px; }
+.comment-item { display: flex; gap: 7px; }
+.comment-av { width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 8px; font-weight: 500; color: white; flex-shrink: 0; }
+.comment-body { flex: 1; }
+.comment-meta { font-size: 10px; color: var(--muted); margin-bottom: 2px; }
+.comment-text { font-size: 11px; background: var(--surface2); padding: 7px 9px; border-radius: 6px; line-height: 1.5; }
+.comment-input-row { display: flex; gap: 7px; align-items: flex-end; }
+.comment-input-row textarea { flex:1; font-family:'IBM Plex Mono',monospace; font-size:12px; padding:7px 10px; border:1px solid var(--border); border-radius:6px; background:var(--surface); color:var(--text); outline:none; resize:none; min-height:55px; }
+.comment-input-row textarea:focus { border-color:var(--accent); }
+
+/* DAYS PRESETS */
+.days-presets { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 7px; }
+.day-preset { font-family: 'IBM Plex Mono', monospace; font-size: 11px; padding: 3px 9px; border: 1px solid var(--border); border-radius: 5px; background: transparent; color: var(--muted); cursor: pointer; transition: all .15s; }
+.day-preset.active, .day-preset:hover { background: var(--accent); color: white; border-color: var(--accent); }
+
+/* TOAST */
+.toast { position:fixed; bottom:22px; left:50%; transform:translateX(-50%); background:var(--text); color:var(--bg); padding:9px 18px; border-radius:7px; font-size:12px; z-index:200; animation:toastIn .25s ease; box-shadow:0 4px 18px rgba(0,0,0,.18); pointer-events:none; }
+@keyframes toastIn { from{opacity:0;transform:translateX(-50%) translateY(8px);} to{opacity:1;transform:translateX(-50%) translateY(0);} }
+
+/* EMPTY */
+.empty { text-align:center; padding:50px 20px; color:var(--muted); }
+.empty .ei { font-size:34px; margin-bottom:10px; opacity:.35; }
+
+::-webkit-scrollbar { width:4px; height:4px; }
+::-webkit-scrollbar-track { background:transparent; }
+::-webkit-scrollbar-thumb { background:var(--border); border-radius:4px; }
+
+/* ===== MOBILE NAV BAR ===== */
+.mobile-nav {
+  display: none;
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  padding: 8px 0 max(8px, env(safe-area-inset-bottom));
+  z-index: 50;
+  box-shadow: 0 -2px 12px rgba(0,0,0,0.06);
+}
+.mobile-nav-inner { display: flex; justify-content: space-around; align-items: center; }
+.mob-nav-btn {
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  background: none; border: none; cursor: pointer;
+  padding: 4px 16px; border-radius: 10px;
+  transition: all .15s; position: relative;
+}
+.mob-nav-btn .mob-icon { font-size: 20px; line-height: 1; }
+.mob-nav-btn .mob-label { font-family: 'IBM Plex Mono', monospace; font-size: 9px; letter-spacing: .5px; color: var(--muted); }
+.mob-nav-btn.active .mob-label { color: var(--accent); font-weight: 500; }
+.mob-nav-btn .mob-badge {
+  position: absolute; top: 2px; right: 10px;
+  background: var(--danger); color: white;
+  font-size: 8px; font-weight: 700;
+  padding: 1px 4px; border-radius: 8px;
+  min-width: 14px; text-align: center;
+  line-height: 1.4;
+}
+.mob-nav-btn .mob-badge.warn { background: var(--warn); }
+.mob-nav-btn .mob-badge.accent { background: var(--accent); }
+
+/* ===== MOBILE FAB ===== */
+.mob-fab {
+  display: none;
+  position: fixed;
+  bottom: calc(70px + env(safe-area-inset-bottom));
+  right: 20px;
+  width: 52px; height: 52px;
+  background: var(--text); color: var(--bg);
+  border: none; border-radius: 50%;
+  font-size: 24px; cursor: pointer;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+  z-index: 49;
+  transition: all .2s;
+  display: none;
+  align-items: center; justify-content: center;
+}
+.mob-fab:active { transform: scale(.93); }
+
+/* ===== MOBILE SEARCH OVERLAY ===== */
+.mob-search-bar {
+  display: none;
+  padding: 10px 16px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+.mob-search-bar .search-box { width: 100%; }
+
+@media (max-width: 640px) {
+  /* Hide desktop sidebar */
+  .sidebar { display: none !important; }
+
+  /* Show mobile nav */
+  .mobile-nav { display: block; }
+  .mob-fab { display: flex; }
+
+  /* Adjust main layout */
+  .app { flex-direction: column; }
+  .main { padding-bottom: 65px; }
+
+  /* Topbar mobile */
+  .topbar { padding: 12px 16px; gap: 8px; }
+  .page-title { font-size: 16px; }
+  .search-box { display: none; }
+  .mob-search-bar { display: block; }
+  #add-btn { display: none; }
+
+  /* Filterbar */
+  .filterbar { padding: 8px 12px; overflow-x: auto; flex-wrap: nowrap; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+  .filterbar::-webkit-scrollbar { display: none; }
+  .filter-chip { white-space: nowrap; flex-shrink: 0; }
+
+  /* Cards */
+  .page-content { padding: 14px 14px; }
+  .card { padding: 13px 14px; }
+
+  /* View toggle smaller */
+  .view-toggle { }
+  .view-btn { padding: 5px 9px; font-size: 13px; }
+
+  /* Modal — full screen bottom sheet on mobile */
+  .overlay { align-items: flex-end; justify-content: stretch; }
+  .modal {
+    width: 100vw;
+    height: 92vh;
+    border-radius: 16px 16px 0 0;
+    animation: slideUp .25s ease;
+  }
+  @keyframes slideUp { from { transform: translateY(40px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+  .modal-head { padding: 16px 20px 14px; }
+  .modal-body { padding: 16px 20px; }
+
+  /* Form inputs larger touch targets */
+  .form-input, .form-select, .form-ta { font-size: 14px; padding: 10px 12px; }
+  .btn { padding: 10px 16px; font-size: 13px; }
+  .btn-primary { padding: 12px 16px; }
+
+  /* Kanban — horizontal scroll */
+  .kanban-wrap { padding: 12px 14px; gap: 10px; }
+  .kanban-col { width: 240px; }
+
+  /* Calendar cells smaller */
+  .cal-cell { min-height: 56px; padding: 4px; }
+  .cal-wrap { padding: 14px 14px; }
+  .cal-ev { font-size: 8px; }
+
+  /* Check btn bigger for touch */
+  .check-btn { width: 26px; height: 26px; font-size: 12px; }
+
+  /* Reminder cards */
+  .rem-card { padding: 11px 13px; }
+
+  /* Status opts wrap better */
+  .status-opts { gap: 6px; }
+  .status-opt { font-size: 12px; padding: 7px 14px; }
+
+  /* Form rows stack on small screen */
+  .form-row { flex-direction: column; gap: 0; }
+
+  /* Drag handle for modal */
+  .modal::before {
+    content: '';
+    display: block;
+    width: 36px; height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    margin: 10px auto 0;
+  }
+}
+</style>
+</head>
+<body>
+
+
+<div class="app">
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-text">Коли що</div>
+    <div class="logo-sub" id="s-sub">Система документів</div>
+    <div class="lang-switcher">
+      <button class="lang-btn active" onclick="setLang('uk')">УКР</button>
+      <button class="lang-btn" onclick="setLang('en')">ENG</button>
+      <button class="lang-btn" onclick="setLang('de')">DEU</button>
+    </div>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-label" id="sl-nav">Навігація</div>
+    <ul class="sidebar-nav">
+      <li><a onclick="goPage('docs')" id="nav-docs"><span class="icon">📄</span> <span id="sl-docs">Документи</span> <span class="badge" id="bdg-docs">4</span></a></li>
+      <li><a onclick="goPage('tasks')" id="nav-tasks"><span class="icon">✅</span> <span id="sl-tasks">Задачі</span> <span class="badge" id="bdg-tasks">5</span></a></li>
+      <li><a onclick="goPage('reminders')" id="nav-reminders"><span class="icon">🔔</span> <span id="sl-reminders">Нагадування</span> <span class="badge warn" id="bdg-rem">3</span></a></li>
+      <li><a onclick="goPage('team')" id="nav-team"><span class="icon">👥</span> <span id="sl-team">Команда</span> <span class="badge" id="bdg-team">4</span></a></li>
+    </ul>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-label" id="sl-inst">Інстанції</div>
+    <ul class="sidebar-nav">
+      <li><a><span class="icon">🏛️</span> <span id="sl-gov">Держоргани</span></a></li>
+      <li><a><span class="icon">⚖️</span> <span id="sl-court">Суди</span> <span class="badge danger">1</span></a></li>
+      <li><a><span class="icon">🏢</span> <span id="sl-org">Організації</span></a></li>
+      <li><a><span class="icon">👤</span> <span id="sl-person">Персони</span></a></li>
+    </ul>
+  </div>
+  <div class="sidebar-footer">
+    <div class="user-chip">
+      <div class="s-avatar" style="background:#2a5c45">ОМ</div>
+      <div><div class="user-name">Олена М.</div><div class="user-role" id="sl-role">Адміністратор</div></div>
+    </div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+  <div class="topbar" id="topbar">
+    <div class="page-title" id="page-title">Документи</div>
+    <div class="view-toggle" id="view-toggle" style="display:none">
+      <button class="view-btn active" id="vbtn-list" onclick="setView('list',this)">☰</button>
+      <button class="view-btn" id="vbtn-kanban" onclick="setView('kanban',this)">⊞</button>
+      <button class="view-btn" id="vbtn-cal" onclick="setView('cal',this)" style="display:none">📅</button>
+    </div>
+    <div class="search-box"><span>🔍</span><input type="text" id="search-inp" placeholder="Пошук..." oninput="renderCurrent()"></div>
+    <button class="btn btn-primary" id="add-btn" onclick="openAdd()">+ <span id="add-lbl">Документ</span></button>
+  </div>
+
+  <!-- MOBILE SEARCH -->
+  <div class="mob-search-bar">
+    <div class="search-box"><span>🔍</span><input type="text" id="search-inp-mob" placeholder="Пошук..." oninput="document.getElementById('search-inp').value=this.value;renderCurrent()"></div>
+  </div>
+
+  <div class="filterbar" id="filterbar"></div>
+
+  <!-- PAGES -->
+  <div class="page-content active" id="page-docs"></div>
+  <div class="page-content" id="page-tasks-list"></div>
+  <div class="page-content" id="page-tasks-kanban" style="display:none;padding:0;overflow:hidden;height:100%;"></div>
+  <div class="page-content" id="page-reminders"></div>
+  <div class="page-content" id="page-reminders-cal" style="display:none;padding:0;overflow-y:auto;"></div>
+  <div class="page-content" id="page-team"></div>
+</main>
+</div>
+
+<!-- MODAL -->
+<div class="overlay" id="overlay" style="display:none" onclick="closeOverlay(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-head">
+      <div class="modal-head-title" id="modal-title">—</div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// DATA
+// ============================================================
+const ROLES = {
+  admin:    { key:'admin',    label:{uk:'Адміністратор', en:'Administrator', de:'Administrator'}, color:'#2a5c45' },
+  executor: { key:'executor', label:{uk:'Виконавець',    en:'Executor',       de:'Ausführer'},     color:'#c4601a' },
+  observer: { key:'observer', label:{uk:'Спостерігач',   en:'Observer',       de:'Beobachter'},    color:'#3a5a8c' },
+};
+
+let team = [
+  { id:0, name:'Олена М.', initials:'ОМ', color:'#2a5c45', email:'o.m@company.ua', role:'admin',    active:true },
+  { id:1, name:'Богдан Р.', initials:'БР', color:'#c4601a', email:'b.r@company.ua', role:'executor', active:true },
+  { id:2, name:'Катерина С.', initials:'КС', color:'#3a5a8c', email:'k.s@company.ua', role:'executor', active:true },
+  { id:3, name:'Іван Д.',    initials:'ІД', color:'#8c3a5a', email:'i.d@company.ua', role:'observer', active:true },
+];
+let nextMemberId = 4;
+
+// Current logged-in user (index 0 = admin by default)
+let currentUser = 0;
+function isAdmin(){ return team[currentUser]?.role === 'admin'; }
+
+const DOC_REFS = { '1':'ДОК-2024-0041','2':'ДОК-2024-0038','3':'ДОК-2024-0029','4':'ДОК-2023-0114' };
+const DOC_NAMES= { '1':'Позовна заява','2':'Податкова декларація','3':'Дозвіл на будівництво','4':'Ліцензійна угода' };
+const typeIco  = { court:'🏛️', tax:'💰', legal:'⚖️', admin:'📋' };
+const typeCls  = { court:'urgent', tax:'active', legal:'active', admin:'waiting' };
+
+let docs = [
+  { id:'1', title:'Позовна заява про стягнення боргу', ref:'ДОК-2024-0041', type:'court', status:'urgent', deadline:'2025-05-20', assignees:[0,1], attachments:3, currentStage:2,
+    stages:[
+      {name:'Підготовка позову',inst:'Юридичний відділ',date:'2024-11-01',result:'Позов підготовлено та перевірено',status:'done'},
+      {name:'Подання до суду',inst:'Господарський суд м. Київ',date:'2024-11-15',result:'Прийнято до розгляду, справа №2024-Г-1182',status:'done'},
+      {name:'Попереднє засідання',inst:'Господарський суд м. Київ',date:null,result:null,status:'current'},
+      {name:'Судове засідання',inst:'Господарський суд м. Київ',date:null,result:null,status:'pending'},
+      {name:'Виконання рішення',inst:'Виконавча служба',date:null,result:null,status:'pending'},
+    ]},
+  { id:'2', title:'Податкова декларація за 2024 рік', ref:'ДОК-2024-0038', type:'tax', status:'active', deadline:'2025-03-01', assignees:[2], attachments:7, currentStage:1,
+    stages:[
+      {name:'Збір документів',inst:'Бухгалтерія',date:'2024-12-01',result:'Всі первинні документи зібрано',status:'done'},
+      {name:'Заповнення декларації',inst:'Бухгалтерія',date:null,result:null,status:'current'},
+      {name:'Подання до ДПС',inst:'ДПС',date:null,result:null,status:'pending'},
+      {name:'Отримання квитанції',inst:'ДПС (електронно)',date:null,result:null,status:'pending'},
+    ]},
+  { id:'3', title:"Дозвіл на будівництво — об'єкт №17", ref:'ДОК-2024-0029', type:'admin', status:'waiting', deadline:'2025-04-15', assignees:[0,3], attachments:12, currentStage:3,
+    stages:[
+      {name:'Проектна документація',inst:'Проектне бюро',date:'2024-09-10',result:'Проект затверджено архітектором',status:'done'},
+      {name:'Погодження містобудування',inst:'ДАБІ Київ',date:'2024-10-05',result:'Погоджено з зауваженнями',status:'done'},
+      {name:'Екологічна експертиза',inst:'Мінприроди',date:'2024-11-20',result:'Висновок позитивний №ЕЕ-2024-882',status:'done'},
+      {name:'Розгляд заяви',inst:'ДАБІ Київ',date:null,result:null,status:'current'},
+      {name:'Видача дозволу',inst:'ДАБІ Київ',date:null,result:null,status:'pending'},
+    ]},
+  { id:'4', title:'Ліцензійна угода з ТОВ "Прайм"', ref:'ДОК-2023-0114', type:'legal', status:'done', deadline:'2024-06-30', assignees:[1,2], attachments:5, currentStage:3,
+    stages:[
+      {name:'Узгодження умов',inst:'Юридичний відділ',date:'2023-10-01',result:'Умови узгоджено обома сторонами',status:'done'},
+      {name:'Підписання угоди',inst:'Нотаріус Коваленко О.',date:'2023-11-15',result:'Угода нотаріально посвідчена',status:'done'},
+      {name:'Реєстрація в УКРПАТЕНТ',inst:'УКРПАТЕНТ',date:'2023-12-10',result:'Зареєстровано, свідоцтво №АВ-2023-4421',status:'done'},
+      {name:'Виконання угоди',inst:'ТОВ "Прайм"',date:'2024-06-30',result:'Всі умови виконано в строк',status:'done'},
+    ]},
+];
+
+function dStr(n){ const d=new Date(); d.setDate(d.getDate()+n); return d.toISOString().split('T')[0]; }
+
+let tasks = [
+  {id:1,title:'Підготувати доповнення до позовної заяви',desc:'Перевірити всі докази, додати нові свідчення',status:'progress',assignee:0,priority:'high',deadline:dStr(1),docId:'1',comments:[{author:0,text:'Маю 2 нових документи, додам завтра',date:'2024-12-28'}]},
+  {id:2,title:'Заповнити форму Ф-1 для податкової',desc:'',status:'todo',assignee:2,priority:'medium',deadline:dStr(38),docId:'2',comments:[]},
+  {id:3,title:'Зателефонувати до ДАБІ щодо статусу',desc:'Уточнити чи надійшли всі документи',status:'todo',assignee:0,priority:'high',deadline:dStr(5),docId:'3',comments:[]},
+  {id:4,title:'Звірити архів договорів за 2024 рік',desc:'',status:'review',assignee:1,priority:'low',deadline:dStr(13),docId:'',comments:[{author:1,text:'Зробив, перевір будь ласка',date:'2024-12-30'}]},
+  {id:5,title:'Оновити контактну базу партнерів',desc:'',status:'todo',assignee:3,priority:'low',deadline:dStr(25),docId:'',comments:[]},
+];
+let nextTaskId = 6;
+
+let reminders = [
+  {id:1,title:'Попереднє судове засідання',docId:'1',assignee:0,date:dStr(0),notify:['inapp','email'],repeat:'none',done:false},
+  {id:2,title:'Подати доповнення до позовної заяви',docId:'1',assignee:1,date:dStr(-3),notify:['inapp'],repeat:'none',done:false},
+  {id:3,title:'Дедлайн подання декларації',docId:'2',assignee:2,date:dStr(4),notify:['inapp','email'],repeat:'none',done:false},
+  {id:4,title:'Уточнити статус у ДАБІ',docId:'3',assignee:0,date:dStr(6),notify:['inapp'],repeat:'none',done:false},
+  {id:5,title:'Перевірити розрахунки декларації',docId:'2',assignee:2,date:dStr(14),notify:['email'],repeat:'none',done:false},
+  {id:6,title:'Оновити архів договорів',docId:'',assignee:3,date:dStr(22),notify:['inapp'],repeat:'monthly',done:false},
+  {id:7,title:'Звірка первинних документів',docId:'',assignee:1,date:dStr(-10),notify:['inapp'],repeat:'none',done:true},
+];
+let nextRemId = 8;
+let nextDocId = 5;
+
+// ============================================================
+// STATE
+// ============================================================
+let lang = 'uk';
+let currentPage = 'docs';
+let currentView = 'list';
+let currentFilter = 'all';
+let editId = null;
+let modalMode = ''; // 'doc' | 'task' | 'reminder'
+let selectedStatus = 'todo';
+let calYear = new Date().getFullYear();
+let calMonth = new Date().getMonth();
+
+// ============================================================
+// I18N
+// ============================================================
+const L = {
+  uk:{ docs:'Документи', tasks:'Задачі', reminders:'Нагадування', add_doc:'Документ', add_task:'Задача', add_rem:'Нагадування', search:'Пошук...', all:'Усі', active:'Активні', urgent:'Термінові', waiting:'Очікування', done:'Завершені', todo:'До роботи', progress:'В процесі', review:'Перевірка', overdue:'⚡ Прострочені', today_f:'Сьогодні', week:'7 днів', future:'Майбутні', done_f:'Виконані', nodoc:'Без документа', admin:'Адміністратор', nav:'Навігація', inst:'Інстанції', gov:'Держоргани', court:'Суди', org:'Організації', person:'Персони', subtitle:'Система документів' },
+  en:{ docs:'Documents', tasks:'Tasks', reminders:'Reminders', add_doc:'Document', add_task:'Task', add_rem:'Reminder', search:'Search...', all:'All', active:'Active', urgent:'Urgent', waiting:'Waiting', done:'Done', todo:'To Do', progress:'In Progress', review:'Review', overdue:'⚡ Overdue', today_f:'Today', week:'7 days', future:'Future', done_f:'Done', nodoc:'No document', admin:'Administrator', nav:'Navigation', inst:'Instances', gov:'Government', court:'Courts', org:'Organizations', person:'Persons', subtitle:'Document System' },
+  de:{ docs:'Dokumente', tasks:'Aufgaben', reminders:'Erinnerungen', add_doc:'Dokument', add_task:'Aufgabe', add_rem:'Erinnerung', search:'Suche...', all:'Alle', active:'Aktiv', urgent:'Dringend', waiting:'Warten', done:'Erledigt', todo:'Zu tun', progress:'In Bearbeitung', review:'Überprüfung', overdue:'⚡ Überfällig', today_f:'Heute', week:'7 Tage', future:'Zukünftig', done_f:'Erledigt', nodoc:'Kein Dokument', admin:'Administrator', nav:'Navigation', inst:'Instanzen', gov:'Behörden', court:'Gerichte', org:'Organisationen', person:'Personen', subtitle:'Dokumentensystem' },
+};
+function t(k){ return (L[lang]||L.uk)[k]||k; }
+
+function setLang(l){
+  lang=l;
+  document.querySelectorAll('.lang-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelector(`.lang-btn[onclick="setLang('${l}')"]`).classList.add('active');
+  applySidebarI18n();
+  renderCurrent();
+}
+
+function applySidebarI18n(){
+  document.getElementById('s-sub').textContent=t('subtitle');
+  document.getElementById('sl-nav').textContent=t('nav');
+  document.getElementById('sl-docs').textContent=t('docs');
+  document.getElementById('sl-tasks').textContent=t('tasks');
+  document.getElementById('sl-reminders').textContent=t('reminders');
+  document.getElementById('sl-inst').textContent=t('inst');
+  document.getElementById('sl-gov').textContent=t('gov');
+  document.getElementById('sl-court').textContent=t('court');
+  document.getElementById('sl-org').textContent=t('org');
+  document.getElementById('sl-person').textContent=t('person');
+  document.getElementById('sl-role').textContent=t('admin');
+  // Mobile labels
+  const ml1=document.getElementById('mob-lbl-docs'); if(ml1)ml1.textContent=t('docs');
+  const ml2=document.getElementById('mob-lbl-tasks'); if(ml2)ml2.textContent=t('tasks');
+  const ml3=document.getElementById('mob-lbl-rem'); if(ml3)ml3.textContent=t('reminders');
+}
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+function goPage(page){
+  currentPage=page; currentFilter='all'; currentView='list';
+  document.querySelectorAll('.sidebar-nav li a').forEach(a=>a.classList.remove('active'));
+  const navEl=document.getElementById('nav-'+page);
+  if(navEl)navEl.classList.add('active');
+  // Mobile nav
+  document.querySelectorAll('.mob-nav-btn').forEach(b=>b.classList.remove('active'));
+  const mobEl=document.getElementById('mob-nav-'+page);
+  if(mobEl)mobEl.classList.add('active');
+  document.getElementById('page-title').textContent=t(page);
+  const addKey=page==='reminders'?'add_rem':page==='docs'?'add_doc':'add_task';
+  document.getElementById('add-lbl').textContent=t(addKey);
+  document.getElementById('search-inp').value='';
+  const mobSearch=document.getElementById('search-inp-mob');
+  if(mobSearch)mobSearch.value='';
+  setupTopbar();
+  renderCurrent();
+}
+
+function setupTopbar(){
+  const vt=document.getElementById('view-toggle');
+  const vbk=document.getElementById('vbtn-kanban');
+  const vbc=document.getElementById('vbtn-cal');
+  if(currentPage==='tasks'){ vt.style.display='flex'; vbk.style.display=''; vbc.style.display='none'; }
+  else if(currentPage==='reminders'){ vt.style.display='flex'; vbk.style.display='none'; vbc.style.display=''; }
+  else { vt.style.display='none'; }
+  // Hide add button for team page if not admin, hide for observer everywhere
+  const addBtn=document.getElementById('add-btn');
+  if(currentPage==='team') addBtn.style.display=isAdmin()?'flex':'none';
+  else addBtn.style.display=team[currentUser]?.role==='observer'?'none':'flex';
+  document.querySelectorAll('.view-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('vbtn-list').classList.add('active');
+  currentView='list';
+}
+
+function setView(v, el){
+  currentView=v;
+  document.querySelectorAll('.view-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  renderCurrent();
+}
+
+function setFilter(f, el){
+  currentFilter=f;
+  document.querySelectorAll('.filterbar .filter-chip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+  renderCurrent();
+}
+
+function renderCurrent(){
+  // Hide all pages first
+  document.querySelectorAll('.page-content').forEach(p=>{
+    p.classList.remove('active');
+    p.style.display='none';
+  });
+  updateBadges();
+  if(currentPage==='docs'){
+    const el=document.getElementById('page-docs');
+    el.style.display='block'; el.classList.add('active');
+    renderDocs();
+  } else if(currentPage==='tasks'){
+    if(currentView==='kanban'){
+      const el=document.getElementById('page-tasks-kanban');
+      el.style.display='flex'; el.classList.add('active');
+    } else {
+      const el=document.getElementById('page-tasks-list');
+      el.style.display='block'; el.classList.add('active');
+    }
+    renderTasks();
+  } else if(currentPage==='reminders'){
+    if(currentView==='cal'){
+      const el=document.getElementById('page-reminders-cal');
+      el.style.display='block'; el.classList.add('active');
+    } else {
+      const el=document.getElementById('page-reminders');
+      el.style.display='block'; el.classList.add('active');
+    }
+    renderReminders();
+  } else if(currentPage==='team'){
+    const el=document.getElementById('page-team');
+    el.style.display='block'; el.classList.add('active');
+    renderTeam();
+  }
+}
+
+function updateBadges(){
+  const docsActive=docs.filter(d=>d.status!=='done').length;
+  const tasksActive=tasks.filter(t=>t.status!=='done').length;
+  const today=new Date().toISOString().split('T')[0];
+  const remUrgent=reminders.filter(r=>!r.done&&r.date<=today).length;
+  document.getElementById('bdg-docs').textContent=docsActive;
+  document.getElementById('bdg-tasks').textContent=tasksActive;
+  document.getElementById('bdg-rem').textContent=remUrgent;
+  const bt=document.getElementById('bdg-team');
+  if(bt)bt.textContent=team.filter(m=>m.active).length;
+
+  // Mobile badges
+  const mbDocs=document.getElementById('mob-bdg-docs');
+  const mbTasks=document.getElementById('mob-bdg-tasks');
+  const mbRem=document.getElementById('mob-bdg-rem');
+  if(mbDocs){mbDocs.textContent=docsActive;mbDocs.style.display=docsActive?'':'none';}
+  if(mbTasks){mbTasks.textContent=tasksActive;mbTasks.style.display=tasksActive?'':'none';}
+  if(mbRem){mbRem.textContent=remUrgent;mbRem.style.display=remUrgent?'':'none';}
+}
+
+// ============================================================
+// HELPERS
+// ============================================================
+function fmtDate(d){
+  if(!d)return '—';
+  return new Date(d).toLocaleDateString(lang==='uk'?'uk-UA':lang==='de'?'de-DE':'en-GB',{day:'2-digit',month:'short',year:'numeric'});
+}
+function fmtShort(d){
+  if(!d)return '';
+  return new Date(d).toLocaleDateString(lang==='uk'?'uk-UA':lang==='de'?'de-DE':'en-GB',{day:'2-digit',month:'short'});
+}
+function daysFromNow(ds){
+  if(!ds)return null;
+  const d=new Date(ds); d.setHours(0,0,0,0);
+  const n=new Date(); n.setHours(0,0,0,0);
+  return Math.round((d-n)/86400000);
+}
+function classifyDays(n){
+  if(n===null)return 'future';
+  if(n<0)return 'overdue'; if(n===0)return 'today'; if(n<=7)return 'soon'; return 'future';
+}
+function cntLabel(n){
+  if(n===null)return '';
+  const lbl={uk:{overdue:d=>`Прострочено ${Math.abs(d)} дн.`,today:'Сьогодні',soon:d=>`Через ${d} дн.`,future:d=>`Через ${d} дн.`},en:{overdue:d=>`${Math.abs(d)}d overdue`,today:'Today',soon:d=>`In ${d}d`,future:d=>`In ${d}d`},de:{overdue:d=>`${Math.abs(d)} T. überfällig`,today:'Heute',soon:d=>`In ${d} T.`,future:d=>`In ${d} T.`}};
+  const l=lbl[lang]||lbl.uk;
+  if(n<0)return l.overdue(n); if(n===0)return l.today; return l.soon(n);
+}
+function miniAvs(indices){
+  return `<div class="mini-avs">${indices.map(i=>`<div class="mini-av" style="background:${team[i].color}" title="${team[i].name}">${team[i].initials}</div>`).join('')}</div>`;
+}
+function miniAv(i){
+  return `<div class="mini-av" style="background:${team[i].color};border:none" title="${team[i].name}">${team[i].initials}</div>`;
+}
+function priDot(p){ return `<div class="pri-dot ${p}"></div>`; }
+function docChip(docId){
+  if(!docId) return `<span class="chip chip-todo" style="font-size:9px">${t('nodoc')}</span>`;
+  return `<span class="chip chip-active" style="font-size:9px">📄 ${DOC_REFS[docId]||''}</span>`;
+}
+
+// ============================================================
+// DOCS PAGE
+// ============================================================
+function renderDocs(){
+  // filterbar
+  const fb=document.getElementById('filterbar');
+  fb.innerHTML=['all','active','urgent','waiting','done'].map(f=>`<button class="filter-chip ${currentFilter===f?'active':''}" onclick="setFilter('${f}',this)">${t(f)}</button>`).join('');
+
+  const q=document.getElementById('search-inp').value.toLowerCase();
+  const filtered=docs.filter(d=>{
+    if(q&&!d.title.toLowerCase().includes(q)&&!d.ref.toLowerCase().includes(q))return false;
+    return currentFilter==='all'||d.status===currentFilter;
+  });
+
+  const el=document.getElementById('page-docs');
+  if(!filtered.length){el.innerHTML=`<div class="empty"><div class="ei">🗂️</div><p>Документів не знайдено</p></div>`;return;}
+
+  el.innerHTML=filtered.map((doc,i)=>{
+    const done=doc.stages.filter(s=>s.status==='done').length;
+    const cur=doc.stages[doc.currentStage];
+    const stages=doc.stages.map((s,si)=>{
+      const lc=si<doc.currentStage?'done':'';
+      const dc=s.status==='done'?'done':s.status==='current'?(doc.status==='urgent'?'urgent':'current'):'';
+      return `<div class="stage-dot ${dc}"></div>${si<doc.stages.length-1?`<div class="stage-line ${lc}"></div>`:''}`;
+    }).join('');
+    const statusLabel={active:t('active'),urgent:t('urgent'),waiting:t('waiting'),done:t('done')};
+    return `<div class="card" onclick="openDocDetail('${doc.id}')" style="animation-delay:${i*.04}s">
+      <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:10px">
+        <div style="font-size:20px;width:34px;text-align:center">${typeIco[doc.type]||'📄'}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-family:'Literata',serif;font-size:14px;font-weight:600;margin-bottom:2px">${doc.title}</div>
+          <div style="font-size:10px;color:var(--muted)">${doc.ref}</div>
+        </div>
+        <span class="chip chip-${doc.status}">${statusLabel[doc.status]}</span>
+      </div>
+      <div class="stage-bar">${stages}</div>
+      <div style="font-size:10px;color:var(--muted);margin-bottom:10px;display:flex;gap:12px;flex-wrap:wrap">
+        <span style="color:var(--accent);font-weight:500">▶ ${cur?cur.name:'—'}</span>
+        <span>${done}/${doc.stages.length} ет.</span>
+        ${doc.deadline?`<span style="color:var(--danger)">⏱ ${fmtShort(doc.deadline)}</span>`:''}
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;padding-top:10px;border-top:1px solid var(--border)">
+        ${miniAvs(doc.assignees)}
+        <span style="font-size:10px;color:var(--muted);margin-left:auto">📎 ${doc.attachments}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ============================================================
+// TASKS PAGE
+// ============================================================
+function renderTasks(){
+  const fb=document.getElementById('filterbar');
+  fb.innerHTML=['all','todo','progress','review','done','overdue','nodoc'].map(f=>`<button class="filter-chip ${currentFilter===f?'active':''}" onclick="setFilter('${f}',this)">${t(f)}</button>`).join('');
+
+  // Show/hide views
+  const isList=currentView==='list'||currentView!=='kanban';
+  document.getElementById('page-tasks-list').style.display=isList?'block':'none';
+  document.getElementById('page-tasks-list').classList.toggle('active',isList);
+  document.getElementById('page-tasks-kanban').style.display=!isList?'flex':'none';
+
+  if(currentView==='kanban'){ renderKanban(); return; }
+
+  const q=document.getElementById('search-inp').value.toLowerCase();
+  const today=new Date().toISOString().split('T')[0];
+  const filtered=tasks.filter(tk=>{
+    if(q&&!tk.title.toLowerCase().includes(q))return false;
+    if(currentFilter==='all')return true;
+    if(currentFilter==='overdue')return tk.deadline&&tk.deadline<today&&tk.status!=='done';
+    if(currentFilter==='nodoc')return !tk.docId;
+    return tk.status===currentFilter;
+  });
+
+  const groups={todo:[],progress:[],review:[],done:[]};
+  filtered.forEach(tk=>(groups[tk.status]||groups.todo).push(tk));
+  const gLabels={todo:t('todo'),progress:t('progress'),review:t('review'),done:t('done')};
+
+  let html='';
+  for(const [st,items] of Object.entries(groups)){
+    if(!items.length)continue;
+    html+=`<div class="sec-head"><div class="sec-title">${gLabels[st]}</div><div class="sec-count">${items.length}</div><div class="sec-line"></div></div>`;
+    html+=items.map((tk,i)=>{
+      const over=tk.deadline&&tk.deadline<today&&tk.status!=='done';
+      return `<div class="card ${tk.status==='done'?'done-r':''}" onclick="openTaskDetail(${tk.id})" style="display:flex;align-items:flex-start;gap:10px;animation-delay:${i*.03}s">
+        <div class="check-btn ${tk.status==='done'?'checked':''}" onclick="event.stopPropagation();toggleTaskDone(${tk.id})">${tk.status==='done'?'✓':''}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:500;margin-bottom:5px;${tk.status==='done'?'text-decoration:line-through;color:var(--muted)':''}">${tk.title}</div>
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            ${docChip(tk.docId)}
+            ${tk.deadline?`<span style="font-size:10px;color:${over?'var(--danger)':'var(--muted)'}">${over?'⚡ ':' '}${fmtShort(tk.deadline)}</span>`:''}
+            ${tk.comments.length?`<span style="font-size:10px;color:var(--muted)">💬 ${tk.comments.length}</span>`:''}
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:7px;flex-shrink:0">${priDot(tk.priority)}${miniAv(tk.assignee)}</div>
+      </div>`;
+    }).join('');
+  }
+  if(!filtered.length)html=`<div class="empty"><div class="ei">✅</div><p>Задач не знайдено</p></div>`;
+  document.getElementById('page-tasks-list').innerHTML=html;
+}
+
+function renderKanban(){
+  const cols=[{id:'todo',label:t('todo')},{id:'progress',label:t('progress')},{id:'review',label:t('review')},{id:'done',label:t('done')}];
+  const el=document.getElementById('page-tasks-kanban');
+  el.innerHTML=`<div class="kanban-wrap">${cols.map(col=>{
+    const items=tasks.filter(tk=>tk.status===col.id);
+    const cards=items.map(tk=>`<div class="kanban-card" onclick="openTaskDetail(${tk.id})">
+      <div class="kanban-card-title">${tk.title}</div>
+      ${docChip(tk.docId)}
+      <div class="kanban-card-foot" style="margin-top:7px">
+        <span style="font-size:10px;color:var(--muted);flex:1">${tk.deadline?'📅 '+fmtShort(tk.deadline):''}</span>
+        ${priDot(tk.priority)}${miniAv(tk.assignee)}
+      </div>
+    </div>`).join('');
+    return `<div class="kanban-col">
+      <div class="kanban-col-head">
+        <div class="kanban-col-dot" style="background:${col.id==='todo'?'var(--muted)':col.id==='progress'?'var(--accent)':col.id==='review'?'var(--warn)':'#666'}"></div>
+        <div class="kanban-col-title">${col.label}</div>
+        <div class="kanban-col-count">${items.length}</div>
+      </div>
+      <div class="kanban-cards">${cards}<button class="kanban-add-btn" onclick="openAdd('${col.id}')">+ ${t('add_task')}</button></div>
+    </div>`;
+  }).join('')}</div>`;
+}
+
+function toggleTaskDone(id){
+  const tk=tasks.find(t=>t.id===id);
+  if(tk)tk.status=tk.status==='done'?'todo':'done';
+  renderTasks();
+}
+
+// ============================================================
+// REMINDERS PAGE
+// ============================================================
+function renderReminders(){
+  const isCal=currentView==='cal';
+  document.getElementById('page-reminders').style.display=!isCal?'block':'none';
+  document.getElementById('page-reminders').classList.toggle('active',!isCal);
+  document.getElementById('page-reminders-cal').style.display=isCal?'block':'none';
+  document.getElementById('page-reminders-cal').classList.toggle('active',isCal);
+
+  const fb=document.getElementById('filterbar');
+  fb.innerHTML=['all','overdue','today_f','week','future','done_f'].map((f,idx)=>{
+    const labels={all:t('all'),overdue:t('overdue'),today_f:t('today_f'),week:t('week'),future:t('future'),done_f:t('done_f')};
+    return `<button class="filter-chip ${currentFilter===f?'active':''}" onclick="setFilter('${f}',this)">${labels[f]}</button>`;
+  }).join('');
+
+  if(isCal){ renderReminderCal(); return; }
+
+  const today=new Date().toISOString().split('T')[0];
+  const filtered=reminders.filter(r=>{
+    const days=daysFromNow(r.date);
+    const cls=classifyDays(days);
+    if(currentFilter==='all')return !r.done;
+    if(currentFilter==='done_f')return r.done;
+    if(currentFilter==='overdue')return cls==='overdue'&&!r.done;
+    if(currentFilter==='today_f')return cls==='today'&&!r.done;
+    if(currentFilter==='week')return days!==null&&days>=0&&days<=7&&!r.done;
+    if(currentFilter==='future')return cls==='future'&&!r.done;
+    return true;
+  });
+
+  // Group
+  const groups={};const order=[];
+  filtered.forEach(r=>{
+    const days=daysFromNow(r.date);
+    const g=r.done?'✅':days<0?'🔴':days===0?'🟡':days<=7?'📅':'🗓';
+    if(!groups[g]){groups[g]=[];order.push(g);}
+    groups[g].push(r);
+  });
+
+  let html='';
+  if(!filtered.length)html=`<div class="empty"><div class="ei">🔔</div><p>Нагадувань немає</p></div>`;
+  order.forEach(g=>{
+    const items=groups[g];
+    html+=`<div class="sec-head"><div class="sec-title">${g} ${items.length}</div><div class="sec-line"></div></div>`;
+    html+=items.map((r,i)=>{
+      const days=daysFromNow(r.date);
+      const cls=r.done?'done-r':classifyDays(days);
+      const m=team[r.assignee];
+      const docPart=r.docId?`<span class="chip chip-active" style="font-size:9px">📄 ${DOC_REFS[r.docId]}</span>`:`<span class="chip chip-todo" style="font-size:9px">${t('nodoc')}</span>`;
+      const ntfy=r.notify.map(n=>`<span class="chip chip-todo" style="font-size:9px">${n==='inapp'?'🔔':' 📧'}</span>`).join('');
+      const repeatIco=r.repeat!=='none'?'🔁 ':'';
+      return `<div class="rem-card ${cls}" onclick="openRemDetail(${r.id})" style="animation-delay:${i*.03}s">
+        <div class="rem-icon ${cls}">${r.done?'✅':cls==='overdue'?'⚡':cls==='today'?'🔔':cls==='soon'?'📌':'📅'}</div>
+        <div class="rem-body">
+          <div class="rem-title">${repeatIco}${r.title}</div>
+          <div class="rem-meta">${docPart}${ntfy}<span>📅 ${fmtDate(r.date)}</span>${!r.done?`<span class="countdown ${cls}">${cntLabel(days)}</span>`:''}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:7px;flex-shrink:0">
+          <div class="check-btn ${r.done?'checked':''}" onclick="event.stopPropagation();toggleRemDone(${r.id})">${r.done?'✓':''}</div>
+          <div class="mini-av" style="background:${m.color};border:none">${m.initials}</div>
+        </div>
+      </div>`;
+    }).join('');
+  });
+  document.getElementById('page-reminders').innerHTML=html;
+}
+
+function toggleRemDone(id){
+  const r=reminders.find(x=>x.id===id);
+  if(r){r.done=!r.done; renderReminders(); showToast(r.done?'✅ Виконано':'🔔 Відновлено');}
+}
+
+function renderReminderCal(){
+  const wrap=document.getElementById('page-reminders-cal');
+  const mns={uk:['Січень','Лютий','Березень','Квітень','Травень','Червень','Липень','Серпень','Вересень','Жовтень','Листопад','Грудень'],en:['January','February','March','April','May','June','July','August','September','October','November','December'],de:['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember']};
+  const dns={uk:['Пн','Вт','Ср','Чт','Пт','Сб','Нд'],en:['Mo','Tu','We','Th','Fr','Sa','Su'],de:['Mo','Di','Mi','Do','Fr','Sa','So']};
+  const mn=mns[lang]||mns.uk; const dn=dns[lang]||dns.uk;
+  const fd=new Date(calYear,calMonth,1); const ld=new Date(calYear,calMonth+1,0);
+  let sdow=fd.getDay(); sdow=sdow===0?6:sdow-1;
+  const todayStr=new Date().toISOString().split('T')[0];
+  const byDate={};
+  reminders.forEach(r=>{ if(!r.date)return; if(!byDate[r.date])byDate[r.date]=[]; byDate[r.date].push(r); });
+
+  let cells='';
+  for(let i=0;i<sdow;i++){ const pd=new Date(calYear,calMonth,-sdow+i+1); cells+=`<div class="cal-cell other"><div class="cal-date-num">${pd.getDate()}</div></div>`; }
+  for(let d=1;d<=ld.getDate();d++){
+    const ds=`${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const isT=ds===todayStr;
+    const dr=byDate[ds]||[];
+    const evs=dr.slice(0,3).map(r=>{
+      const days=daysFromNow(r.date); const cls=r.done?'done-r':classifyDays(days);
+      return `<div class="cal-ev ${cls}" onclick="event.stopPropagation();openRemDetail(${r.id})" title="${r.title}">${r.title.substring(0,20)}${r.title.length>20?'…':''}</div>`;
+    }).join('');
+    const more=dr.length>3?`<div style="font-size:8px;color:var(--muted)">+${dr.length-3}</div>`:'';
+    cells+=`<div class="cal-cell ${isT?'today-c':''}"><div class="cal-date-num">${d}</div>${evs}${more}</div>`;
+  }
+  const total=Math.ceil((sdow+ld.getDate())/7)*7;
+  for(let i=ld.getDate()+1;i<=total-sdow;i++) cells+=`<div class="cal-cell other"><div class="cal-date-num">${i}</div></div>`;
+
+  wrap.innerHTML=`<div class="cal-wrap">
+    <div class="cal-header">
+      <button class="cal-nav" onclick="changeCalMonth(-1)">◀</button>
+      <div class="cal-month-title">${mn[calMonth]} ${calYear}</div>
+      <button class="cal-nav" onclick="changeCalMonth(1)">▶</button>
+    </div>
+    <div class="cal-grid">
+      ${dn.map(d=>`<div class="cal-dn">${d}</div>`).join('')}
+      ${cells}
+    </div>
+  </div>`;
+}
+function changeCalMonth(dir){ calMonth+=dir; if(calMonth>11){calMonth=0;calYear++;} if(calMonth<0){calMonth=11;calYear--;} renderReminderCal(); }
+
+// ============================================================
+// MODALS — OPEN
+// ============================================================
+function openAdd(defaultStatus='todo'){
+  editId=null;
+  if(currentPage==='docs') openDocForm(null);
+  else if(currentPage==='tasks') openTaskForm(null, defaultStatus);
+  else if(currentPage==='reminders') openRemForm(null);
+}
+
+function openDocDetail(id){ openDocForm(id); }
+function openTaskDetail(id){ openTaskForm(id); }
+function openRemDetail(id){ openRemForm(id); }
+
+// ============================================================
+// DOC FORM
+// ============================================================
+function openDocForm(id){
+  modalMode='doc';
+  const doc=id?docs.find(d=>d.id===id):null;
+  document.getElementById('modal-title').textContent=doc?doc.title:'Новий документ';
+  document.getElementById('overlay').style.display='flex';
+
+  if(doc){
+    // Detail view
+    const cur=doc.stages[doc.currentStage];
+    const statusLabel={active:t('active'),urgent:t('urgent'),waiting:t('waiting'),done:t('done')};
+    const tl=doc.stages.map(s=>{
+      const dc=s.status==='done'?'done':s.status==='current'?'current':'';
+      return `<div class="tl-item">
+        <div class="tl-dot ${dc}"></div>
+        <div class="tl-body">
+          <div class="tl-name ${dc==='current'?'current':''}">${s.name}</div>
+          <div class="tl-inst">📍 ${s.inst}</div>
+          <div class="tl-result ${s.result?'':'pending'}">${s.result||'Результат не зафіксовано'}</div>
+          ${s.date?`<div class="tl-date">📅 ${fmtDate(s.date)}</div>`:''}
+        </div>
+      </div>`;
+    }).join('');
+
+    document.getElementById('modal-body').innerHTML=`
+      <div class="modal-sec">
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:14px">
+          <span class="chip chip-${doc.status}">${statusLabel[doc.status]}</span>
+          <span style="font-size:11px;color:var(--muted)">${doc.ref}</span>
+          ${doc.deadline?`<span style="font-size:11px;color:var(--danger);margin-left:auto">⏱ ${fmtDate(doc.deadline)}</span>`:''}
+        </div>
+        <div class="modal-sec-title">Шлях документа</div>
+        <div class="timeline">${tl}</div>
+      </div>
+      <div class="modal-sec">
+        <div class="modal-sec-title">Зафіксувати результат</div>
+        <div class="form-group">
+          <label class="form-label">Результат / дія</label>
+          <textarea class="form-ta" id="stage-res" placeholder="Опишіть що відбулось..."></textarea>
+        </div>
+        <button class="btn btn-primary" onclick="saveStageResult('${id}')">Зберегти та перейти →</button>
+      </div>
+      <div class="modal-sec">
+        <div class="modal-sec-title">Вкладення (${(doc.files||[]).length})</div>
+        <div id="attach-list">${renderAttachList(doc)}</div>
+        <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+          <label class="btn btn-ghost btn-sm" style="cursor:pointer">
+            📎 Завантажити файл
+            <input type="file" style="display:none" multiple onchange="handleFileUpload(event,'${id}')">
+          </label>
+          <button class="btn btn-ghost btn-sm" onclick="openAddLink('${id}')">🔗 Додати посилання</button>
+        </div>
+      </div>`;
+  } else {
+    document.getElementById('modal-body').innerHTML=`
+      <div class="form-group"><label class="form-label">Назва документа</label><input class="form-input" id="fd-title" placeholder="Назва..."></div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Тип</label><select class="form-select" id="fd-type"><option value="legal">⚖️ Юридичний</option><option value="court">🏛️ Судовий</option><option value="tax">💰 Податковий</option><option value="admin">📋 Адміністративний</option></select></div>
+        <div class="form-group"><label class="form-label">Дедлайн</label><input type="date" class="form-input" id="fd-deadline"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Перша інстанція</label><input class="form-input" id="fd-inst" placeholder="Суд / Органи..."></div>
+      <div class="form-group"><label class="form-label">Відповідальний</label><select class="form-select" id="fd-assignee">${team.map((m,i)=>`<option value="${i}">${m.name}</option>`).join('')}</select></div>
+      <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:8px" onclick="saveDoc()">Створити документ</button>`;
+  }
+}
+
+// ============================================================
+// FILE ATTACHMENTS
+// ============================================================
+function fileIcon(name){
+  const ext=(name||'').split('.').pop().toLowerCase();
+  if(['pdf'].includes(ext)) return '📕';
+  if(['doc','docx'].includes(ext)) return '📘';
+  if(['xls','xlsx'].includes(ext)) return '📗';
+  if(['jpg','jpeg','png','gif','webp'].includes(ext)) return '🖼️';
+  if(['zip','rar','7z'].includes(ext)) return '🗜️';
+  return '📎';
+}
+
+function fileSize(bytes){
+  if(!bytes) return '';
+  if(bytes<1024) return bytes+'B';
+  if(bytes<1024*1024) return (bytes/1024).toFixed(1)+'KB';
+  return (bytes/1024/1024).toFixed(1)+'MB';
+}
+
+function renderAttachList(doc){
+  const files=doc.files||[];
+  if(!files.length) return `<div style="font-size:11px;color:var(--muted);padding:8px 0">Файлів немає</div>`;
+  return files.map((f,i)=>`
+    <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;border:1px solid var(--border);border-radius:7px;margin-bottom:6px;background:var(--surface2)">
+      <span style="font-size:18px">${fileIcon(f.name)}</span>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:12px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${f.name}</div>
+        <div style="font-size:10px;color:var(--muted)">${f.size?fileSize(f.size):''} ${f.date?'· '+f.date:''} ${f.type==='link'?'· 🔗 Посилання':''}</div>
+      </div>
+      <div style="display:flex;gap:5px;flex-shrink:0">
+        ${f.url?`<a href="${f.url}" target="_blank" class="btn btn-ghost btn-sm" style="text-decoration:none">↗</a>`:''}
+        <button class="btn btn-ghost btn-sm" style="color:var(--danger)" onclick="removeAttach('${doc.id}',${i})">✕</button>
+      </div>
+    </div>`).join('');
+}
+
+async function handleFileUpload(event, docId){
+  const doc=docs.find(d=>d.id===docId);
+  if(!doc)return;
+  if(!doc.files)doc.files=[];
+  const files=Array.from(event.target.files);
+  if(!files.length)return;
+
+  for(const file of files){
+    const today=new Date().toLocaleDateString('uk-UA');
+    if(megaStorage){
+      // Upload to MEGA
+      showToast('☁️ Завантаження на MEGA...');
+      try {
+        let folder=Object.values(megaStorage.files).find(f=>f.name===MEGA_FOLDER_NAME&&f.directory);
+        if(!folder){
+          folder=await new Promise((res,rej)=>{megaStorage.root.mkdir(MEGA_FOLDER_NAME,(err,f)=>{if(err)rej(err);else res(f);});});
+        }
+        const buf=await file.arrayBuffer();
+        const upload=folder.upload({name:file.name,size:file.size},new Uint8Array(buf));
+        const megaFile=await new Promise((res,rej)=>{upload.on('complete',f=>res(f));upload.on('error',rej);});
+        const url=await new Promise((res,rej)=>{megaFile.link((err,l)=>{if(err)rej(err);else res(l);});});
+        doc.files.push({name:file.name,size:file.size,date:today,url,type:'mega'});
+        showToast(`✅ ${file.name} завантажено`);
+      } catch(err){
+        console.warn('MEGA upload error:',err);
+        // Fallback — store as local blob URL
+        const url=URL.createObjectURL(file);
+        doc.files.push({name:file.name,size:file.size,date:today,url,type:'local'});
+        showToast(`📎 ${file.name} додано локально`);
+      }
+    } else {
+      // No MEGA — store as local blob URL (session only)
+      const url=URL.createObjectURL(file);
+      doc.files.push({name:file.name,size:file.size,date:today,url,type:'local'});
+      showToast(`📎 ${file.name} додано`);
+    }
+    doc.attachments=(doc.files||[]).length;
+  }
+  // Refresh attach list in modal
+  const al=document.getElementById('attach-list');
+  if(al)al.innerHTML=renderAttachList(doc);
+  renderDocs(); megaSaveData();
+}
+
+function openAddLink(docId){
+  const url=prompt('Введіть посилання на файл (Google Drive, MEGA, тощо):');
+  if(!url)return;
+  const name=prompt('Назва файлу:')||url;
+  const doc=docs.find(d=>d.id===docId);
+  if(!doc)return;
+  if(!doc.files)doc.files=[];
+  const today=new Date().toLocaleDateString('uk-UA');
+  doc.files.push({name,url,date:today,type:'link'});
+  doc.attachments=(doc.files||[]).length;
+  const al=document.getElementById('attach-list');
+  if(al)al.innerHTML=renderAttachList(doc);
+  renderDocs(); megaSaveData();
+  showToast('🔗 Посилання додано');
+}
+
+function removeAttach(docId, idx){
+  const doc=docs.find(d=>d.id===docId);
+  if(!doc||!doc.files)return;
+  const f=doc.files[idx];
+  if(f&&f.type==='local'&&f.url)URL.revokeObjectURL(f.url);
+  doc.files.splice(idx,1);
+  doc.attachments=(doc.files||[]).length;
+  const al=document.getElementById('attach-list');
+  if(al)al.innerHTML=renderAttachList(doc);
+  renderDocs(); megaSaveData();
+  showToast('🗑 Файл видалено');
+}
+
+function saveStageResult(docId){
+  const doc=docs.find(d=>d.id===docId);
+  if(!doc)return;
+  const res=document.getElementById('stage-res').value.trim();
+  if(!res){alert('Введіть результат');return;}
+  doc.stages[doc.currentStage].result=res;
+  doc.stages[doc.currentStage].status='done';
+  doc.stages[doc.currentStage].date=new Date().toISOString().split('T')[0];
+  const nextI=doc.stages.findIndex((s,i)=>i>doc.currentStage&&s.status==='pending');
+  if(nextI!==-1){doc.stages[nextI].status='current';doc.currentStage=nextI;doc.status='active';}
+  else doc.status='done';
+  closeModal(); renderDocs(); showToast('✅ Результат збережено');
+}
+
+function saveDoc(){
+  const title=document.getElementById('fd-title').value.trim();
+  if(!title){alert('Введіть назву');return;}
+  const id=String(nextDocId++);
+  const inst=document.getElementById('fd-inst').value.trim()||'Не вказано';
+  docs.unshift({id,title,ref:`ДОК-${new Date().getFullYear()}-${String(docs.length+1).padStart(4,'0')}`,type:document.getElementById('fd-type').value,status:'active',deadline:document.getElementById('fd-deadline').value||null,assignees:[parseInt(document.getElementById('fd-assignee').value)],attachments:0,files:[],currentStage:0,
+    stages:[{name:'Підготовка',inst,date:new Date().toISOString().split('T')[0],result:null,status:'current'},{name:'Подання',inst,date:null,result:null,status:'pending'},{name:'Розгляд',inst,date:null,result:null,status:'pending'},{name:'Завершення',inst,date:null,result:null,status:'pending'}]
+  });
+  closeModal(); renderDocs(); showToast('📄 Документ створено');
+}
+
+// ============================================================
+// TASK FORM
+// ============================================================
+function openTaskForm(id, defaultStatus='todo'){
+  modalMode='task'; editId=id;
+  const tk=id?tasks.find(t=>t.id===id):null;
+  document.getElementById('modal-title').textContent=tk?'Редагувати задачу':'Нова задача';
+  document.getElementById('overlay').style.display='flex';
+  selectedStatus=tk?tk.status:defaultStatus;
+
+  const statusOpts=['todo','progress','review','done'].map(s=>`<button class="status-opt ${selectedStatus===s?'active':''}" onclick="selStatus('${s}',this)">${t(s)}</button>`).join('');
+  const docOpts=`<option value="">— ${t('nodoc')} —</option>${Object.entries(DOC_REFS).map(([k,v])=>`<option value="${k}" ${tk&&tk.docId===k?'selected':''}>${v} · ${DOC_NAMES[k]}</option>`).join('')}`;
+  const comments=tk&&tk.comments.length?tk.comments.map(c=>`<div class="comment-item"><div class="comment-av" style="background:${team[c.author].color}">${team[c.author].initials}</div><div class="comment-body"><div class="comment-meta">${team[c.author].name} · ${c.date}</div><div class="comment-text">${c.text}</div></div></div>`).join(''):`<div style="font-size:11px;color:var(--muted);padding:4px 0">Коментарів немає</div>`;
+
+  document.getElementById('modal-body').innerHTML=`
+    <div class="form-group"><label class="form-label">Назва</label><input class="form-input" id="ft-title" value="${tk?tk.title.replace(/"/g,'&quot;'):''}" placeholder="Що потрібно зробити?"></div>
+    <div class="form-group"><label class="form-label">Опис</label><textarea class="form-ta" id="ft-desc">${tk?tk.desc:''}</textarea></div>
+    <div class="modal-sec"><div class="modal-sec-title">Статус</div><div class="status-opts" id="status-opts">${statusOpts}</div></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Виконавець</label><select class="form-select" id="ft-assignee">${team.map((m,i)=>`<option value="${i}" ${tk&&tk.assignee===i?'selected':''}>${m.name}</option>`).join('')}</select></div>
+      <div class="form-group"><label class="form-label">Пріоритет</label><select class="form-select" id="ft-priority"><option value="high" ${tk&&tk.priority==='high'?'selected':''}>🔴 Високий</option><option value="medium" ${!tk||tk.priority==='medium'?'selected':''}>🟡 Середній</option><option value="low" ${tk&&tk.priority==='low'?'selected':''}>🟢 Низький</option></select></div>
+    </div>
+    <div class="form-group"><label class="form-label">Дедлайн</label><input type="date" class="form-input" id="ft-deadline" value="${tk?tk.deadline||'':''}"></div>
+    <div class="form-group"><label class="form-label">Документ (необов'язково)</label><select class="form-select" id="ft-doc">${docOpts}</select></div>
+    <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:4px" onclick="saveTask()"><span>${tk?'Зберегти':'Створити задачу'}</span></button>
+    ${tk?`<div class="modal-sec" style="margin-top:20px"><div class="modal-sec-title">Коментарі</div><div class="comment-list" id="clist">${comments}</div><div class="comment-input-row"><textarea id="cinput" placeholder="Коментар..."></textarea><button class="btn btn-primary btn-sm" onclick="addComment(${id})" style="height:36px">→</button></div></div>`:''}`;
+}
+
+function selStatus(s, el){
+  selectedStatus=s;
+  document.querySelectorAll('.status-opts .status-opt').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+}
+
+function saveTask(){
+  const title=document.getElementById('ft-title').value.trim();
+  if(!title){alert('Введіть назву');return;}
+  if(editId){
+    const tk=tasks.find(t=>t.id===editId);
+    tk.title=title; tk.desc=document.getElementById('ft-desc').value;
+    tk.status=selectedStatus; tk.assignee=parseInt(document.getElementById('ft-assignee').value);
+    tk.priority=document.getElementById('ft-priority').value;
+    tk.deadline=document.getElementById('ft-deadline').value;
+    tk.docId=document.getElementById('ft-doc').value;
+    showToast('💾 Збережено');
+  } else {
+    tasks.unshift({id:nextTaskId++,title,desc:document.getElementById('ft-desc').value,status:selectedStatus,assignee:parseInt(document.getElementById('ft-assignee').value),priority:document.getElementById('ft-priority').value,deadline:document.getElementById('ft-deadline').value,docId:document.getElementById('ft-doc').value,comments:[]});
+    showToast('✅ Задачу створено');
+  }
+  closeModal(); renderTasks();
+}
+
+function addComment(tkId){
+  const text=document.getElementById('cinput').value.trim();
+  if(!text)return;
+  const tk=tasks.find(t=>t.id===tkId);
+  tk.comments.push({author:0,text,date:new Date().toLocaleDateString('uk-UA')});
+  document.getElementById('cinput').value='';
+  const clist=document.getElementById('clist');
+  clist.innerHTML=tk.comments.map(c=>`<div class="comment-item"><div class="comment-av" style="background:${team[c.author].color}">${team[c.author].initials}</div><div class="comment-body"><div class="comment-meta">${team[c.author].name} · ${c.date}</div><div class="comment-text">${c.text}</div></div></div>`).join('');
+}
+
+// ============================================================
+// REMINDER FORM
+// ============================================================
+function openRemForm(id){
+  modalMode='reminder'; editId=id;
+  const r=id?reminders.find(x=>x.id===id):null;
+  document.getElementById('modal-title').textContent=r?r.title:'Нове нагадування';
+  document.getElementById('overlay').style.display='flex';
+
+  const docOpts=`<option value="">— ${t('nodoc')} —</option>${Object.entries(DOC_REFS).map(([k,v])=>`<option value="${k}" ${r&&r.docId===k?'selected':''}>${v} · ${DOC_NAMES[k]}</option>`).join('')}`;
+  const hasEmail=r&&r.notify.includes('email');
+  const hasInapp=!r||r.notify.includes('inapp');
+  const todayStr=new Date().toISOString().split('T')[0];
+
+  document.getElementById('modal-body').innerHTML=`
+    <div class="form-group"><label class="form-label">Текст нагадування</label><input class="form-input" id="fr-title" value="${r?r.title.replace(/"/g,'&quot;'):''}" placeholder="Що нагадати?"></div>
+    <div class="form-group"><label class="form-label">Документ</label><select class="form-select" id="fr-doc">${docOpts}</select></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Відповідальний</label><select class="form-select" id="fr-assignee">${team.map((m,i)=>`<option value="${i}" ${r&&r.assignee===i?'selected':''}>${m.name}</option>`).join('')}</select></div>
+      <div class="form-group"><label class="form-label">Дата</label><input type="date" class="form-input" id="fr-date" value="${r?r.date:todayStr}"></div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Або за N днів до дедлайну</label>
+      <div style="display:flex;gap:8px;align-items:center">
+        <input type="date" class="form-input" id="fr-deadline" style="flex:1" placeholder="Дедлайн">
+        <input type="number" class="form-input" id="fr-days" value="7" min="1" style="width:70px" oninput="calcRemDate()">
+      </div>
+      <div class="days-presets">
+        ${[1,3,7,14,30,60].map(n=>`<button class="day-preset ${n===7?'active':''}" onclick="setRemDays(${n},this)">${n}д</button>`).join('')}
+      </div>
+      <div id="fr-date-result" style="font-size:11px;color:var(--accent);margin-top:4px"></div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Канали сповіщення</label>
+      <div class="notify-opts">
+        <label class="notify-opt ${hasInapp?'sel':''}">
+          <input type="checkbox" id="fr-inapp" ${hasInapp?'checked':''} onchange="toggleNotifyOpt(this,'fr-inapp-opt')">
+          <span>🔔</span><div><div style="font-size:12px;font-weight:500">В системі</div><div style="font-size:10px;color:var(--muted)">Значок у центрі нагадувань</div></div>
+        </label>
+        <label class="notify-opt ${hasEmail?'sel':''}" id="fr-email-opt">
+          <input type="checkbox" id="fr-email" ${hasEmail?'checked':''} onchange="toggleNotifyOpt(this,'fr-email-opt'); updateEmailPrev()">
+          <span>📧</span><div><div style="font-size:12px;font-weight:500">Email</div><div style="font-size:10px;color:var(--muted)">Лист на пошту виконавця</div></div>
+        </label>
+      </div>
+      <div id="email-prev" style="${hasEmail?'':'display:none'}; margin-top:8px; background:var(--surface2); border:1px solid var(--border); border-radius:7px; padding:12px; font-size:11px; color:var(--muted)">
+        <div id="ep-subj" style="font-weight:500;color:var(--text);margin-bottom:3px"></div>
+        <div id="ep-body" style="line-height:1.6"></div>
+      </div>
+    </div>
+    <div class="form-group"><label class="form-label">Повторення</label><select class="form-select" id="fr-repeat"><option value="none" ${!r||r.repeat==='none'?'selected':''}>Без повторення</option><option value="weekly" ${r&&r.repeat==='weekly'?'selected':''}>Щотижня</option><option value="monthly" ${r&&r.repeat==='monthly'?'selected':''}>Щомісяця</option></select></div>
+    <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:4px" onclick="saveReminder()">${r?'Зберегти':'Створити нагадування'}</button>`;
+
+  if(hasEmail)updateEmailPrev();
+  document.getElementById('fr-deadline').addEventListener('input',calcRemDate);
+}
+
+function setRemDays(n, el){
+  document.getElementById('fr-days').value=n;
+  document.querySelectorAll('.day-preset').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  calcRemDate();
+}
+
+function calcRemDate(){
+  const dl=document.getElementById('fr-deadline').value;
+  const days=parseInt(document.getElementById('fr-days').value)||0;
+  if(!dl){document.getElementById('fr-date-result').textContent='';return;}
+  const dt=new Date(dl); dt.setDate(dt.getDate()-days);
+  const ds=dt.toISOString().split('T')[0];
+  document.getElementById('fr-date').value=ds;
+  document.getElementById('fr-date-result').textContent=`→ Нагадування: ${fmtDate(ds)}`;
+}
+
+function toggleNotifyOpt(cb, optId){
+  const opt=document.getElementById(optId);
+  if(opt)opt.classList.toggle('sel',cb.checked);
+  const ep=document.getElementById('email-prev');
+  if(ep)ep.style.display=document.getElementById('fr-email').checked?'block':'none';
+}
+
+function updateEmailPrev(){
+  const title=document.getElementById('fr-title')?.value||'Нагадування';
+  const docId=document.getElementById('fr-doc')?.value||'';
+  const ai=parseInt(document.getElementById('fr-assignee')?.value)||0;
+  const m=team[ai];
+  const dp=document.getElementById('ep-subj');
+  const db=document.getElementById('ep-body');
+  if(dp)dp.textContent=`[Коли що] ${title}${docId?' · '+DOC_NAMES[docId]:''}`;
+  if(db)db.textContent=`Вітаємо, ${m.name.split(' ')[0]}!\n\nНагадуємо: ${title}${docId?'\nДокумент: '+DOC_NAMES[docId]:''}\n\nСистема «Коли що»`;
+}
+
+function saveReminder(){
+  const title=document.getElementById('fr-title').value.trim();
+  if(!title){alert('Введіть текст');return;}
+  const notify=[];
+  if(document.getElementById('fr-inapp').checked)notify.push('inapp');
+  if(document.getElementById('fr-email').checked)notify.push('email');
+  if(!notify.length){alert('Оберіть канал сповіщення');return;}
+  const obj={title,docId:document.getElementById('fr-doc').value,assignee:parseInt(document.getElementById('fr-assignee').value)||0,date:document.getElementById('fr-date').value,notify,repeat:document.getElementById('fr-repeat').value,done:false};
+  if(editId){Object.assign(reminders.find(r=>r.id===editId),obj);showToast('💾 Збережено');}
+  else{reminders.unshift({id:nextRemId++,...obj});showToast('🔔 Нагадування створено');}
+  closeModal(); renderReminders();
+}
+
+// ============================================================
+// MODAL CLOSE
+// ============================================================
+function closeModal(){ document.getElementById('overlay').style.display='none'; editId=null; }
+function closeOverlay(e){ if(e.target===document.getElementById('overlay'))closeModal(); }
+
+// ============================================================
+// TOAST
+// ============================================================
+function showToast(msg){
+  const t=document.createElement('div'); t.className='toast'; t.textContent=msg;
+  document.body.appendChild(t); setTimeout(()=>t.remove(),2500);
+}
+
+// ============================================================
+// ATTACHMENTS
+// ============================================================
+function fileIcon(name){
+  const ext=(name.split('.').pop()||'').toLowerCase();
+  if(['pdf'].includes(ext)) return '📕';
+  if(['doc','docx'].includes(ext)) return '📘';
+  if(['xls','xlsx'].includes(ext)) return '📗';
+  if(['jpg','jpeg','png','gif','webp'].includes(ext)) return '🖼️';
+  if(['zip','rar','7z'].includes(ext)) return '📦';
+  return '📄';
+}
+
+function renderAttachList(doc){
+  const files=doc.files||[];
+  if(!files.length) return `<div style="font-size:11px;color:var(--muted);padding:6px 0">Вкладень немає</div>`;
+  return files.map((f,i)=>`
+    <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;border:1px solid var(--border);border-radius:7px;margin-bottom:6px;background:var(--surface2)">
+      <span style="font-size:18px">${fileIcon(f.name)}</span>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${f.name}</div>
+        <div style="font-size:10px;color:var(--muted)">${f.size||''} · ${f.date||''} · ${f.by||''}</div>
+      </div>
+      <div style="display:flex;gap:6px;flex-shrink:0">
+        ${f.url?`<a href="${f.url}" target="_blank" class="btn btn-ghost btn-sm" style="text-decoration:none">↗</a>`:''}
+        <button class="btn btn-ghost btn-sm" style="color:var(--danger)" onclick="removeAttachment('${doc.id}',${i})">✕</button>
+      </div>
+    </div>`).join('');
+}
+
+function handleFileUpload(event, docId){
+  const doc=docs.find(d=>d.id===docId);
+  if(!doc) return;
+  if(!doc.files) doc.files=[];
+  const files=Array.from(event.target.files);
+  let uploaded=0;
+
+  files.forEach(file=>{
+    // If MEGA connected — upload there
+    if(megaStorage){
+      showToast('☁️ Завантаження на MEGA...');
+      const reader=new FileReader();
+      reader.onload=async(e)=>{
+        try {
+          const buf=new Uint8Array(e.target.result);
+          let folder=Object.values(megaStorage.files).find(f=>f.name===MEGA_FOLDER_NAME&&f.directory);
+          if(!folder){
+            folder=await new Promise((res,rej)=>megaStorage.root.mkdir(MEGA_FOLDER_NAME,(err,f)=>err?rej(err):res(f)));
+          }
+          const upload=folder.upload({name:file.name, size:buf.length}, buf);
+          const megaFile=await new Promise((res,rej)=>{upload.on('complete',res);upload.on('error',rej);});
+          const url=await new Promise((res,rej)=>megaFile.link((err,l)=>err?rej(err):res(l)));
+          doc.files.push({name:file.name, size:fmtFileSize(file.size), date:new Date().toLocaleDateString('uk-UA'), by:team[currentUser]?.name||'', url, mega:true});
+          doc.attachments=(doc.files||[]).length;
+          refreshAttachList(docId);
+          megaSaveData();
+          showToast('✅ '+file.name+' завантажено на MEGA');
+        } catch(err){ showToast('❌ Помилка: '+err.message); }
+      };
+      reader.readAsArrayBuffer(file);
+    } else {
+      // Store as local blob URL
+      const url=URL.createObjectURL(file);
+      doc.files.push({name:file.name, size:fmtFileSize(file.size), date:new Date().toLocaleDateString('uk-UA'), by:team[currentUser]?.name||'', url, local:true});
+      doc.attachments=(doc.files||[]).length;
+      uploaded++;
+      if(uploaded===files.length){
+        refreshAttachList(docId);
+        renderDocs();
+        showToast(`📎 ${files.length > 1 ? files.length+' файли' : files[0].name} додано`);
+      }
+    }
+  });
+}
+
+function openAddLink(docId){
+  const doc=docs.find(d=>d.id===docId);
+  if(!doc) return;
+  const name=prompt('Назва файлу/посилання:');
+  if(!name) return;
+  const url=prompt('URL посилання (Google Drive, MEGA тощо):');
+  if(!url) return;
+  if(!doc.files) doc.files=[];
+  doc.files.push({name, size:'', date:new Date().toLocaleDateString('uk-UA'), by:team[currentUser]?.name||'', url, link:true});
+  doc.attachments=(doc.files||[]).length;
+  refreshAttachList(docId);
+  renderDocs();
+  megaSaveData();
+  showToast('🔗 Посилання додано');
+}
+
+function removeAttachment(docId, idx){
+  const doc=docs.find(d=>d.id===docId);
+  if(!doc||!doc.files) return;
+  if(!confirm('Видалити вкладення?')) return;
+  doc.files.splice(idx,1);
+  doc.attachments=(doc.files||[]).length;
+  refreshAttachList(docId);
+  renderDocs();
+  megaSaveData();
+}
+
+function refreshAttachList(docId){
+  const doc=docs.find(d=>d.id===docId);
+  const el=document.getElementById('attach-list');
+  if(el&&doc) el.innerHTML=renderAttachList(doc);
+}
+
+function fmtFileSize(bytes){
+  if(bytes<1024) return bytes+'B';
+  if(bytes<1048576) return Math.round(bytes/1024)+'KB';
+  return (bytes/1048576).toFixed(1)+'MB';
+}
+
+// ============================================================
+// TEAM PAGE
+// ============================================================
+function renderTeam(){
+  document.getElementById('filterbar').innerHTML='';
+  document.getElementById('view-toggle').style.display='none';
+  const admin=isAdmin();
+  const el=document.getElementById('page-team');
+
+  const roleLabel=(r)=>(ROLES[r]?.label[lang]||r);
+  const roleColor=(r)=>(ROLES[r]?.color||'#888');
+
+  const memberCards=team.filter(m=>m.active).map((m,i)=>{
+    const isMe=m.id===currentUser;
+    const myDocs=docs.filter(d=>d.assignees.includes(m.id)).length;
+    const myTasks=tasks.filter(t=>t.assignee===m.id&&t.status!=='done').length;
+    const canEdit=admin||isMe;
+    return `<div class="card" style="display:flex;align-items:flex-start;gap:14px;cursor:default">
+      <div style="width:44px;height:44px;border-radius:50%;background:${m.color};color:white;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:500;flex-shrink:0">${m.initials}</div>
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px">
+          <span style="font-size:14px;font-weight:500">${m.name}</span>
+          ${isMe?`<span class="chip" style="background:#e8f4e8;color:#2a5c45;font-size:9px">Це ви</span>`:''}
+          <span class="chip" style="background:${roleColor(m.role)}22;color:${roleColor(m.role)};font-size:9px">${roleLabel(m.role)}</span>
+        </div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:8px">${m.email}</div>
+        <div style="display:flex;gap:12px;font-size:10px;color:var(--muted)">
+          <span>📄 ${myDocs} doc.</span>
+          <span>✅ ${myTasks} задач</span>
+        </div>
+      </div>
+      ${canEdit?`<div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0">
+        ${admin&&!isMe?`<button class="btn btn-ghost btn-sm" onclick="openEditMember(${m.id})">✏️</button>`:''}
+        ${isMe?`<button class="btn btn-ghost btn-sm" onclick="openEditMember(${m.id})">✏️</button>`:''}
+        ${admin&&!isMe?`<button class="btn btn-ghost btn-sm" style="color:var(--danger)" onclick="deactivateMember(${m.id})">✕</button>`:''}
+      </div>`:''}
+    </div>`;
+  }).join('');
+
+  const inactive=team.filter(m=>!m.active);
+  const inactiveHTML=inactive.length?`
+    <div class="sec-head" style="margin-top:24px"><div class="sec-title">Деактивовані</div><div class="sec-count">${inactive.length}</div><div class="sec-line"></div></div>
+    ${inactive.map(m=>`<div class="card" style="display:flex;align-items:center;gap:12px;opacity:.5;cursor:default">
+      <div style="width:36px;height:36px;border-radius:50%;background:${m.color};color:white;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:500">${m.initials}</div>
+      <div style="flex:1"><div style="font-size:13px">${m.name}</div><div style="font-size:10px;color:var(--muted)">${m.email}</div></div>
+      ${admin?`<button class="btn btn-ghost btn-sm" onclick="reactivateMember(${m.id})">↩️ Відновити</button>`:''}
+    </div>`).join('')}`:'';
+
+  el.innerHTML=`
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px">
+      <div>
+        <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:4px">Активних учасників</div>
+        <div style="font-family:'Literata',serif;font-size:28px;font-weight:600">${team.filter(m=>m.active).length} <span style="font-size:16px;color:var(--muted)">/ 10</span></div>
+      </div>
+      ${admin?`<button class="btn btn-primary" onclick="openAddMember()">+ Учасник</button>`:''}
+    </div>
+    <div style="display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap">
+      ${Object.values(ROLES).map(r=>{
+        const cnt=team.filter(m=>m.active&&m.role===r.key).length;
+        return `<div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 16px;flex:1;min-width:100px">
+          <div style="font-size:10px;color:var(--muted);margin-bottom:2px">${r.label[lang]}</div>
+          <div style="font-size:20px;font-weight:600;color:${r.color}">${cnt}</div>
+        </div>`;
+      }).join('')}
+    </div>
+    <div class="sec-head"><div class="sec-title">Учасники</div><div class="sec-count">${team.filter(m=>m.active).length}</div><div class="sec-line"></div></div>
+    ${memberCards}
+    ${inactiveHTML}`;
+}
+
+function openAddMember(){
+  if(!isAdmin()){ showToast('⛔ Тільки адміністратор може додавати'); return; }
+  document.getElementById('modal-title').textContent='Новий учасник';
+  document.getElementById('modal-body').innerHTML=`
+    <div class="form-group"><label class="form-label">Ім'я</label><input class="form-input" id="nm-name" placeholder="Ім'я Прізвище"></div>
+    <div class="form-group"><label class="form-label">Email</label><input type="email" class="form-input" id="nm-email" placeholder="email@company.ua"></div>
+    <div class="form-group"><label class="form-label">Ініціали (2 символи)</label><input class="form-input" id="nm-initials" placeholder="ОМ" maxlength="2" style="text-transform:uppercase"></div>
+    <div class="form-group"><label class="form-label">Роль</label>
+      <select class="form-select" id="nm-role">
+        ${Object.values(ROLES).map(r=>`<option value="${r.key}">${r.label[lang]}</option>`).join('')}
+      </select>
+    </div>
+    <div class="form-group"><label class="form-label">Колір</label>
+      <div style="display:flex;gap:8px;flex-wrap:wrap" id="nm-color-opts">
+        ${['#2a5c45','#c4601a','#3a5a8c','#8c3a5a','#5a3a8c','#3a6a8c','#8c6a3a','#4a8c3a'].map((c,i)=>`
+          <div onclick="selectColor('${c}',this)" style="width:28px;height:28px;border-radius:50%;background:${c};cursor:pointer;border:3px solid ${i===0?'#000':'transparent'};transition:all .15s" data-color="${c}"></div>
+        `).join('')}
+      </div>
+    </div>
+    <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:8px" onclick="saveMember()">Додати учасника</button>`;
+  document.getElementById('overlay').style.display='flex';
+  window._selectedColor='#2a5c45';
+}
+
+function openEditMember(id){
+  const m=team.find(x=>x.id===id);
+  if(!m)return;
+  if(!isAdmin()&&m.id!==currentUser){ showToast('⛔ Немає прав'); return; }
+  document.getElementById('modal-title').textContent='Редагувати учасника';
+  document.getElementById('modal-body').innerHTML=`
+    <div class="form-group"><label class="form-label">Ім'я</label><input class="form-input" id="nm-name" value="${m.name}"></div>
+    <div class="form-group"><label class="form-label">Email</label><input type="email" class="form-input" id="nm-email" value="${m.email}"></div>
+    <div class="form-group"><label class="form-label">Ініціали</label><input class="form-input" id="nm-initials" value="${m.initials}" maxlength="2" style="text-transform:uppercase"></div>
+    ${isAdmin()?`<div class="form-group"><label class="form-label">Роль</label>
+      <select class="form-select" id="nm-role">
+        ${Object.values(ROLES).map(r=>`<option value="${r.key}" ${m.role===r.key?'selected':''}>${r.label[lang]}</option>`).join('')}
+      </select>
+    </div>`:'<input type="hidden" id="nm-role" value="'+m.role+'">'}
+    <div class="form-group"><label class="form-label">Колір</label>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        ${['#2a5c45','#c4601a','#3a5a8c','#8c3a5a','#5a3a8c','#3a6a8c','#8c6a3a','#4a8c3a'].map(c=>`
+          <div onclick="selectColor('${c}',this)" style="width:28px;height:28px;border-radius:50%;background:${c};cursor:pointer;border:3px solid ${c===m.color?'#000':'transparent'};transition:all .15s" data-color="${c}"></div>
+        `).join('')}
+      </div>
+    </div>
+    <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:8px" onclick="saveMember(${id})">Зберегти</button>`;
+  document.getElementById('overlay').style.display='flex';
+  window._selectedColor=m.color;
+}
+
+function selectColor(c, el){
+  window._selectedColor=c;
+  document.querySelectorAll('#modal-body [data-color]').forEach(d=>d.style.border='3px solid transparent');
+  el.style.border='3px solid #000';
+}
+
+function saveMember(editId=null){
+  const name=document.getElementById('nm-name').value.trim();
+  const email=document.getElementById('nm-email').value.trim();
+  const initials=(document.getElementById('nm-initials').value.trim().toUpperCase()||name.split(' ').map(w=>w[0]).join('').substring(0,2));
+  const role=document.getElementById('nm-role').value;
+  const color=window._selectedColor||'#2a5c45';
+  if(!name){ alert('Введіть ім\'я'); return; }
+  if(editId!==null){
+    const m=team.find(x=>x.id===editId);
+    if(m){ m.name=name; m.email=email; m.initials=initials; m.role=role; m.color=color; }
+    showToast('💾 Збережено');
+  } else {
+    team.push({id:nextMemberId++,name,initials,color,email,role,active:true});
+    showToast('👤 Учасника додано');
+  }
+  closeModal(); renderTeam(); megaSaveData();
+}
+
+function deactivateMember(id){
+  if(!isAdmin()){ showToast('⛔ Тільки адміністратор'); return; }
+  if(id===currentUser){ showToast('⛔ Не можна деактивувати себе'); return; }
+  const m=team.find(x=>x.id===id);
+  if(m){ m.active=false; renderTeam(); megaSaveData(); showToast('👤 Учасника деактивовано'); }
+}
+
+function reactivateMember(id){
+  if(!isAdmin()){ showToast('⛔ Тільки адміністратор'); return; }
+  const m=team.find(x=>x.id===id);
+  if(m){ m.active=true; renderTeam(); megaSaveData(); showToast('👤 Учасника відновлено'); }
+}
+
+// ============================================================
+// INIT
+// ============================================================
+applySidebarI18n();
+</script>
+
+<!-- MEGA LOGIN SCREEN -->
+<div id="mega-screen" style="
+  position:fixed;inset:0;background:var(--bg);z-index:200;
+  display:flex;align-items:center;justify-content:center;padding:24px;
+">
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:32px 28px;width:100%;max-width:380px;box-shadow:var(--shadow)">
+    <div style="font-family:'Literata',serif;font-size:24px;font-weight:600;margin-bottom:4px">Коли що</div>
+    <div style="font-size:11px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:28px">Синхронізація через MEGA</div>
+
+    <div id="mega-status" style="font-size:12px;color:var(--muted);margin-bottom:16px;min-height:18px"></div>
+
+    <div class="form-group">
+      <label class="form-label">Email (MEGA акаунт)</label>
+      <input type="email" class="form-input" id="mega-email" placeholder="your@email.com" style="font-size:16px">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Пароль</label>
+      <input type="password" class="form-input" id="mega-pass" placeholder="••••••••" style="font-size:16px">
+    </div>
+
+    <button class="btn btn-primary" onclick="megaLogin()" style="width:100%;justify-content:center;margin-top:8px;padding:10px" id="mega-login-btn">
+      Увійти та синхронізувати
+    </button>
+
+    <button onclick="document.getElementById('mega-screen').style.display='none'; goPage('docs');" style="width:100%;margin-top:10px;background:none;border:none;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);cursor:pointer;padding:6px">
+      Продовжити без синхронізації
+    </button>
+
+    <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border);font-size:10px;color:var(--muted);line-height:1.6">
+      🔒 Дані зберігаються у вашому MEGA акаунті.<br>
+      Програма не має доступу до інших файлів.<br>
+      Немає акаунту? <a href="https://mega.nz/register" target="_blank" style="color:var(--accent)">Зареєструватись безкоштовно →</a>
+    </div>
+  </div>
+</div>
+
+<!-- MEGA SYNC INDICATOR -->
+<div id="mega-sync-bar" style="
+  position:fixed;top:0;left:0;right:0;
+  background:var(--accent);color:white;
+  font-family:'IBM Plex Mono',monospace;font-size:11px;
+  padding:6px 16px;text-align:center;z-index:150;
+  display:none;
+">
+  ☁️ Синхронізація...
+</div>
+
+<script>
+// ============================================================
+// MEGA INTEGRATION
+// ============================================================
+let megaStorage = null;
+let megaFile = null;
+let syncTimeout = null;
+const MEGA_FILE_NAME = 'kolyscho-data.json';
+const MEGA_FOLDER_NAME = 'Коли що';
+
+function megaInit(){
+  const savedEmail = localStorage.getItem('mega_email');
+  if(savedEmail){
+    const el = document.getElementById('mega-email');
+    if(el) el.value = savedEmail;
+  }
+  const screen = document.getElementById('mega-screen');
+  if(screen) screen.style.display = 'flex';
+}
+
+document.addEventListener('DOMContentLoaded', megaInit);
+
+async function megaLogin(){
+  const email = document.getElementById('mega-email').value.trim();
+  const pass  = document.getElementById('mega-pass').value;
+  const btn   = document.getElementById('mega-login-btn');
+  const status= document.getElementById('mega-status');
+
+  if(!email || !pass){ status.textContent = '⚠️ Введіть email і пароль'; return; }
+
+  btn.textContent = 'Підключення...';
+  btn.disabled = true;
+  status.textContent = '🔄 Авторизація в MEGA...';
+
+  try {
+    const { Storage } = window.megajs || {};
+    if(!Storage){ throw new Error('MEGA SDK не завантажився'); }
+
+    megaStorage = new Storage({ email, password: pass, autologin: false });
+
+    await new Promise((res, rej) => {
+      megaStorage.login((err) => { if(err) rej(err); else res(); });
+    });
+
+    localStorage.setItem('mega_email', email);
+    status.textContent = '✅ Авторизовано! Завантаження даних...';
+
+    await megaLoadData();
+
+    document.getElementById('mega-screen').style.display = 'none';
+    goPage('docs');
+    showToast('☁️ Синхронізовано з MEGA');
+    addMegaSyncButton();
+
+  } catch(err) {
+    console.error(err);
+    status.textContent = '❌ Помилка: ' + (err.message || 'Невірний email або пароль');
+    btn.textContent = 'Увійти та синхронізувати';
+    btn.disabled = false;
+  }
+}
+
+function skipMega(){
+  document.getElementById('mega-screen').style.display = 'none';
+  if(typeof goPage === 'function') goPage('docs');
+  else window.addEventListener('load', () => goPage('docs'));
+}
+
+async function megaLoadData(){
+  try {
+    // Find or create folder
+    let folder = Object.values(megaStorage.files).find(f => f.name === MEGA_FOLDER_NAME && f.directory);
+    if(!folder){
+      folder = await new Promise((res, rej) => {
+        megaStorage.root.mkdir(MEGA_FOLDER_NAME, (err, f) => { if(err) rej(err); else res(f); });
+      });
+    }
+
+    // Find data file
+    const file = Object.values(megaStorage.files).find(f => f.name === MEGA_FILE_NAME && f.parent === folder.nodeId);
+
+    if(file){
+      megaFile = file;
+      const buf = await new Promise((res, rej) => {
+        file.download((err, data) => { if(err) rej(err); else res(data); });
+      });
+      const text = new TextDecoder().decode(buf);
+      const data = JSON.parse(text);
+      if(data.docs)      docs      = data.docs;
+      if(data.tasks)     tasks     = data.tasks;
+      if(data.reminders) reminders = data.reminders;
+      if(data.nextTaskId) nextTaskId = data.nextTaskId;
+      if(data.nextRemId)  nextRemId  = data.nextRemId;
+      if(data.nextDocId)  nextDocId  = data.nextDocId;
+    }
+  } catch(err){
+    console.warn('MEGA load error:', err);
+  }
+}
+
+async function megaSaveData(){
+  if(!megaStorage) return;
+  if(syncTimeout) clearTimeout(syncTimeout);
+  syncTimeout = setTimeout(async () => {
+    const bar = document.getElementById('mega-sync-bar');
+    if(bar) bar.style.display = 'block';
+    try {
+      const data = JSON.stringify({ docs, tasks, reminders, nextTaskId, nextRemId, nextDocId });
+      const buf  = new TextEncoder().encode(data);
+
+      let folder = Object.values(megaStorage.files).find(f => f.name === MEGA_FOLDER_NAME && f.directory);
+      if(!folder){
+        folder = await new Promise((res, rej) => {
+          megaStorage.root.mkdir(MEGA_FOLDER_NAME, (err, f) => { if(err) rej(err); else res(f); });
+        });
+      }
+
+      // Delete old file if exists
+      if(megaFile){
+        await new Promise((res) => { megaFile.delete(true, () => res()); });
+        megaFile = null;
+      }
+
+      // Upload new file
+      const upload = folder.upload({ name: MEGA_FILE_NAME, size: buf.length }, buf);
+      megaFile = await new Promise((res, rej) => {
+        upload.on('complete', (f) => res(f));
+        upload.on('error', rej);
+      });
+
+      if(bar) bar.style.display = 'none';
+    } catch(err){
+      console.warn('MEGA save error:', err);
+      if(bar){ bar.style.background='var(--danger)'; bar.textContent='❌ Помилка синхронізації'; setTimeout(()=>{ bar.style.display='none'; bar.style.background='var(--accent)'; bar.textContent='☁️ Синхронізація...'; },3000); }
+    }
+  }, 1500);
+}
+
+// Auto-save hook — patch save functions
+
+
+function addMegaSyncButton(){
+  // Add sync button to desktop sidebar footer
+  const footer = document.querySelector('.sidebar-footer');
+  if(footer && !document.getElementById('mega-sync-btn')){
+    const btn = document.createElement('button');
+    btn.id = 'mega-sync-btn';
+    btn.className = 'btn btn-ghost btn-sm';
+    btn.style.cssText = 'width:100%;justify-content:center;margin-top:8px;font-size:10px';
+    btn.innerHTML = '☁️ Синхронізувати';
+    btn.onclick = () => { megaSaveData(); showToast('☁️ Синхронізація...'); };
+    footer.appendChild(btn);
+  }
+  // Add to mobile settings sheet
+  const sheet = document.querySelector('.mob-sheet-body');
+  if(sheet && !document.getElementById('mega-sync-mob-btn')){
+    const div = document.createElement('div');
+    div.innerHTML = `<div class="mob-sheet-divider"></div>
+      <button id="mega-sync-mob-btn" class="mob-sheet-link" onclick="megaSaveData();showToast('☁️ Синхронізація...')" style="color:var(--accent);font-weight:500">
+        ☁️ Синхронізувати з MEGA
+      </button>
+      <button class="mob-sheet-link" onclick="megaLogout()" style="color:var(--danger)">
+        🚪 Вийти з MEGA
+      </button>`;
+    sheet.appendChild(div);
+  }
+}
+
+function megaLogout(){
+  megaStorage = null; megaFile = null;
+  localStorage.removeItem('mega_email');
+  closeMobSettings();
+  document.getElementById('mega-screen').style.display = 'flex';
+  document.getElementById('mega-pass').value = '';
+  document.getElementById('mega-status').textContent = '';
+}
+
+// Patch data-changing functions to auto-sync
+['saveDoc','saveTask','saveReminder','saveStageResult','toggleTaskDone','toggleRemDone'].forEach(fn => {
+  const orig = window[fn];
+  if(orig) window[fn] = function(){ orig.apply(this,arguments); megaSaveData(); };
+});
+</script>
+<!-- MOBILE BOTTOM NAV -->
+<nav class="mobile-nav">
+  <div class="mobile-nav-inner">
+    <button class="mob-nav-btn active" id="mob-nav-docs" onclick="goPage('docs')">
+      <span class="mob-icon">📄</span>
+      <span class="mob-label" id="mob-lbl-docs">Документи</span>
+      <span class="mob-badge accent" id="mob-bdg-docs">4</span>
+    </button>
+    <button class="mob-nav-btn" id="mob-nav-tasks" onclick="goPage('tasks')">
+      <span class="mob-icon">✅</span>
+      <span class="mob-label" id="mob-lbl-tasks">Задачі</span>
+      <span class="mob-badge accent" id="mob-bdg-tasks" style="display:none"></span>
+    </button>
+    <button class="mob-nav-btn" id="mob-nav-reminders" onclick="goPage('reminders')">
+      <span class="mob-icon">🔔</span>
+      <span class="mob-label" id="mob-lbl-rem">Нагадування</span>
+      <span class="mob-badge warn" id="mob-bdg-rem">3</span>
+    </button>
+    <button class="mob-nav-btn" id="mob-nav-team" onclick="goPage('team')">
+      <span class="mob-icon">👥</span>
+      <span class="mob-label">Команда</span>
+    </button>
+    <button class="mob-nav-btn" id="mob-nav-more" onclick="openMobSettings()">
+      <span class="mob-icon">⚙️</span>
+      <span class="mob-label">Ще</span>
+    </button>
+  </div>
+</nav>
+
+<!-- MOBILE FAB -->
+<button class="mob-fab" id="mob-fab" onclick="openAdd()">＋</button>
+
+<!-- MOBILE SETTINGS SHEET -->
+<div class="mob-settings-overlay" id="mob-settings-overlay" onclick="closeMobSettings()" style="display:none"></div>
+<div class="mob-settings-sheet" id="mob-settings-sheet" style="display:none">
+  <div class="mob-sheet-handle"></div>
+  <div class="mob-sheet-body">
+    <!-- User -->
+    <div class="mob-sheet-user">
+      <div class="s-avatar" style="background:#2a5c45;width:42px;height:42px;font-size:14px;border-radius:50%;color:white;display:flex;align-items:center;justify-content:center;font-weight:500">ОМ</div>
+      <div>
+        <div style="font-size:14px;font-weight:500;color:var(--text)">Олена М.</div>
+        <div style="font-size:11px;color:var(--muted)" id="mob-role-lbl">Адміністратор</div>
+      </div>
+    </div>
+
+    <div class="mob-sheet-divider"></div>
+
+    <!-- Language -->
+    <div class="mob-sheet-section-title" id="mob-lbl-lang">Мова інтерфейсу</div>
+    <div class="mob-lang-opts">
+      <button class="mob-lang-btn active" id="mob-lang-uk" onclick="setLangMob('uk')">🇺🇦 Українська</button>
+      <button class="mob-lang-btn" id="mob-lang-en" onclick="setLangMob('en')">🇬🇧 English</button>
+      <button class="mob-lang-btn" id="mob-lang-de" onclick="setLangMob('de')">🇩🇪 Deutsch</button>
+    </div>
+
+    <div class="mob-sheet-divider"></div>
+
+    <!-- Nav links -->
+    <div class="mob-sheet-section-title" id="mob-lbl-inst">Інстанції</div>
+    <div class="mob-sheet-links">
+      <button class="mob-sheet-link" onclick="closeMobSettings()">🏛️ <span id="mob-sl-gov">Держоргани</span></button>
+      <button class="mob-sheet-link" onclick="closeMobSettings()">⚖️ <span id="mob-sl-court">Суди</span></button>
+      <button class="mob-sheet-link" onclick="closeMobSettings()">🏢 <span id="mob-sl-org">Організації</span></button>
+      <button class="mob-sheet-link" onclick="closeMobSettings()">👤 <span id="mob-sl-person">Персони</span></button>
+    </div>
+  </div>
+</div>
+
+<style>
+.mob-settings-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.3);
+  backdrop-filter: blur(3px);
+  z-index: 80;
+  animation: fadeIn .2s ease;
+}
+.mob-settings-sheet {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  background: var(--surface);
+  border-radius: 18px 18px 0 0;
+  z-index: 81;
+  padding-bottom: env(safe-area-inset-bottom);
+  animation: slideUp .25s ease;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+.mob-sheet-handle {
+  width: 36px; height: 4px;
+  background: var(--border);
+  border-radius: 2px;
+  margin: 12px auto 0;
+}
+.mob-sheet-body { padding: 16px 20px 24px; }
+.mob-sheet-user {
+  display: flex; align-items: center; gap: 12px;
+  padding: 8px 0 16px;
+}
+.mob-sheet-divider {
+  height: 1px; background: var(--border);
+  margin: 14px 0;
+}
+.mob-sheet-section-title {
+  font-size: 9px; letter-spacing: 2.5px;
+  text-transform: uppercase; color: var(--muted);
+  margin-bottom: 10px;
+}
+.mob-lang-opts { display: flex; flex-direction: column; gap: 7px; }
+.mob-lang-btn {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 13px; padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px; background: transparent;
+  color: var(--muted); cursor: pointer;
+  text-align: left; transition: all .15s;
+}
+.mob-lang-btn.active {
+  background: var(--accent-light);
+  color: var(--accent);
+  border-color: var(--accent);
+  font-weight: 500;
+}
+.mob-sheet-links { display: flex; flex-direction: column; gap: 4px; }
+.mob-sheet-link {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 13px; padding: 10px 14px;
+  border: none; border-radius: 8px;
+  background: transparent; color: var(--text);
+  cursor: pointer; text-align: left;
+  transition: all .15s; display: flex; gap: 10px;
+  align-items: center;
+}
+.mob-sheet-link:hover { background: var(--surface2); }
+</style>
+
+<script>
+function openMobSettings(){
+  document.querySelectorAll('.mob-nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('mob-nav-more').classList.add('active');
+  document.getElementById('mob-settings-overlay').style.display='block';
+  document.getElementById('mob-settings-sheet').style.display='block';
+  updateMobLangBtns();
+}
+function closeMobSettings(){
+  document.getElementById('mob-settings-overlay').style.display='none';
+  document.getElementById('mob-settings-sheet').style.display='none';
+  // Restore active nav btn
+  document.querySelectorAll('.mob-nav-btn').forEach(b=>b.classList.remove('active'));
+  const el=document.getElementById('mob-nav-'+currentPage);
+  if(el)el.classList.add('active');
+}
+function setLangMob(l){
+  setLang(l);
+  updateMobLangBtns();
+  updateMobI18n();
+}
+function updateMobLangBtns(){
+  ['uk','en','de'].forEach(l=>{
+    const b=document.getElementById('mob-lang-'+l);
+    if(b)b.classList.toggle('active',lang===l);
+  });
+  // sync desktop lang btns too
+  document.querySelectorAll('.lang-btn').forEach(b=>b.classList.remove('active'));
+  const db=document.querySelector(`.lang-btn[onclick="setLang('${lang}')"]`);
+  if(db)db.classList.add('active');
+}
+function updateMobI18n(){
+  const el=id=>document.getElementById(id);
+  const lbl={
+    uk:{role:'Адміністратор',lang:'Мова інтерфейсу',inst:'Інстанції',gov:'Держоргани',court:'Суди',org:'Організації',person:'Персони'},
+    en:{role:'Administrator',lang:'Interface language',inst:'Instances',gov:'Government',court:'Courts',org:'Organizations',person:'Persons'},
+    de:{role:'Administrator',lang:'Sprache',inst:'Instanzen',gov:'Behörden',court:'Gerichte',org:'Organisationen',person:'Personen'},
+  };
+  const l=lbl[lang]||lbl.uk;
+  if(el('mob-role-lbl'))el('mob-role-lbl').textContent=l.role;
+  if(el('mob-lbl-lang'))el('mob-lbl-lang').textContent=l.lang;
+  if(el('mob-lbl-inst'))el('mob-lbl-inst').textContent=l.inst;
+  if(el('mob-sl-gov'))el('mob-sl-gov').textContent=l.gov;
+  if(el('mob-sl-court'))el('mob-sl-court').textContent=l.court;
+  if(el('mob-sl-org'))el('mob-sl-org').textContent=l.org;
+  if(el('mob-sl-person'))el('mob-sl-person').textContent=l.person;
+}
+</script>
+
+</body>
+</html>
