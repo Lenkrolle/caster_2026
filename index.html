@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Коли що</title>
+<title>Коліщатко</title>
 <link href="https://fonts.googleapis.com/css2?family=Literata:ital,wght@0,300;0,400;0,600;1,300&family=IBM+Plex+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/megajs@1/dist/main.browser-umd.js"></script>
 <style>
@@ -397,7 +397,7 @@ body { background: var(--bg); color: var(--text); font-family: 'IBM Plex Mono', 
 <!-- SIDEBAR -->
 <aside class="sidebar">
   <div class="sidebar-logo">
-    <div class="logo-text">Коли що</div>
+    <div class="logo-text" id="logo-text">Коліщатко</div>
     <div class="logo-sub" id="s-sub">Система документів</div>
     <div class="lang-switcher">
       <button class="lang-btn active" onclick="setLang('uk')">УКР</button>
@@ -572,9 +572,9 @@ let calMonth = new Date().getMonth();
 // I18N
 // ============================================================
 const L = {
-  uk:{ docs:'Документи', tasks:'Задачі', reminders:'Нагадування', add_doc:'Документ', add_task:'Задача', add_rem:'Нагадування', search:'Пошук...', all:'Усі', active:'Активні', urgent:'Термінові', waiting:'Очікування', done:'Завершені', todo:'До роботи', progress:'В процесі', review:'Перевірка', overdue:'⚡ Прострочені', today_f:'Сьогодні', week:'7 днів', future:'Майбутні', done_f:'Виконані', nodoc:'Без документа', admin:'Адміністратор', nav:'Навігація', inst:'Інстанції', gov:'Держоргани', court:'Суди', org:'Організації', person:'Персони', subtitle:'Система документів' },
-  en:{ docs:'Documents', tasks:'Tasks', reminders:'Reminders', add_doc:'Document', add_task:'Task', add_rem:'Reminder', search:'Search...', all:'All', active:'Active', urgent:'Urgent', waiting:'Waiting', done:'Done', todo:'To Do', progress:'In Progress', review:'Review', overdue:'⚡ Overdue', today_f:'Today', week:'7 days', future:'Future', done_f:'Done', nodoc:'No document', admin:'Administrator', nav:'Navigation', inst:'Instances', gov:'Government', court:'Courts', org:'Organizations', person:'Persons', subtitle:'Document System' },
-  de:{ docs:'Dokumente', tasks:'Aufgaben', reminders:'Erinnerungen', add_doc:'Dokument', add_task:'Aufgabe', add_rem:'Erinnerung', search:'Suche...', all:'Alle', active:'Aktiv', urgent:'Dringend', waiting:'Warten', done:'Erledigt', todo:'Zu tun', progress:'In Bearbeitung', review:'Überprüfung', overdue:'⚡ Überfällig', today_f:'Heute', week:'7 Tage', future:'Zukünftig', done_f:'Erledigt', nodoc:'Kein Dokument', admin:'Administrator', nav:'Navigation', inst:'Instanzen', gov:'Behörden', court:'Gerichte', org:'Organisationen', person:'Personen', subtitle:'Dokumentensystem' },
+  uk:{ appName:'Коліщатко', docs:'Документи', tasks:'Задачі', reminders:'Нагадування', add_doc:'Документ', add_task:'Задача', add_rem:'Нагадування', search:'Пошук...', all:'Усі', active:'Активні', urgent:'Термінові', waiting:'Очікування', done:'Завершені', todo:'До роботи', progress:'В процесі', review:'Перевірка', overdue:'⚡ Прострочені', today_f:'Сьогодні', week:'7 днів', future:'Майбутні', done_f:'Виконані', nodoc:'Без документа', admin:'Адміністратор', nav:'Навігація', inst:'Інстанції', gov:'Держоргани', court:'Суди', org:'Організації', person:'Персони', subtitle:'Система документів' },
+  en:{ appName:'Caster', docs:'Documents', tasks:'Tasks', reminders:'Reminders', add_doc:'Document', add_task:'Task', add_rem:'Reminder', search:'Search...', all:'All', active:'Active', urgent:'Urgent', waiting:'Waiting', done:'Done', todo:'To Do', progress:'In Progress', review:'Review', overdue:'⚡ Overdue', today_f:'Today', week:'7 days', future:'Future', done_f:'Done', nodoc:'No document', admin:'Administrator', nav:'Navigation', inst:'Instances', gov:'Government', court:'Courts', org:'Organizations', person:'Persons', subtitle:'Document System' },
+  de:{ appName:'Rolle', docs:'Dokumente', tasks:'Aufgaben', reminders:'Erinnerungen', add_doc:'Dokument', add_task:'Aufgabe', add_rem:'Erinnerung', search:'Suche...', all:'Alle', active:'Aktiv', urgent:'Dringend', waiting:'Warten', done:'Erledigt', todo:'Zu tun', progress:'In Bearbeitung', review:'Überprüfung', overdue:'⚡ Überfällig', today_f:'Heute', week:'7 Tage', future:'Zukünftig', done_f:'Erledigt', nodoc:'Kein Dokument', admin:'Administrator', nav:'Navigation', inst:'Instanzen', gov:'Behörden', court:'Gerichte', org:'Organisationen', person:'Personen', subtitle:'Dokumentensystem' },
 };
 function t(k){ return (L[lang]||L.uk)[k]||k; }
 
@@ -587,6 +587,11 @@ function setLang(l){
 }
 
 function applySidebarI18n(){
+  const name=t('appName');
+  document.querySelector('.logo-text').textContent=name;
+  document.title=name;
+  const ml=document.getElementById('mega-logo-text');
+  if(ml)ml.textContent=name;
   document.getElementById('s-sub').textContent=t('subtitle');
   document.getElementById('sl-nav').textContent=t('nav');
   document.getElementById('sl-docs').textContent=t('docs');
@@ -1363,8 +1368,8 @@ function updateEmailPrev(){
   const m=team[ai];
   const dp=document.getElementById('ep-subj');
   const db=document.getElementById('ep-body');
-  if(dp)dp.textContent=`[Коли що] ${title}${docId?' · '+DOC_NAMES[docId]:''}`;
-  if(db)db.textContent=`Вітаємо, ${m.name.split(' ')[0]}!\n\nНагадуємо: ${title}${docId?'\nДокумент: '+DOC_NAMES[docId]:''}\n\nСистема «Коли що»`;
+  if(dp)dp.textContent=`[${t('appName')}] ${title}${docId?' · '+DOC_NAMES[docId]:''}`;
+  if(db)db.textContent=`Вітаємо, ${m.name.split(' ')[0]}!\n\nНагадуємо: ${title}${docId?'\nДокумент: '+DOC_NAMES[docId]:''}\n\nСистема «${t('appName')}»`;
 }
 
 function saveReminder(){
@@ -1677,7 +1682,7 @@ applySidebarI18n();
   display:flex;align-items:center;justify-content:center;padding:24px;
 ">
   <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:32px 28px;width:100%;max-width:380px;box-shadow:var(--shadow)">
-    <div style="font-family:'Literata',serif;font-size:24px;font-weight:600;margin-bottom:4px">Коли що</div>
+    <div style="font-family:'Literata',serif;font-size:24px;font-weight:600;margin-bottom:4px" id="mega-logo-text">Коліщатко</div>
     <div style="font-size:11px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:28px">Синхронізація через MEGA</div>
 
     <div id="mega-status" style="font-size:12px;color:var(--muted);margin-bottom:16px;min-height:18px"></div>
