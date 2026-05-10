@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Коліщатко</title>
 <link href="https://fonts.googleapis.com/css2?family=Literata:ital,wght@0,300;0,400;0,600;1,300&family=IBM+Plex+Mono:wght@300;400;500&display=swap" rel="stylesheet">
-<script src="https://unpkg.com/megajs@1/dist/main.browser-umd.js"></script>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
@@ -416,12 +415,11 @@ body { background: var(--bg); color: var(--text); font-family: 'IBM Plex Mono', 
   </div>
   <div class="sidebar-section">
     <div class="sidebar-label" id="sl-inst">Інстанції</div>
-    <ul class="sidebar-nav">
-      <li><a><span class="icon">🏛️</span> <span id="sl-gov">Держоргани</span></a></li>
-      <li><a><span class="icon">⚖️</span> <span id="sl-court">Суди</span> <span class="badge danger">1</span></a></li>
-      <li><a><span class="icon">🏢</span> <span id="sl-org">Організації</span></a></li>
-      <li><a><span class="icon">👤</span> <span id="sl-person">Персони</span></a></li>
+    <ul class="sidebar-nav" id="inst-nav">
     </ul>
+    <div style="padding:4px 10px">
+      <button onclick="goPage('instances')" style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);background:none;border:none;cursor:pointer;padding:4px 0;letter-spacing:1px">+ Керувати інстанціями</button>
+    </div>
   </div>
   <div class="sidebar-footer">
     <div class="user-chip">
@@ -458,6 +456,7 @@ body { background: var(--bg); color: var(--text); font-family: 'IBM Plex Mono', 
   <div class="page-content" id="page-reminders"></div>
   <div class="page-content" id="page-reminders-cal" style="display:none;padding:0;overflow-y:auto;"></div>
   <div class="page-content" id="page-team"></div>
+  <div class="page-content" id="page-instances"></div>
 </main>
 </div>
 
@@ -489,6 +488,31 @@ let team = [
   { id:3, name:'Іван Д.',    initials:'ІД', color:'#8c3a5a', email:'i.d@company.ua', role:'observer', active:true },
 ];
 let nextMemberId = 4;
+
+// Instances — user-defined
+// Instances — user-defined
+let instTypes = [
+  { id:1, key:'gov',      label:'Держоргани',  icon:'🏛️' },
+  { id:2, key:'court',    label:'Суди',        icon:'⚖️' },
+  { id:3, key:'org',      label:'Організації', icon:'🏢' },
+  { id:4, key:'person',   label:'Персони',     icon:'👤' },
+  { id:5, key:'internal', label:'Внутрішні',   icon:'📋' },
+];
+let nextInstTypeId = 6;
+
+let instances = [
+  { id:1, name:'Юридичний відділ',       icon:'⚖️', type:'internal' },
+  { id:2, name:'Господарський суд м. Київ', icon:'🏛️', type:'court' },
+  { id:3, name:'ДПС',                    icon:'🏢', type:'gov' },
+  { id:4, name:'ДАБІ Київ',              icon:'🏢', type:'gov' },
+  { id:5, name:'Мінприроди',             icon:'🏢', type:'gov' },
+  { id:6, name:'Бухгалтерія',            icon:'📋', type:'internal' },
+  { id:7, name:'Виконавча служба',       icon:'⚖️', type:'court' },
+  { id:8, name:'УКРПАТЕНТ',              icon:'🏢', type:'gov' },
+  { id:9, name:'Нотаріус Коваленко О.', icon:'👤', type:'person' },
+  { id:10, name:'ТОВ "Прайм"',          icon:'🏢', type:'org' },
+];
+let nextInstId = 11;
 
 // Current logged-in user (index 0 = admin by default)
 let currentUser = 0;
@@ -694,6 +718,10 @@ function renderCurrent(){
     const el=document.getElementById('page-team');
     el.style.display='block'; el.classList.add('active');
     renderTeam();
+  } else if(currentPage==='instances'){
+    const el=document.getElementById('page-instances');
+    el.style.display='block'; el.classList.add('active');
+    renderInstances();
   }
 }
 
@@ -1026,18 +1054,24 @@ function openDocForm(id){
   document.getElementById('overlay').style.display='flex';
 
   if(doc){
-    // Detail view
     const cur=doc.stages[doc.currentStage];
     const statusLabel={active:t('active'),urgent:t('urgent'),waiting:t('waiting'),done:t('done')};
-    const tl=doc.stages.map(s=>{
+    const tl=doc.stages.map((s,si)=>{
       const dc=s.status==='done'?'done':s.status==='current'?'current':'';
+      const isDone=s.status==='done';
+      const editBtns=isDone?`
+        <div style="display:flex;gap:6px;margin-top:6px">
+          <button class="btn btn-ghost btn-sm" onclick="editStageResult('${id}',${si})" style="font-size:10px">✏️ Редагувати</button>
+          ${si>0?`<button class="btn btn-ghost btn-sm" onclick="revertStage('${id}',${si})" style="font-size:10px;color:var(--warn)">↩ Повернути</button>`:''}
+        </div>`:'';
       return `<div class="tl-item">
         <div class="tl-dot ${dc}"></div>
         <div class="tl-body">
           <div class="tl-name ${dc==='current'?'current':''}">${s.name}</div>
           <div class="tl-inst">📍 ${s.inst}</div>
-          <div class="tl-result ${s.result?'':'pending'}">${s.result||'Результат не зафіксовано'}</div>
+          <div class="tl-result ${s.result?'':'pending'}" id="stage-result-${si}">${s.result||'Результат не зафіксовано'}</div>
           ${s.date?`<div class="tl-date">📅 ${fmtDate(s.date)}</div>`:''}
+          ${editBtns}
         </div>
       </div>`;
     }).join('');
@@ -1047,7 +1081,8 @@ function openDocForm(id){
         <div style="display:flex;gap:8px;align-items:center;margin-bottom:14px">
           <span class="chip chip-${doc.status}">${statusLabel[doc.status]}</span>
           <span style="font-size:11px;color:var(--muted)">${doc.ref}</span>
-          ${doc.deadline?`<span style="font-size:11px;color:var(--danger);margin-left:auto">⏱ ${fmtDate(doc.deadline)}</span>`:''}
+          ${doc.deadline?`<span style="font-size:11px;color:var(--danger)">⏱ ${fmtDate(doc.deadline)}</span>`:''}
+          <button class="btn btn-ghost btn-sm" onclick="deleteDoc('${id}')" style="margin-left:auto;color:var(--danger)">🗑 Видалити</button>
         </div>
         <div class="modal-sec-title">Шлях документа</div>
         <div class="timeline">${tl}</div>
@@ -1057,6 +1092,11 @@ function openDocForm(id){
         <div class="form-group">
           <label class="form-label">Результат / дія</label>
           <textarea class="form-ta" id="stage-res" placeholder="Опишіть що відбулось..."></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Наступна інстанція (необов'язково)</label>
+          <datalist id="inst-list-stage">${instances.map(i=>`<option value="${i.name}">`).join('')}</datalist>
+          <input class="form-input" list="inst-list-stage" id="stage-next-inst" placeholder="Вибери або введи...">
         </div>
         <button class="btn btn-primary" onclick="saveStageResult('${id}')">Зберегти та перейти →</button>
       </div>
@@ -1078,9 +1118,66 @@ function openDocForm(id){
         <div class="form-group"><label class="form-label">Тип</label><select class="form-select" id="fd-type"><option value="legal">⚖️ Юридичний</option><option value="court">🏛️ Судовий</option><option value="tax">💰 Податковий</option><option value="admin">📋 Адміністративний</option></select></div>
         <div class="form-group"><label class="form-label">Дедлайн</label><input type="date" class="form-input" id="fd-deadline"></div>
       </div>
-      <div class="form-group"><label class="form-label">Перша інстанція</label><input class="form-input" id="fd-inst" placeholder="Суд / Органи..."></div>
+      <div class="form-group"><label class="form-label">Перша інстанція</label>
+      <datalist id="inst-list-doc">${instances.map(i=>`<option value="${i.name}">`).join('')}</datalist>
+      <input class="form-input" list="inst-list-doc" id="fd-inst" placeholder="Вибери або введи назву...">
+    </div>
       <div class="form-group"><label class="form-label">Відповідальний</label><select class="form-select" id="fd-assignee">${team.map((m,i)=>`<option value="${i}">${m.name}</option>`).join('')}</select></div>
+      <div class="form-group">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+          <label class="form-label" style="margin:0">🔔 Нагадування</label>
+          <button type="button" onclick="addDocRemRow()" style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--accent);background:none;border:none;cursor:pointer">+ Додати</button>
+        </div>
+        <div id="fd-rem-rows">
+          <div class="fd-rem-row" style="display:flex;gap:8px;align-items:center;margin-bottom:7px">
+            <select class="form-select" style="flex:1;font-size:12px" onchange="fdRemTypeChange(this)">
+              <option value="days">За N днів до дедлайну</option>
+              <option value="date">Конкретна дата</option>
+            </select>
+            <input type="number" class="form-input fd-rem-days" min="1" max="365" value="7" style="width:70px;font-size:12px" placeholder="днів">
+            <input type="date" class="form-input fd-rem-date" style="display:none;font-size:12px">
+            <button type="button" onclick="this.closest('.fd-rem-row').remove()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px;padding:0 4px">✕</button>
+          </div>
+          <div class="fd-rem-row" style="display:flex;gap:8px;align-items:center;margin-bottom:7px">
+            <select class="form-select" style="flex:1;font-size:12px" onchange="fdRemTypeChange(this)">
+              <option value="days">За N днів до дедлайну</option>
+              <option value="date">Конкретна дата</option>
+            </select>
+            <input type="number" class="form-input fd-rem-days" min="1" max="365" value="3" style="width:70px;font-size:12px" placeholder="днів">
+            <input type="date" class="form-input fd-rem-date" style="display:none;font-size:12px">
+            <button type="button" onclick="this.closest('.fd-rem-row').remove()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px;padding:0 4px">✕</button>
+          </div>
+        </div>
+      </div>
       <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:8px" onclick="saveDoc()">Створити документ</button>`;
+  }
+}
+
+function addDocRemRow(){
+  const row=document.createElement('div');
+  row.className='fd-rem-row';
+  row.style.cssText='display:flex;gap:8px;align-items:center;margin-bottom:7px';
+  row.innerHTML=`
+    <select class="form-select" style="flex:1;font-size:12px" onchange="fdRemTypeChange(this)">
+      <option value="days">За N днів до дедлайну</option>
+      <option value="date">Конкретна дата</option>
+    </select>
+    <input type="number" class="form-input fd-rem-days" min="1" max="365" value="14" style="width:70px;font-size:12px" placeholder="днів">
+    <input type="date" class="form-input fd-rem-date" style="display:none;font-size:12px">
+    <button type="button" onclick="this.closest('.fd-rem-row').remove()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px;padding:0 4px">✕</button>`;
+  document.getElementById('fd-rem-rows').appendChild(row);
+}
+
+function fdRemTypeChange(sel){
+  const row=sel.closest('.fd-rem-row');
+  const daysInput=row.querySelector('.fd-rem-days');
+  const dateInput=row.querySelector('.fd-rem-date');
+  if(sel.value==='date'){
+    daysInput.style.display='none';
+    dateInput.style.display='block';
+  } else {
+    daysInput.style.display='block';
+    dateInput.style.display='none';
   }
 }
 
@@ -1194,6 +1291,47 @@ function removeAttach(docId, idx){
   showToast('🗑 Файл видалено');
 }
 
+function deleteDoc(id){
+  const doc=docs.find(d=>d.id===id);
+  if(!doc)return;
+  if(!confirm(`Видалити документ "${doc.title}"? Це також видалить пов'язані нагадування.`))return;
+  docs=docs.filter(d=>d.id!==id);
+  reminders=reminders.filter(r=>r.docId!==id);
+  closeModal(); renderDocs(); megaSaveData();
+  showToast('🗑 Документ видалено');
+}
+
+function editStageResult(docId, stageIdx){
+  const doc=docs.find(d=>d.id===docId);
+  if(!doc)return;
+  const stage=doc.stages[stageIdx];
+  const newResult=prompt('Редагувати результат етапу:', stage.result||'');
+  if(newResult===null)return; // cancelled
+  stage.result=newResult.trim();
+  renderDocs(); megaSaveData();
+  openDocDetail(docId);
+  showToast('✏️ Результат оновлено');
+}
+
+function revertStage(docId, stageIdx){
+  const doc=docs.find(d=>d.id===docId);
+  if(!doc)return;
+  if(!confirm(`Повернути етап "${doc.stages[stageIdx].name}" назад? Поточний прогрес після нього буде скасовано.`))return;
+  // Revert this stage and all after it back to pending
+  for(let i=stageIdx;i<doc.stages.length;i++){
+    doc.stages[i].status= i===stageIdx ? 'current' : 'pending';
+    if(i>stageIdx){ doc.stages[i].result=null; doc.stages[i].date=null; }
+  }
+  doc.currentStage=stageIdx;
+  doc.status='active';
+  renderDocs(); megaSaveData();
+  openDocDetail(docId);
+  // Clear the result textarea
+  const ta=document.getElementById('stage-res');
+  if(ta) ta.value='';
+  showToast('↩ Етап повернуто');
+}
+
 function saveStageResult(docId){
   const doc=docs.find(d=>d.id===docId);
   if(!doc)return;
@@ -1202,8 +1340,9 @@ function saveStageResult(docId){
   doc.stages[doc.currentStage].result=res;
   doc.stages[doc.currentStage].status='done';
   doc.stages[doc.currentStage].date=new Date().toISOString().split('T')[0];
+  const nextInst=document.getElementById('stage-next-inst')?.value.trim();
   const nextI=doc.stages.findIndex((s,i)=>i>doc.currentStage&&s.status==='pending');
-  if(nextI!==-1){doc.stages[nextI].status='current';doc.currentStage=nextI;doc.status='active';}
+  if(nextI!==-1){doc.stages[nextI].status='current'; if(nextInst)doc.stages[nextI].inst=nextInst; doc.currentStage=nextI;doc.status='active';}
   else doc.status='done';
   closeModal(); renderDocs(); showToast('✅ Результат збережено');
 }
@@ -1213,9 +1352,39 @@ function saveDoc(){
   if(!title){alert('Введіть назву');return;}
   const id=String(nextDocId++);
   const inst=document.getElementById('fd-inst').value.trim()||'Не вказано';
-  docs.unshift({id,title,ref:`ДОК-${new Date().getFullYear()}-${String(docs.length+1).padStart(4,'0')}`,type:document.getElementById('fd-type').value,status:'active',deadline:document.getElementById('fd-deadline').value||null,assignees:[parseInt(document.getElementById('fd-assignee').value)],attachments:0,files:[],currentStage:0,
-    stages:[{name:'Підготовка',inst,date:new Date().toISOString().split('T')[0],result:null,status:'current'},{name:'Подання',inst,date:null,result:null,status:'pending'},{name:'Розгляд',inst,date:null,result:null,status:'pending'},{name:'Завершення',inst,date:null,result:null,status:'pending'}]
+  const deadline=document.getElementById('fd-deadline').value||null;
+  const assigneeIdx=parseInt(document.getElementById('fd-assignee').value);
+
+  docs.unshift({id,title,ref:`ДОК-${new Date().getFullYear()}-${String(docs.length+1).padStart(4,'0')}`,type:document.getElementById('fd-type').value,status:'active',deadline,assignees:[assigneeIdx],attachments:0,files:[],currentStage:0,
+    stages:[{name:'Підготовка',inst,date:new Date().toISOString().split('T')[0],result:null,status:'current'},{name:'Подання',inst:'',date:null,result:null,status:'pending'},{name:'Розгляд',inst:'',date:null,result:null,status:'pending'},{name:'Завершення',inst:'',date:null,result:null,status:'pending'}]
   });
+
+  // Create reminders from rows
+  let remError = false;
+  document.querySelectorAll('.fd-rem-row').forEach(row=>{
+    const type=row.querySelector('select').value;
+    let remDate=null;
+    if(type==='date'){
+      remDate=row.querySelector('.fd-rem-date').value;
+      if(remDate && deadline && remDate>=deadline){
+        remError=true; return;
+      }
+    } else if(deadline){
+      const days=parseInt(row.querySelector('.fd-rem-days').value)||0;
+      if(days>0){
+        const dt=new Date(deadline);
+        dt.setDate(dt.getDate()-days);
+        remDate=dt.toISOString().split('T')[0];
+      }
+    }
+    if(remDate){
+      const days=type==='days'?row.querySelector('.fd-rem-days').value:'';
+      const label=type==='days'?`${title} — за ${days} днів`:`${title} — ${fmtDate(remDate)}`;
+      reminders.unshift({id:nextRemId++,title:label,docId:id,assignee:assigneeIdx,date:remDate,notify:['inapp'],repeat:'none',done:false});
+    }
+  });
+  if(remError){ alert('Дата нагадування має бути раніше дедлайну!'); return; }
+
   closeModal(); renderDocs(); showToast('📄 Документ створено');
 }
 
@@ -1671,241 +1840,503 @@ function reactivateMember(id){
 }
 
 // ============================================================
+// INSTANCES
+// ============================================================
+function getInstType(key){ return instTypes.find(t=>t.key===key)||{label:key,icon:'📌'}; }
+
+function renderInstances(){
+  document.getElementById('filterbar').innerHTML='';
+  document.getElementById('view-toggle').style.display='none';
+  const el = document.getElementById('page-instances');
+  const admin = isAdmin();
+
+  // Group instances by type
+  const typeGroups = {};
+  instTypes.forEach(t=>{ typeGroups[t.key]=[]; });
+  instances.forEach(inst=>{
+    if(!typeGroups[inst.type]) typeGroups[inst.type]=[];
+    typeGroups[inst.type].push(inst);
+  });
+
+  let html = `<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px">
+    <div>
+      <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:4px">Всього інстанцій</div>
+      <div style="font-family:'Literata',serif;font-size:28px;font-weight:600">${instances.length}</div>
+    </div>
+    <div style="display:flex;gap:8px">
+      ${admin?`<button class="btn btn-ghost" onclick="openManageInstTypes()">⚙️ Групи</button>`:''}
+      <button class="btn btn-primary" onclick="openAddInst()">+ Інстанція</button>
+    </div>
+  </div>`;
+
+  for(const t of instTypes){
+    const items = typeGroups[t.key]||[];
+    if(!items.length && !admin) continue;
+    html += `<div class="sec-head"><div class="sec-title">${t.icon} ${t.label}</div><div class="sec-count">${items.length}</div><div class="sec-line"></div></div>`;
+    if(!items.length){
+      html+=`<div style="font-size:11px;color:var(--muted);padding:8px 0 14px">Немає інстанцій</div>`;
+    } else {
+      html += items.map(inst=>{
+        const usedIn=docs.filter(d=>d.stages.some(s=>s.inst===inst.name)).length;
+        return `<div class="card" style="display:flex;align-items:center;gap:12px;cursor:default">
+          <div style="font-size:22px;width:36px;text-align:center">${inst.icon}</div>
+          <div style="flex:1">
+            <div style="font-size:13px;font-weight:500">${inst.name}</div>
+            <div style="font-size:10px;color:var(--muted);margin-top:2px">📄 Використовується в ${usedIn} документах</div>
+          </div>
+          <div style="display:flex;gap:6px">
+            <button class="btn btn-ghost btn-sm" onclick="openEditInst(${inst.id})">✏️</button>
+            ${admin?`<button class="btn btn-ghost btn-sm" style="color:var(--danger)" onclick="deleteInst(${inst.id})">✕</button>`:''}
+          </div>
+        </div>`;
+      }).join('');
+    }
+  }
+
+  // Ungrouped
+  const ungrouped=instances.filter(inst=>!instTypes.find(t=>t.key===inst.type));
+  if(ungrouped.length){
+    html+=`<div class="sec-head"><div class="sec-title">📌 Інші</div><div class="sec-count">${ungrouped.length}</div><div class="sec-line"></div></div>`;
+    html+=ungrouped.map(inst=>`<div class="card" style="display:flex;align-items:center;gap:12px;cursor:default">
+      <div style="font-size:22px">${inst.icon}</div>
+      <div style="flex:1"><div style="font-size:13px;font-weight:500">${inst.name}</div></div>
+      <div style="display:flex;gap:6px">
+        <button class="btn btn-ghost btn-sm" onclick="openEditInst(${inst.id})">✏️</button>
+        ${admin?`<button class="btn btn-ghost btn-sm" style="color:var(--danger)" onclick="deleteInst(${inst.id})">✕</button>`:''}
+      </div>
+    </div>`).join('');
+  }
+
+  el.innerHTML = html;
+}
+
+function openManageInstTypes(){
+  if(!isAdmin()){ showToast('⛔ Тільки адміністратор'); return; }
+  document.getElementById('modal-title').textContent='Групи інстанцій';
+  const icons=['🏛️','⚖️','🏢','👤','📋','🏦','🏥','🎓','🚔','📮','🔬','🏗️','📜','🌐','🚑'];
+  document.getElementById('modal-body').innerHTML=`
+    <div style="margin-bottom:16px">
+      ${instTypes.map(t=>`
+        <div style="display:flex;align-items:center;gap:10px;padding:9px 12px;border:1px solid var(--border);border-radius:7px;margin-bottom:7px;background:var(--surface2)">
+          <span style="font-size:18px">${t.icon}</span>
+          <span style="flex:1;font-size:13px;font-weight:500">${t.label}</span>
+          <button class="btn btn-ghost btn-sm" onclick="editInstType(${t.id})">✏️</button>
+          <button class="btn btn-ghost btn-sm" style="color:var(--danger)" onclick="deleteInstType(${t.id})">✕</button>
+        </div>`).join('')}
+    </div>
+    <div class="sec-head"><div class="sec-title">Нова група</div><div class="sec-line"></div></div>
+    <div class="form-group" style="margin-top:10px">
+      <label class="form-label">Назва групи</label>
+      <input class="form-input" id="it-name" placeholder="Назва...">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Іконка</label>
+      <div style="display:flex;gap:6px;flex-wrap:wrap" id="it-icon-opts">
+        ${icons.map((ic,i)=>`<button onclick="selectItIcon('${ic}',this)" style="font-size:18px;padding:5px 7px;border:2px solid ${i===0?'var(--accent)':'var(--border)'};border-radius:6px;background:${i===0?'var(--accent-light)':'transparent'};cursor:pointer">${ic}</button>`).join('')}
+      </div>
+    </div>
+    <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="saveInstType()">+ Додати групу</button>`;
+  window._selItIcon = icons[0];
+  document.getElementById('overlay').style.display='flex';
+}
+
+function selectItIcon(ic, el){
+  window._selItIcon=ic;
+  document.querySelectorAll('#it-icon-opts button').forEach(b=>{ b.style.borderColor='var(--border)'; b.style.background='transparent'; });
+  el.style.borderColor='var(--accent)'; el.style.background='var(--accent-light)';
+}
+
+function saveInstType(){
+  const name=document.getElementById('it-name').value.trim();
+  if(!name){alert('Введіть назву');return;}
+  const icon=window._selItIcon||'📌';
+  const key='type_'+Date.now();
+  instTypes.push({id:nextInstTypeId++, key, label:name, icon});
+  megaSaveData();
+  openManageInstTypes();
+  showToast('✅ Групу додано');
+}
+
+function editInstType(id){
+  const t=instTypes.find(x=>x.id===id);
+  if(!t)return;
+  const newName=prompt('Нова назва групи:', t.label);
+  if(!newName||!newName.trim())return;
+  t.label=newName.trim();
+  megaSaveData();
+  openManageInstTypes();
+  renderInstances();
+  showToast('💾 Збережено');
+}
+
+function deleteInstType(id){
+  const t=instTypes.find(x=>x.id===id);
+  if(!t)return;
+  const used=instances.some(i=>i.type===t.key);
+  if(used&&!confirm(`Група "${t.label}" використовується. Видалити? Інстанції залишаться без групи.`))return;
+  instTypes=instTypes.filter(x=>x.id!==id);
+  megaSaveData();
+  openManageInstTypes();
+  renderInstances();
+  showToast('🗑 Групу видалено');
+}
+
+function openAddInst(){
+  document.getElementById('modal-title').textContent='Нова інстанція';
+  document.getElementById('modal-body').innerHTML=instForm();
+  document.getElementById('overlay').style.display='flex';
+}
+
+function openEditInst(id){
+  const inst=instances.find(x=>x.id===id);
+  if(!inst)return;
+  document.getElementById('modal-title').textContent='Редагувати інстанцію';
+  document.getElementById('modal-body').innerHTML=instForm(inst);
+  document.getElementById('overlay').style.display='flex';
+}
+
+function instForm(inst=null){
+  const icons=['🏛️','⚖️','🏢','👤','📋','🏦','🏥','🎓','🚔','📮'];
+  return `
+    <div class="form-group"><label class="form-label">Назва</label>
+      <input class="form-input" id="fi-name" value="${inst?inst.name:''}" placeholder="Назва інстанції"></div>
+    <div class="form-group"><label class="form-label">Група</label>
+      <select class="form-select" id="fi-type">
+        ${instTypes.map(t=>`<option value="${t.key}" ${inst&&inst.type===t.key?'selected':''}>${t.icon} ${t.label}</option>`).join('')}
+      </select></div>
+    <div class="form-group"><label class="form-label">Іконка</label>
+      <div style="display:flex;gap:8px;flex-wrap:wrap" id="fi-icon-opts">
+        ${icons.map(ic=>`<button onclick="selectInstIcon('${ic}',this)" style="font-size:20px;padding:6px 8px;border:2px solid ${inst&&inst.icon===ic?'var(--accent)':'var(--border)'};border-radius:7px;background:${inst&&inst.icon===ic?'var(--accent-light)':'transparent'};cursor:pointer" data-icon="${ic}">${ic}</button>`).join('')}
+      </div></div>
+    <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:8px" onclick="saveInst(${inst?inst.id:'null'})">
+      ${inst?'Зберегти':'Додати інстанцію'}
+    </button>`;
+}
+
+function selectInstIcon(ic, el){
+  window._selInstIcon=ic;
+  document.querySelectorAll('#fi-icon-opts button').forEach(b=>{ b.style.borderColor='var(--border)'; b.style.background='transparent'; });
+  el.style.borderColor='var(--accent)'; el.style.background='var(--accent-light)';
+}
+
+function saveInst(editId){
+  const name=document.getElementById('fi-name').value.trim();
+  if(!name){alert('Введіть назву');return;}
+  const type=document.getElementById('fi-type').value;
+  const icon=window._selInstIcon||(instTypes.find(t=>t.key===type)?.icon||'📌');
+  if(editId&&editId!=='null'){
+    const inst=instances.find(x=>x.id===editId);
+    if(inst){inst.name=name;inst.type=type;inst.icon=icon;}
+    showToast('💾 Збережено');
+  } else {
+    instances.push({id:nextInstId++,name,type,icon});
+    showToast('✅ Інстанцію додано');
+  }
+  closeModal(); renderInstances(); renderInstNav(); megaSaveData();
+}
+
+function deleteInst(id){
+  const inst=instances.find(x=>x.id===id);
+  if(!inst)return;
+  const used=docs.some(d=>d.stages.some(s=>s.inst===inst.name));
+  if(used&&!confirm(`Інстанція "${inst.name}" використовується в документах. Видалити?`))return;
+  instances=instances.filter(x=>x.id!==id);
+  renderInstances(); renderInstNav(); megaSaveData();
+  showToast('🗑 Видалено');
+}
+
+function instSelectHTML(selectedName=''){
+  return `<datalist id="inst-list">
+    ${instances.map(i=>`<option value="${i.name}">${i.icon} ${i.name}</option>`).join('')}
+  </datalist>
+  <input class="form-input" list="inst-list" id="fd-inst" value="${selectedName}" placeholder="Вибери або введи назву...">`;
+}
+
+// ============================================================
 // INIT
 // ============================================================
 applySidebarI18n();
+renderInstNav();
 </script>
 
-<!-- MEGA LOGIN SCREEN -->
-<div id="mega-screen" style="
-  position:fixed;inset:0;background:var(--bg);z-index:200;
-  display:flex;align-items:center;justify-content:center;padding:24px;
-">
-  <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:32px 28px;width:100%;max-width:380px;box-shadow:var(--shadow)">
+<!-- SYNC SCREEN -->
+<div id="mega-screen" style="position:fixed;inset:0;background:var(--bg);z-index:200;display:flex;align-items:center;justify-content:center;padding:24px;">
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:32px 28px;width:100%;max-width:400px;box-shadow:var(--shadow)">
     <div style="font-family:'Literata',serif;font-size:24px;font-weight:600;margin-bottom:4px" id="mega-logo-text">Коліщатко</div>
-    <div style="font-size:11px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:28px">Синхронізація через MEGA</div>
-
-    <div id="mega-status" style="font-size:12px;color:var(--muted);margin-bottom:16px;min-height:18px"></div>
-
-    <div class="form-group">
-      <label class="form-label">Email (MEGA акаунт)</label>
-      <input type="email" class="form-input" id="mega-email" placeholder="your@email.com" style="font-size:16px">
+    <div style="font-size:11px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:24px">Синхронізація через MEGA</div>
+    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:20px;font-size:12px;line-height:1.7;color:var(--text)">
+      <div style="font-weight:500;margin-bottom:6px">📁 Як це працює:</div>
+      1. Відкрий MEGA на комп'ютері<br>
+      2. Натисни кнопку нижче і вибери папку <code style="background:var(--border);padding:1px 5px;border-radius:3px">MEGA/Коліщатко</code><br>
+      3. Програма сама читає і зберігає туди дані
     </div>
-    <div class="form-group">
-      <label class="form-label">Пароль</label>
-      <input type="password" class="form-input" id="mega-pass" placeholder="••••••••" style="font-size:16px">
+    <div id="sync-status-msg" style="font-size:12px;color:var(--muted);margin-bottom:14px;min-height:18px"></div>
+    <button class="btn btn-primary" onclick="fsPickFolder()" style="width:100%;justify-content:center;padding:11px;font-size:13px">
+      📁 Вибрати папку MEGA
+    </button>
+    <div style="margin-top:10px;display:flex;gap:8px">
+      <button onclick="fsSkip()" style="flex:1;background:none;border:1px solid var(--border);border-radius:6px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);cursor:pointer;padding:8px">
+        Без синхронізації
+      </button>
+      <button onclick="fsImportJSON()" style="flex:1;background:none;border:1px solid var(--border);border-radius:6px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);cursor:pointer;padding:8px">
+        📥 Імпорт JSON
+      </button>
     </div>
-
-    <button class="btn btn-primary" onclick="megaLogin()" style="width:100%;justify-content:center;margin-top:8px;padding:10px" id="mega-login-btn">
-      Увійти та синхронізувати
-    </button>
-
-    <button onclick="document.getElementById('mega-screen').style.display='none'; goPage('docs');" style="width:100%;margin-top:10px;background:none;border:none;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);cursor:pointer;padding:6px">
-      Продовжити без синхронізації
-    </button>
-
-    <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border);font-size:10px;color:var(--muted);line-height:1.6">
-      🔒 Дані зберігаються у вашому MEGA акаунті.<br>
-      Програма не має доступу до інших файлів.<br>
-      Немає акаунту? <a href="https://mega.nz/register" target="_blank" style="color:var(--accent)">Зареєструватись безкоштовно →</a>
+    <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border);font-size:10px;color:var(--muted);line-height:1.6">
+      ⚠️ Потрібен Chrome або Edge браузер.<br>
+      Дані зберігаються тільки у вибраній папці.
     </div>
   </div>
 </div>
 
-<!-- MEGA SYNC INDICATOR -->
-<div id="mega-sync-bar" style="
-  position:fixed;top:0;left:0;right:0;
-  background:var(--accent);color:white;
-  font-family:'IBM Plex Mono',monospace;font-size:11px;
-  padding:6px 16px;text-align:center;z-index:150;
-  display:none;
-">
-  ☁️ Синхронізація...
+<!-- SYNC BAR -->
+<div id="mega-sync-bar" style="position:fixed;top:0;left:0;right:0;background:var(--accent);color:white;font-family:'IBM Plex Mono',monospace;font-size:11px;padding:6px 16px;text-align:center;z-index:150;display:none;">
+  ☁️ Збереження...
 </div>
 
 <script>
 // ============================================================
-// MEGA INTEGRATION
+// FILE SYSTEM ACCESS API — MEGA SYNC
 // ============================================================
-let megaStorage = null;
-let megaFile = null;
-let syncTimeout = null;
-const MEGA_FILE_NAME = 'kolyscho-data.json';
-const MEGA_FOLDER_NAME = 'Коли що';
+let fsFolder      = null;
+let fsFilesFolder = null;
+let syncTimeout   = null;
+const DATA_FILE   = 'data.json';
+const FILES_DIR   = 'files';
 
 function megaInit(){
-  const savedEmail = localStorage.getItem('mega_email');
-  if(savedEmail){
-    const el = document.getElementById('mega-email');
-    if(el) el.value = savedEmail;
-  }
   const screen = document.getElementById('mega-screen');
   if(screen) screen.style.display = 'flex';
+  lsLoad();
 }
-
 document.addEventListener('DOMContentLoaded', megaInit);
 
-async function megaLogin(){
-  const email = document.getElementById('mega-email').value.trim();
-  const pass  = document.getElementById('mega-pass').value;
-  const btn   = document.getElementById('mega-login-btn');
-  const status= document.getElementById('mega-status');
-
-  if(!email || !pass){ status.textContent = '⚠️ Введіть email і пароль'; return; }
-
-  btn.textContent = 'Підключення...';
-  btn.disabled = true;
-  status.textContent = '🔄 Авторизація в MEGA...';
-
+async function fsPickFolder(){
+  const msg = document.getElementById('sync-status-msg');
+  if(!('showDirectoryPicker' in window)){
+    msg.style.color='var(--danger)';
+    msg.textContent='❌ Потрібен Chrome або Edge браузер.';
+    return;
+  }
   try {
-    const { Storage } = window.megajs || {};
-    if(!Storage){ throw new Error('MEGA SDK не завантажився'); }
-
-    megaStorage = new Storage({ email, password: pass, autologin: false });
-
-    await new Promise((res, rej) => {
-      megaStorage.login((err) => { if(err) rej(err); else res(); });
-    });
-
-    localStorage.setItem('mega_email', email);
-    status.textContent = '✅ Авторизовано! Завантаження даних...';
-
-    await megaLoadData();
-
-    document.getElementById('mega-screen').style.display = 'none';
+    msg.style.color='var(--muted)';
+    msg.textContent='Вибираємо папку...';
+    fsFolder = await window.showDirectoryPicker({ mode:'readwrite' });
+    msg.textContent='📂 Зчитуємо дані...';
+    fsFilesFolder = await fsFolder.getDirectoryHandle(FILES_DIR, { create:true });
+    await fsReadData();
+    // Hide screen first, then render
+    const screen = document.getElementById('mega-screen');
+    if(screen) screen.style.display='none';
+    // Small delay to ensure DOM is ready
+    await new Promise(r=>setTimeout(r,50));
     goPage('docs');
-    showToast('☁️ Синхронізовано з MEGA');
-    addMegaSyncButton();
-
-  } catch(err) {
-    console.error(err);
-    status.textContent = '❌ Помилка: ' + (err.message || 'Невірний email або пароль');
-    btn.textContent = 'Увійти та синхронізувати';
-    btn.disabled = false;
-  }
-}
-
-function skipMega(){
-  document.getElementById('mega-screen').style.display = 'none';
-  if(typeof goPage === 'function') goPage('docs');
-  else window.addEventListener('load', () => goPage('docs'));
-}
-
-async function megaLoadData(){
-  try {
-    // Find or create folder
-    let folder = Object.values(megaStorage.files).find(f => f.name === MEGA_FOLDER_NAME && f.directory);
-    if(!folder){
-      folder = await new Promise((res, rej) => {
-        megaStorage.root.mkdir(MEGA_FOLDER_NAME, (err, f) => { if(err) rej(err); else res(f); });
-      });
-    }
-
-    // Find data file
-    const file = Object.values(megaStorage.files).find(f => f.name === MEGA_FILE_NAME && f.parent === folder.nodeId);
-
-    if(file){
-      megaFile = file;
-      const buf = await new Promise((res, rej) => {
-        file.download((err, data) => { if(err) rej(err); else res(data); });
-      });
-      const text = new TextDecoder().decode(buf);
-      const data = JSON.parse(text);
-      if(data.docs)      docs      = data.docs;
-      if(data.tasks)     tasks     = data.tasks;
-      if(data.reminders) reminders = data.reminders;
-      if(data.nextTaskId) nextTaskId = data.nextTaskId;
-      if(data.nextRemId)  nextRemId  = data.nextRemId;
-      if(data.nextDocId)  nextDocId  = data.nextDocId;
-    }
+    addSyncButtons();
+    showToast('📁 Папка підключена: ' + fsFolder.name);
   } catch(err){
-    console.warn('MEGA load error:', err);
+    if(err.name==='AbortError'){ msg.textContent=''; return; }
+    console.error(err);
+    msg.style.color='var(--danger)';
+    msg.textContent='❌ ' + err.message;
   }
 }
 
-async function megaSaveData(){
-  if(!megaStorage) return;
-  if(syncTimeout) clearTimeout(syncTimeout);
-  syncTimeout = setTimeout(async () => {
-    const bar = document.getElementById('mega-sync-bar');
-    if(bar) bar.style.display = 'block';
-    try {
-      const data = JSON.stringify({ docs, tasks, reminders, nextTaskId, nextRemId, nextDocId });
-      const buf  = new TextEncoder().encode(data);
-
-      let folder = Object.values(megaStorage.files).find(f => f.name === MEGA_FOLDER_NAME && f.directory);
-      if(!folder){
-        folder = await new Promise((res, rej) => {
-          megaStorage.root.mkdir(MEGA_FOLDER_NAME, (err, f) => { if(err) rej(err); else res(f); });
-        });
-      }
-
-      // Delete old file if exists
-      if(megaFile){
-        await new Promise((res) => { megaFile.delete(true, () => res()); });
-        megaFile = null;
-      }
-
-      // Upload new file
-      const upload = folder.upload({ name: MEGA_FILE_NAME, size: buf.length }, buf);
-      megaFile = await new Promise((res, rej) => {
-        upload.on('complete', (f) => res(f));
-        upload.on('error', rej);
-      });
-
-      if(bar) bar.style.display = 'none';
-    } catch(err){
-      console.warn('MEGA save error:', err);
-      if(bar){ bar.style.background='var(--danger)'; bar.textContent='❌ Помилка синхронізації'; setTimeout(()=>{ bar.style.display='none'; bar.style.background='var(--accent)'; bar.textContent='☁️ Синхронізація...'; },3000); }
-    }
-  }, 1500);
+async function fsReadData(){
+  if(!fsFolder) return;
+  try {
+    const fh   = await fsFolder.getFileHandle(DATA_FILE);
+    const file = await fh.getFile();
+    const text = await file.text();
+    const data = JSON.parse(text);
+    if(data.docs)         docs         = data.docs;
+    if(data.tasks)        tasks        = data.tasks;
+    if(data.reminders)    reminders    = data.reminders;
+    if(data.team)         team         = data.team;
+    if(data.nextTaskId)   nextTaskId   = data.nextTaskId;
+    if(data.nextRemId)    nextRemId    = data.nextRemId;
+    if(data.nextDocId)    nextDocId    = data.nextDocId;
+    if(data.nextMemberId) nextMemberId = data.nextMemberId;
+    if(data.instances)   instances   = data.instances;
+    if(data.nextInstId)     nextInstId     = data.nextInstId;
+    if(data.instTypes)      instTypes      = data.instTypes;
+    if(data.nextInstTypeId) nextInstTypeId = data.nextInstTypeId;
+    lsSave();
+  } catch(err){
+    if(err.name==='NotFoundError'){ await fsWriteData(); }
+    else { console.warn('Read error, fallback localStorage:', err); lsLoad(); }
+  }
 }
 
-// Auto-save hook — patch save functions
+async function fsWriteData(){
+  if(!fsFolder){ lsSave(); return; }
+  try {
+    const bar = document.getElementById('mega-sync-bar');
+    if(bar) bar.style.display='block';
+    const data = JSON.stringify({ docs, tasks, reminders, team, instances, instTypes, nextTaskId, nextRemId, nextDocId, nextMemberId, nextInstId, nextInstTypeId }, null, 2);
+    const fh   = await fsFolder.getFileHandle(DATA_FILE, { create:true });
+    const wr   = await fh.createWritable();
+    await wr.write(data);
+    await wr.close();
+    lsSave();
+    if(bar) bar.style.display='none';
+  } catch(err){
+    console.warn('Write error:', err);
+    const bar = document.getElementById('mega-sync-bar');
+    if(bar){ bar.style.background='var(--danger)'; bar.textContent='❌ Помилка збереження'; setTimeout(()=>{ bar.style.background='var(--accent)'; bar.textContent='☁️ Збереження...'; bar.style.display='none'; },3000); }
+  }
+}
 
+function megaSaveData(){
+  lsSave();
+  if(!fsFolder) return;
+  if(syncTimeout) clearTimeout(syncTimeout);
+  syncTimeout = setTimeout(()=>fsWriteData(), 1200);
+}
 
-function addMegaSyncButton(){
-  // Add sync button to desktop sidebar footer
+async function fsUploadFile(file){
+  if(!fsFilesFolder) return null;
+  try {
+    const uniqueName = Date.now() + '_' + file.name;
+    const fh = await fsFilesFolder.getFileHandle(uniqueName, { create:true });
+    const wr = await fh.createWritable();
+    await wr.write(file);
+    await wr.close();
+    return uniqueName;
+  } catch(err){ console.warn('File upload error:', err); return null; }
+}
+
+async function fsSync(){
+  if(!fsFolder){ showToast('📁 Папку не вибрано'); return; }
+  showToast('☁️ Синхронізація...');
+  await fsWriteData();
+  await fsReadData();
+  renderCurrent();
+  showToast('✅ Синхронізовано');
+}
+
+function fsSkip(){
+  const screen=document.getElementById('mega-screen');
+  if(screen) screen.style.display='none';
+  setTimeout(()=>goPage('docs'), 50);
+}
+
+async function fsImportJSON(){
+  try {
+    const [fh] = await window.showOpenFilePicker({ types:[{ description:'JSON', accept:{'application/json':['.json']} }] });
+    const file = await fh.getFile();
+    const text = await file.text();
+    const data = JSON.parse(text);
+    if(data.docs)         docs         = data.docs;
+    if(data.tasks)        tasks        = data.tasks;
+    if(data.reminders)    reminders    = data.reminders;
+    if(data.team)         team         = data.team;
+    if(data.nextTaskId)   nextTaskId   = data.nextTaskId;
+    if(data.nextRemId)    nextRemId    = data.nextRemId;
+    if(data.nextDocId)    nextDocId    = data.nextDocId;
+    if(data.nextMemberId) nextMemberId = data.nextMemberId;
+    if(data.instances)   instances   = data.instances;
+    if(data.nextInstId)     nextInstId     = data.nextInstId;
+    if(data.instTypes)      instTypes      = data.instTypes;
+    if(data.nextInstTypeId) nextInstTypeId = data.nextInstTypeId;
+    lsSave();
+    const screen=document.getElementById('mega-screen');
+    if(screen) screen.style.display='none';
+    setTimeout(()=>goPage('docs'), 50);
+    showToast('📥 Дані імпортовано');
+  } catch(err){ if(err.name!=='AbortError') showToast('❌ Помилка імпорту'); }
+}
+
+function fsExportJSON(){
+  const data = JSON.stringify({ docs, tasks, reminders, team, instances, instTypes, nextTaskId, nextRemId, nextDocId, nextMemberId, nextInstId, nextInstTypeId }, null, 2);
+  const blob = new Blob([data], { type:'application/json' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href=url; a.download='kolyshatko-data.json'; a.click();
+  URL.revokeObjectURL(url);
+  showToast('📤 Дані експортовано');
+}
+
+function fsDisconnect(){
+  fsFolder=null; fsFilesFolder=null;
+  closeMobSettings();
+  document.getElementById('mega-screen').style.display='flex';
+  document.getElementById('sync-status-msg').textContent='';
+}
+
+function lsSave(){
+  try { localStorage.setItem('kolyshatko_data', JSON.stringify({ docs, tasks, reminders, team, instances, instTypes, nextTaskId, nextRemId, nextDocId, nextMemberId, nextInstId, nextInstTypeId })); } catch(e){}
+}
+
+function lsLoad(){
+  try {
+    const raw = localStorage.getItem('kolyshatko_data');
+    if(!raw) return;
+    const data = JSON.parse(raw);
+    if(data.docs&&data.docs.length)           docs           = data.docs;
+    if(data.tasks&&data.tasks.length)          tasks          = data.tasks;
+    if(data.reminders&&data.reminders.length)  reminders      = data.reminders;
+    if(data.team&&data.team.length)            team           = data.team;
+    if(data.instances&&data.instances.length)  instances      = data.instances;
+    if(data.instTypes&&data.instTypes.length)  instTypes      = data.instTypes;
+    if(data.nextTaskId)    nextTaskId    = data.nextTaskId;
+    if(data.nextRemId)     nextRemId     = data.nextRemId;
+    if(data.nextDocId)     nextDocId     = data.nextDocId;
+    if(data.nextMemberId)  nextMemberId  = data.nextMemberId;
+    if(data.nextInstId)    nextInstId    = data.nextInstId;
+    if(data.nextInstTypeId) nextInstTypeId = data.nextInstTypeId;
+  } catch(e){}
+}
+
+function addSyncButtons(){
   const footer = document.querySelector('.sidebar-footer');
-  if(footer && !document.getElementById('mega-sync-btn')){
-    const btn = document.createElement('button');
-    btn.id = 'mega-sync-btn';
-    btn.className = 'btn btn-ghost btn-sm';
-    btn.style.cssText = 'width:100%;justify-content:center;margin-top:8px;font-size:10px';
-    btn.innerHTML = '☁️ Синхронізувати';
-    btn.onclick = () => { megaSaveData(); showToast('☁️ Синхронізація...'); };
+  if(footer && !document.getElementById('fs-sync-btn')){
+    const btn=document.createElement('button');
+    btn.id='fs-sync-btn'; btn.className='btn btn-ghost btn-sm';
+    btn.style.cssText='width:100%;justify-content:center;margin-top:8px;font-size:10px';
+    btn.innerHTML='☁️ Синхронізувати'; btn.onclick=fsSync;
     footer.appendChild(btn);
   }
-  // Add to mobile settings sheet
-  const sheet = document.querySelector('.mob-sheet-body');
-  if(sheet && !document.getElementById('mega-sync-mob-btn')){
-    const div = document.createElement('div');
-    div.innerHTML = `<div class="mob-sheet-divider"></div>
-      <button id="mega-sync-mob-btn" class="mob-sheet-link" onclick="megaSaveData();showToast('☁️ Синхронізація...')" style="color:var(--accent);font-weight:500">
-        ☁️ Синхронізувати з MEGA
-      </button>
-      <button class="mob-sheet-link" onclick="megaLogout()" style="color:var(--danger)">
-        🚪 Вийти з MEGA
-      </button>`;
+  const sheet=document.querySelector('.mob-sheet-body');
+  if(sheet && !document.getElementById('fs-sync-mob-btn')){
+    const div=document.createElement('div');
+    div.innerHTML=`<div class="mob-sheet-divider"></div>
+      <button id="fs-sync-mob-btn" class="mob-sheet-link" onclick="fsSync()" style="color:var(--accent);font-weight:500">☁️ Синхронізувати</button>
+      <button class="mob-sheet-link" onclick="fsExportJSON()">📤 Експорт JSON</button>
+      <button class="mob-sheet-link" onclick="fsDisconnect()" style="color:var(--danger)">🔌 Відключити папку</button>`;
     sheet.appendChild(div);
   }
 }
 
-function megaLogout(){
-  megaStorage = null; megaFile = null;
-  localStorage.removeItem('mega_email');
-  closeMobSettings();
-  document.getElementById('mega-screen').style.display = 'flex';
-  document.getElementById('mega-pass').value = '';
-  document.getElementById('mega-status').textContent = '';
+async function handleFileUpload(event, docId){
+  const doc=docs.find(d=>d.id===docId);
+  if(!doc) return;
+  if(!doc.files) doc.files=[];
+  const files=Array.from(event.target.files);
+  if(!files.length) return;
+  for(const file of files){
+    const today=new Date().toLocaleDateString('uk-UA');
+    let url=URL.createObjectURL(file);
+    let storedName=file.name;
+    if(fsFilesFolder){
+      showToast('📁 Копіюємо файл...');
+      const name=await fsUploadFile(file);
+      if(name){ storedName=name; url='files/'+name; }
+    }
+    doc.files.push({name:file.name,storedName,size:file.size,date:today,url,type:fsFolder?'fs':'local'});
+    doc.attachments=(doc.files||[]).length;
+    showToast('✅ '+file.name+' додано');
+  }
+  const al=document.getElementById('attach-list');
+  if(al) al.innerHTML=renderAttachList(doc);
+  renderDocs(); megaSaveData();
 }
 
-// Patch data-changing functions to auto-sync
-['saveDoc','saveTask','saveReminder','saveStageResult','toggleTaskDone','toggleRemDone'].forEach(fn => {
-  const orig = window[fn];
-  if(orig) window[fn] = function(){ orig.apply(this,arguments); megaSaveData(); };
+['saveDoc','saveTask','saveReminder','saveStageResult','toggleTaskDone','toggleRemDone','saveMember','deactivateMember','reactivateMember'].forEach(fn=>{
+  const orig=window[fn];
+  if(typeof orig==='function') window[fn]=function(){ orig.apply(this,arguments); megaSaveData(); };
 });
 </script>
+
 <!-- MOBILE BOTTOM NAV -->
 <nav class="mobile-nav">
   <div class="mobile-nav-inner">
