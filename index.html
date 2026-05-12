@@ -408,7 +408,7 @@ body { background: var(--bg); color: var(--text); font-family: 'IBM Plex Mono', 
     <div class="sidebar-label" id="sl-nav">Навігація</div>
     <ul class="sidebar-nav">
       <li><a onclick="goPage('docs')" id="nav-docs"><span class="icon">📄</span> <span id="sl-docs">Документи</span> <span class="badge" id="bdg-docs">4</span></a></li>
-      <li><a onclick="goPage('tasks')" id="nav-tasks"><span class="icon">✅</span> <span id="sl-tasks">Задачі</span> <span class="badge" id="bdg-tasks">5</span></a></li>
+      <li><a onclick="goPage('tasks')" id="nav-tasks"><span class="icon">✅</span> <span id="sl-tasks">Завдання</span> <span class="badge" id="bdg-tasks">5</span></a></li>
       <li><a onclick="goPage('reminders')" id="nav-reminders"><span class="icon">🔔</span> <span id="sl-reminders">Нагадування</span> <span class="badge warn" id="bdg-rem">3</span></a></li>
       <li><a onclick="goPage('team')" id="nav-team"><span class="icon">👥</span> <span id="sl-team">Команда</span> <span class="badge" id="bdg-team">4</span></a></li>
     </ul>
@@ -496,7 +496,7 @@ let instTypes = [
   { id:2, key:'court',    label:'Суди',        icon:'⚖️' },
   { id:3, key:'org',      label:'Організації', icon:'🏢' },
   { id:4, key:'person',   label:'Персони',     icon:'👤' },
-  { id:5, key:'internal', label:'Внутрішні',   icon:'📋' },
+  { id:5, key:'internal', label:'Домашні',   icon:'📋' },
 ];
 let nextInstTypeId = 6;
 
@@ -520,50 +520,44 @@ function isAdmin(){ return team[currentUser]?.role === 'admin'; }
 
 function getDocRef(id){ const d=docs.find(x=>x.id===id); return d?d.ref:''; }
 function getDocName(id){ const d=docs.find(x=>x.id===id); return d?d.title:''; }
-const typeIco  = { court:'🏛️', tax:'💰', legal:'⚖️', admin:'📋' };
-const typeCls  = { court:'urgent', tax:'active', legal:'active', admin:'waiting' };
+const DOC_CATEGORIES = {
+  passport: { label:'Паспорти та ID',      icon:'🛂' },
+  property: { label:'Нерухомість',          icon:'🏠' },
+  auto:     { label:'Авто',                 icon:'🚗' },
+  medical:  { label:'Медицина',             icon:'🏥' },
+  finance:  { label:'Банки та фінанси',     icon:'🏦' },
+  edu:      { label:'Освіта',               icon:'📋' },
+  legal:    { label:'Юридичні',             icon:'⚖️' },
+  other:    { label:'Інше',                 icon:'📦' },
+};
+function typeIco(t){ return DOC_CATEGORIES[t]?.icon||'📄'; }
+function typeCls(t){ return t==='passport'?'active':t==='medical'?'urgent':t==='finance'?'waiting':'active'; }
 
 let docs = [
-  { id:'1', title:'Позовна заява про стягнення боргу', ref:'2024-11-Позовна заява', type:'court', status:'urgent', deadline:'2025-05-20', assignees:[0,1], attachments:3, currentStage:2,
+  { id:'1', title:'Закордонний паспорт', docNumber:'FE123456', issuedBy:'ДМС України', issuedDate:'2021-03-15', validUntil:'2031-03-15', type:'passport', status:'active', deadline:null, assignees:[0], attachments:1, files:[], currentStage:1,
     stages:[
-      {name:'Підготовка позову',inst:'Юридичний відділ',date:'2024-11-01',result:'Позов підготовлено та перевірено',status:'done'},
-      {name:'Подання до суду',inst:'Господарський суд м. Київ',date:'2024-11-15',result:'Прийнято до розгляду, справа №2024-Г-1182',status:'done'},
-      {name:'Попереднє засідання',inst:'Господарський суд м. Київ',date:null,result:null,status:'current'},
-      {name:'Судове засідання',inst:'Господарський суд м. Київ',date:null,result:null,status:'pending'},
-      {name:'Виконання рішення',inst:'Виконавча служба',date:null,result:null,status:'pending'},
+      {name:'Подача заяви',inst:'ДМС',date:'2021-03-10',result:'Заяву подано, оплата здійснена',status:'done'},
+      {name:'Отримання',inst:'ДМС',date:'2021-03-15',result:'Паспорт отримано',status:'done'},
     ]},
-  { id:'2', title:'Податкова декларація за 2024 рік', ref:'2024-12-Податкова декларація', type:'tax', status:'active', deadline:'2025-03-01', assignees:[2], attachments:7, currentStage:1,
+  { id:'2', title:'Медична страховка', docNumber:'МС-2024-0089', issuedBy:'Страхова компанія', issuedDate:'2024-01-01', validUntil:'2025-12-31', type:'medical', status:'urgent', deadline:'2025-12-31', assignees:[0], attachments:2, files:[], currentStage:1,
     stages:[
-      {name:'Збір документів',inst:'Бухгалтерія',date:'2024-12-01',result:'Всі первинні документи зібрано',status:'done'},
-      {name:'Заповнення декларації',inst:'Бухгалтерія',date:null,result:null,status:'current'},
-      {name:'Подання до ДПС',inst:'ДПС',date:null,result:null,status:'pending'},
-      {name:'Отримання квитанції',inst:'ДПС (електронно)',date:null,result:null,status:'pending'},
+      {name:'Оформлення полісу',inst:'Страхова компанія',date:'2024-01-01',result:'Поліс оформлено та оплачено',status:'done'},
+      {name:'Продовження',inst:'Страхова компанія',date:null,result:null,status:'current'},
     ]},
-  { id:'3', title:"Дозвіл на будівництво — об'єкт №17", ref:'2024-09-Дозвіл на будівництво', type:'admin', status:'waiting', deadline:'2025-04-15', assignees:[0,3], attachments:12, currentStage:3,
+  { id:'3', title:'Техогляд автомобіля', docNumber:'ТО-2024-5521', issuedBy:'СТО Автосервіс', issuedDate:'2024-06-01', validUntil:'2025-06-01', type:'auto', status:'waiting', deadline:'2025-06-01', assignees:[1], attachments:0, files:[], currentStage:0,
     stages:[
-      {name:'Проектна документація',inst:'Проектне бюро',date:'2024-09-10',result:'Проект затверджено архітектором',status:'done'},
-      {name:'Погодження містобудування',inst:'ДАБІ Київ',date:'2024-10-05',result:'Погоджено з зауваженнями',status:'done'},
-      {name:'Екологічна експертиза',inst:'Мінприроди',date:'2024-11-20',result:'Висновок позитивний №ЕЕ-2024-882',status:'done'},
-      {name:'Розгляд заяви',inst:'ДАБІ Київ',date:null,result:null,status:'current'},
-      {name:'Видача дозволу',inst:'ДАБІ Київ',date:null,result:null,status:'pending'},
-    ]},
-  { id:'4', title:'Ліцензійна угода з ТОВ "Прайм"', ref:'2023-10-Ліцензійна угода', type:'legal', status:'done', deadline:'2024-06-30', assignees:[1,2], attachments:5, currentStage:3,
-    stages:[
-      {name:'Узгодження умов',inst:'Юридичний відділ',date:'2023-10-01',result:'Умови узгоджено обома сторонами',status:'done'},
-      {name:'Підписання угоди',inst:'Нотаріус Коваленко О.',date:'2023-11-15',result:'Угода нотаріально посвідчена',status:'done'},
-      {name:'Реєстрація в УКРПАТЕНТ',inst:'УКРПАТЕНТ',date:'2023-12-10',result:'Зареєстровано, свідоцтво №АВ-2023-4421',status:'done'},
-      {name:'Виконання угоди',inst:'ТОВ "Прайм"',date:'2024-06-30',result:'Всі умови виконано в строк',status:'done'},
+      {name:'Запис на техогляд',inst:'СТО',date:null,result:null,status:'current'},
+      {name:'Проходження огляду',inst:'СТО',date:null,result:null,status:'pending'},
+      {name:'Отримання талону',inst:'СТО',date:null,result:null,status:'pending'},
     ]},
 ];
 
 function dStr(n){ const d=new Date(); d.setDate(d.getDate()+n); return d.toISOString().split('T')[0]; }
 
 let tasks = [
-  {id:1,title:'Підготувати доповнення до позовної заяви',desc:'Перевірити всі докази, додати нові свідчення',status:'progress',assignee:0,priority:'high',deadline:dStr(1),docId:'1',comments:[{author:0,text:'Маю 2 нових документи, додам завтра',date:'2024-12-28'}]},
-  {id:2,title:'Заповнити форму Ф-1 для податкової',desc:'',status:'todo',assignee:2,priority:'medium',deadline:dStr(38),docId:'2',comments:[]},
-  {id:3,title:'Зателефонувати до ДАБІ щодо статусу',desc:'Уточнити чи надійшли всі документи',status:'todo',assignee:0,priority:'high',deadline:dStr(5),docId:'3',comments:[]},
-  {id:4,title:'Звірити архів договорів за 2024 рік',desc:'',status:'review',assignee:1,priority:'low',deadline:dStr(13),docId:'',comments:[{author:1,text:'Зробив, перевір будь ласка',date:'2024-12-30'}]},
-  {id:5,title:'Оновити контактну базу партнерів',desc:'',status:'todo',assignee:3,priority:'low',deadline:dStr(25),docId:'',comments:[]},
+  {id:1,title:'Продовжити медичну страховку',desc:'Зателефонувати до страхової і уточнити умови',status:'todo',assignee:0,priority:'high',deadline:dStr(30),docId:'2',comments:[]},
+  {id:2,title:'Записатись на техогляд',desc:'',status:'todo',assignee:1,priority:'medium',deadline:dStr(14),docId:'3',comments:[]},
+  {id:3,title:'Перевірити термін дії закордонного паспорта',desc:'',status:'done',assignee:0,priority:'low',deadline:dStr(-5),docId:'1',comments:[]},
 ];
 let nextTaskId = 6;
 
@@ -596,7 +590,7 @@ let calMonth = new Date().getMonth();
 // I18N
 // ============================================================
 const L = {
-  uk:{ appName:'Коліщатко', docs:'Документи', tasks:'Задачі', reminders:'Нагадування', add_doc:'Документ', add_task:'Задача', add_rem:'Нагадування', search:'Пошук...', all:'Усі', active:'Активні', urgent:'Термінові', waiting:'Очікування', done:'Завершені', todo:'До роботи', progress:'В процесі', review:'Перевірка', overdue:'⚡ Прострочені', today_f:'Сьогодні', week:'7 днів', future:'Майбутні', done_f:'Виконані', nodoc:'Без документа', admin:'Адміністратор', nav:'Навігація', inst:'Інстанції', gov:'Держоргани', court:'Суди', org:'Організації', person:'Персони', subtitle:'Система документів' },
+  uk:{ appName:'Коліщатко', docs:'Документи', tasks:'Завдання', reminders:'Нагадування', add_doc:'Документ', add_task:'Завдання', add_rem:'Нагадування', search:'Пошук...', all:'Усі', active:'Активні', urgent:'Термінові', waiting:'Очікування', done:'Завершені', todo:'До роботи', progress:'В процесі', review:'Перевірка', overdue:'⚡ Прострочені', today_f:'Сьогодні', week:'7 днів', future:'Майбутні', done_f:'Виконані', nodoc:'Без документа', admin:'Адміністратор', nav:'Навігація', inst:'Організації', gov:'Держоргани', court:'Суди', org:'Організації', person:'Персони', subtitle:'Система документів' },
   en:{ appName:'Caster', docs:'Documents', tasks:'Tasks', reminders:'Reminders', add_doc:'Document', add_task:'Task', add_rem:'Reminder', search:'Search...', all:'All', active:'Active', urgent:'Urgent', waiting:'Waiting', done:'Done', todo:'To Do', progress:'In Progress', review:'Review', overdue:'⚡ Overdue', today_f:'Today', week:'7 days', future:'Future', done_f:'Done', nodoc:'No document', admin:'Administrator', nav:'Navigation', inst:'Instances', gov:'Government', court:'Courts', org:'Organizations', person:'Persons', subtitle:'Document System' },
   de:{ appName:'Rolle', docs:'Dokumente', tasks:'Aufgaben', reminders:'Erinnerungen', add_doc:'Dokument', add_task:'Aufgabe', add_rem:'Erinnerung', search:'Suche...', all:'Alle', active:'Aktiv', urgent:'Dringend', waiting:'Warten', done:'Erledigt', todo:'Zu tun', progress:'In Bearbeitung', review:'Überprüfung', overdue:'⚡ Überfällig', today_f:'Heute', week:'7 Tage', future:'Zukünftig', done_f:'Erledigt', nodoc:'Kein Dokument', admin:'Administrator', nav:'Navigation', inst:'Instanzen', gov:'Behörden', court:'Gerichte', org:'Organisationen', person:'Personen', subtitle:'Dokumentensystem' },
 };
@@ -812,18 +806,19 @@ function renderDocs(){
     const statusLabel={active:t('active'),urgent:t('urgent'),waiting:t('waiting'),done:t('done')};
     return `<div class="card" onclick="openDocDetail('${doc.id}')" style="animation-delay:${i*.04}s">
       <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:10px">
-        <div style="font-size:20px;width:34px;text-align:center">${typeIco[doc.type]||'📄'}</div>
+        <div style="font-size:22px;width:34px;text-align:center">${DOC_CATEGORIES[doc.type]?.icon||'📄'}</div>
         <div style="flex:1;min-width:0">
           <div style="font-family:'Literata',serif;font-size:14px;font-weight:600;margin-bottom:2px">${doc.title}</div>
-          <div style="font-size:10px;color:var(--muted)">${doc.ref}</div>
+          <div style="font-size:10px;color:var(--muted)">${DOC_CATEGORIES[doc.type]?.label||''} ${doc.docNumber?'· №'+doc.docNumber:''}</div>
         </div>
         <span class="chip chip-${doc.status}">${statusLabel[doc.status]}</span>
       </div>
       <div class="stage-bar">${stages}</div>
       <div style="font-size:10px;color:var(--muted);margin-bottom:10px;display:flex;gap:12px;flex-wrap:wrap">
         <span style="color:var(--accent);font-weight:500">▶ ${cur?cur.name:'—'}</span>
-        <span>${done}/${doc.stages.length} ет.</span>
-        ${doc.deadline?`<span style="color:var(--danger)">⏱ ${fmtShort(doc.deadline)}</span>`:''}
+        <span>${done}/${doc.stages.length} кроків</span>
+        ${doc.validUntil?`<span style="color:var(--danger)">⏱ до ${fmtShort(doc.validUntil)}</span>`:''}
+        ${doc.deadline&&!doc.validUntil?`<span style="color:var(--warn)">📅 ${fmtShort(doc.deadline)}</span>`:''}
       </div>
       <div style="display:flex;align-items:center;gap:10px;padding-top:10px;border-top:1px solid var(--border)">
         ${miniAvs(doc.assignees)}
@@ -1063,7 +1058,14 @@ function openDocForm(id){
         <div style="display:flex;gap:6px;margin-top:6px">
           <button class="btn btn-ghost btn-sm" onclick="editStageResult('${id}',${si})" style="font-size:10px">✏️ Редагувати</button>
           ${si>0?`<button class="btn btn-ghost btn-sm" onclick="revertStage('${id}',${si})" style="font-size:10px;color:var(--warn)">↩ Повернути</button>`:''}
-        </div>`:'';
+        </div>`
+        : s.status==='current' ? `
+        <div style="margin-top:6px">
+          <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);cursor:pointer">
+            <input type="checkbox" ${s.isFinal?'checked':''} onchange="toggleFinalStep('${id}',${si})" style="accent-color:var(--accent)">
+            Це фінальний крок
+          </label>
+        </div>` : '';
       return `<div class="tl-item">
         <div class="tl-dot ${dc}"></div>
         <div class="tl-body">
@@ -1079,28 +1081,36 @@ function openDocForm(id){
 
     document.getElementById('modal-body').innerHTML=`
       <div class="modal-sec">
-        <div style="display:flex;gap:8px;align-items:center;margin-bottom:14px">
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap">
+          <span style="font-size:20px">${DOC_CATEGORIES[doc.type]?.icon||'📄'}</span>
           <span class="chip chip-${doc.status}">${statusLabel[doc.status]}</span>
-          <span style="font-size:11px;color:var(--muted)">${doc.ref}</span>
-          ${doc.deadline?`<span style="font-size:11px;color:var(--danger)">⏱ ${fmtDate(doc.deadline)}</span>`:''}
-          <button class="btn btn-ghost btn-sm" onclick="deleteDoc('${id}')" style="margin-left:auto;color:var(--danger)">🗑 Видалити</button>
+          ${doc.validUntil?`<span style="font-size:11px;color:var(--danger)">⏱ Дійсний до: ${fmtDate(doc.validUntil)}</span>`:''}
+          ${doc.deadline?`<span style="font-size:11px;color:var(--warn)">📅 Дедлайн: ${fmtDate(doc.deadline)}</span>`:''}
+          <button class="btn btn-ghost btn-sm" onclick="deleteDoc('${id}')" style="margin-left:auto;color:var(--danger)">🗑</button>
         </div>
-        <div class="modal-sec-title">Шлях документа</div>
+        ${doc.docNumber||doc.issuedBy||doc.issuedDate?`
+        <div style="background:var(--surface2);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:11px;display:flex;flex-wrap:wrap;gap:12px">
+          ${doc.docNumber?`<span>📋 <b>№</b> ${doc.docNumber}</span>`:''}
+          ${doc.issuedBy?`<span>🏛 ${doc.issuedBy}</span>`:''}
+          ${doc.issuedDate?`<span>📅 Видано: ${fmtDate(doc.issuedDate)}</span>`:''}
+        </div>`:''}
+        <div class="modal-sec-title">Кроки</div>
         <div class="timeline">${tl}</div>
+        <button class="btn btn-ghost btn-sm" style="margin-top:8px" onclick="addStepToDoc('${id}')">+ Додати крок</button>
       </div>
       <div class="modal-sec">
-        <div class="modal-sec-title">Зафіксувати результат</div>
+        <div class="modal-sec-title">Результат кроку</div>
         <div class="form-group">
-          <label class="form-label">Результат / дія</label>
-          <textarea class="form-ta" id="stage-res" placeholder="Опишіть що відбулось..."></textarea>
+          <label class="form-label">Що зроблено</label>
+          <textarea class="form-ta" id="stage-res" placeholder="Запишіть що зробили..."></textarea>
         </div>
         <div class="form-group">
-          <label class="form-label">Наступна інстанція (необов'язково)</label>
+          <label class="form-label">Організація (необов'язково)</label>
           <datalist id="inst-list-stage">${instances.map(i=>`<option value="${i.name}">`).join('')}</datalist>
           <input class="form-input" list="inst-list-stage" id="stage-next-inst" placeholder="Вибери або введи...">
         </div>
         <div class="form-group">
-          <label class="form-label">Очікувана дата завершення наступного етапу (необов'язково)</label>
+          <label class="form-label">Очікувана дата завершення кроку (необов'язково)</label>
           <input type="date" class="form-input" id="stage-next-deadline">
         </div>
         <div class="form-group">
@@ -1122,19 +1132,64 @@ function openDocForm(id){
           </label>
           <button class="btn btn-ghost btn-sm" onclick="openAddLink('${id}')">🔗 Додати посилання</button>
         </div>
+      </div>
+      <div class="modal-sec">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <div class="modal-sec-title" style="margin:0">🔔 Нагадування (${reminders.filter(r=>r.docId===id).length})</div>
+          <button type="button" onclick="addDocRemRow()" style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--accent);background:none;border:none;cursor:pointer">+ Додати</button>
+        </div>
+        <div style="margin-bottom:10px">
+          ${reminders.filter(r=>r.docId===id).map(r=>`
+            <div style="display:flex;align-items:center;gap:8px;padding:7px 10px;border:1px solid var(--border);border-radius:7px;margin-bottom:6px;background:var(--surface2);font-size:11px">
+              <span>${r.done?'✅':'🔔'}</span>
+              <span style="flex:1">${r.title}</span>
+              <span style="color:var(--muted)">${fmtDate(r.date)}</span>
+            </div>`).join('')}
+        </div>
+        <div id="fd-rem-rows"></div>
+        <div id="doc-rem-save" style="display:none">
+          <button class="btn btn-primary btn-sm" onclick="saveDocReminders('${id}')">Зберегти нагадування</button>
+        </div>
       </div>`;
   } else {
     document.getElementById('modal-body').innerHTML=`
-      <div class="form-group"><label class="form-label">Назва документа</label><input class="form-input" id="fd-title" placeholder="Назва..."></div>
-      <div class="form-row">
-        <div class="form-group"><label class="form-label">Тип</label><select class="form-select" id="fd-type"><option value="legal">⚖️ Юридичний</option><option value="court">🏛️ Судовий</option><option value="tax">💰 Податковий</option><option value="admin">📋 Адміністративний</option></select></div>
-        <div class="form-group"><label class="form-label">Дедлайн</label><input type="date" class="form-input" id="fd-deadline"></div>
+      <div class="form-group"><label class="form-label">Назва документа</label><input class="form-input" id="fd-title" placeholder="Паспорт, Страховка, Договір оренди..."></div>
+      <div class="form-group"><label class="form-label">Категорія</label>
+        <select class="form-select" id="fd-type">
+          ${Object.entries(DOC_CATEGORIES).map(([k,v])=>`<option value="${k}">${v.icon} ${v.label}</option>`).join('')}
+        </select>
       </div>
-      <div class="form-group"><label class="form-label">Перша інстанція</label>
-      <datalist id="inst-list-doc">${instances.map(i=>`<option value="${i.name}">`).join('')}</datalist>
-      <input class="form-input" list="inst-list-doc" id="fd-inst" placeholder="Вибери або введи назву...">
-    </div>
-      <div class="form-group"><label class="form-label">Відповідальний</label><select class="form-select" id="fd-assignee">${team.map((m,i)=>`<option value="${i}">${m.name}</option>`).join('')}</select></div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Номер документа</label><input class="form-input" id="fd-docnum" placeholder="Серія та номер..."></div>
+        <div class="form-group"><label class="form-label">Ким видано</label><input class="form-input" id="fd-issuedby" placeholder="Необов'язково..."></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Дата видачі</label><input type="date" class="form-input" id="fd-issueddate"></div>
+        <div class="form-group"><label class="form-label">Дійсний до</label><input type="date" class="form-input" id="fd-validuntil"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Дедлайн (необов'язково)</label><input type="date" class="form-input" id="fd-deadline"></div>
+        <div class="form-group"><label class="form-label">Відповідальний</label><select class="form-select" id="fd-assignee">${team.map((m,i)=>`<option value="${i}">${m.name}</option>`).join('')}</select></div>
+      </div>
+      <div class="form-group"><label class="form-label">Організація</label>
+        <datalist id="inst-list-doc">${instances.map(i=>`<option value="${i.name}">`).join('')}</datalist>
+        <input class="form-input" list="inst-list-doc" id="fd-inst" placeholder="Вибери або введи...">
+      </div>
+      <div class="form-group">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+          <label class="form-label" style="margin:0">📋 Кроки</label>
+          <button type="button" onclick="addStepRow()" style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--accent);background:none;border:none;cursor:pointer">+ Додати крок</button>
+        </div>
+        <div id="fd-steps-rows">
+          <div class="fd-step-row" style="display:flex;gap:8px;align-items:center;margin-bottom:7px">
+            <input class="form-input" placeholder="Назва кроку..." style="flex:1;font-size:12px">
+            <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--muted);white-space:nowrap;cursor:pointer">
+              <input type="checkbox" class="fd-step-final" style="accent-color:var(--accent)"> Фінальний
+            </label>
+            <button type="button" onclick="removeStepRow(this)" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px;padding:0 4px">✕</button>
+          </div>
+        </div>
+      </div>
       <div class="form-group">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
           <label class="form-label" style="margin:0">🔔 Нагадування</label>
@@ -1165,6 +1220,25 @@ function openDocForm(id){
   }
 }
 
+function addStepRow(){
+  // Remove final from all existing steps
+  document.querySelectorAll('.fd-step-final').forEach(cb=>cb.checked=false);
+  const row=document.createElement('div');
+  row.className='fd-step-row';
+  row.style.cssText='display:flex;gap:8px;align-items:center;margin-bottom:7px';
+  row.innerHTML=`
+    <input class="form-input" placeholder="Назва кроку..." style="flex:1;font-size:12px">
+    <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--muted);white-space:nowrap;cursor:pointer">
+      <input type="checkbox" class="fd-step-final" style="accent-color:var(--accent)" checked> Фінальний
+    </label>
+    <button type="button" onclick="removeStepRow(this)" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px;padding:0 4px">✕</button>`;
+  document.getElementById('fd-steps-rows').appendChild(row);
+}
+
+function removeStepRow(btn){
+  btn.closest('.fd-step-row').remove();
+}
+
 function addDocRemRow(){
   const row=document.createElement('div');
   row.className='fd-rem-row';
@@ -1174,10 +1248,43 @@ function addDocRemRow(){
       <option value="days">За N днів до дедлайну</option>
       <option value="date">Конкретна дата</option>
     </select>
-    <input type="number" class="form-input fd-rem-days" min="1" max="365" value="14" style="width:70px;font-size:12px" placeholder="днів">
+    <input type="number" class="form-input fd-rem-days" min="1" max="365" value="7" style="width:70px;font-size:12px">
     <input type="date" class="form-input fd-rem-date" style="display:none;font-size:12px">
     <button type="button" onclick="this.closest('.fd-rem-row').remove()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px;padding:0 4px">✕</button>`;
-  document.getElementById('fd-rem-rows').appendChild(row);
+  const rows=document.getElementById('fd-rem-rows');
+  if(rows) rows.appendChild(row);
+  const saveBtn=document.getElementById('doc-rem-save');
+  if(saveBtn) saveBtn.style.display='block';
+}
+
+function saveDocReminders(docId){
+  const doc=docs.find(d=>d.id===docId);
+  if(!doc)return;
+  const deadline=doc.deadline||'';
+  const assigneeIdx=doc.assignees[0]||0;
+  let hasError=false;
+
+  document.querySelectorAll('.fd-rem-row').forEach(row=>{
+    const type=row.querySelector('select').value;
+    let remDate=null;
+    if(type==='date'){
+      remDate=row.querySelector('.fd-rem-date').value;
+      if(remDate && deadline && remDate>=deadline){ hasError=true; return; }
+    } else if(deadline){
+      const days=parseInt(row.querySelector('.fd-rem-days').value)||0;
+      if(days>0){ const dt=new Date(deadline); dt.setDate(dt.getDate()-days); remDate=dt.toISOString().split('T')[0]; }
+    }
+    if(remDate){
+      const days=type==='days'?row.querySelector('.fd-rem-days').value:'';
+      const label=type==='days'?`${doc.title} — за ${days} днів`:`${doc.title} — ${fmtDate(remDate)}`;
+      reminders.unshift({id:nextRemId++,title:label,docId,assignee:assigneeIdx,date:remDate,notify:['inapp'],repeat:'none',done:false});
+    }
+  });
+
+  if(hasError){ alert('Дата нагадування має бути раніше дедлайну!'); return; }
+  megaSaveData();
+  showToast('🔔 Нагадування збережено');
+  openDocForm(docId);
 }
 
 function fdRemTypeChange(sel){
@@ -1344,6 +1451,28 @@ function revertStage(docId, stageIdx){
   showToast('↩ Етап повернуто');
 }
 
+function addStepToDoc(docId){
+  const doc=docs.find(d=>d.id===docId);
+  if(!doc)return;
+  const name=prompt('Назва нового кроку:');
+  if(!name||!name.trim())return;
+  // Remove final from all existing steps
+  doc.stages.forEach(s=>s.isFinal=false);
+  doc.stages.push({name:name.trim(),inst:'',date:null,result:null,status:'pending',isFinal:true});
+  renderDocs(); megaSaveData();
+  openDocForm(docId);
+  showToast('📋 Крок додано');
+}
+
+function toggleFinalStep(docId, stageIdx){
+  const doc=docs.find(d=>d.id===docId);
+  if(!doc)return;
+  // Remove final from all, set on this one
+  doc.stages.forEach((s,i)=>s.isFinal = i===stageIdx);
+  megaSaveData();
+  showToast('✅ Фінальний крок оновлено');
+}
+
 function saveStageResult(docId){
   const doc=docs.find(d=>d.id===docId);
   if(!doc)return;
@@ -1372,8 +1501,13 @@ function saveStageResult(docId){
   if(remError){ alert('Дата нагадування має бути раніше очікуваної дати етапу!'); return; }
 
   // Move to next stage
+  const currentStageObj=doc.stages[doc.currentStage];
+  const isFinal=currentStageObj?.isFinal||false;
   const nextI=doc.stages.findIndex((s,i)=>i>doc.currentStage&&s.status==='pending');
-  if(nextI!==-1){
+
+  if(isFinal||nextI===-1){
+    doc.status='done';
+  } else {
     doc.stages[nextI].status='current';
     if(nextInst) doc.stages[nextI].inst=nextInst;
     if(nextDeadline) doc.stages[nextI].expectedDate=nextDeadline;
@@ -1397,8 +1531,6 @@ function saveStageResult(docId){
         reminders.unshift({id:nextRemId++,title:label,docId:doc.id,assignee:assigneeIdx,date:remDate,notify:['inapp'],repeat:'none',done:false});
       }
     });
-  } else {
-    doc.status='done';
   }
 
   renderDocs(); megaSaveData();
@@ -1411,39 +1543,60 @@ function saveDoc(){
   const title=document.getElementById('fd-title').value.trim();
   if(!title){alert('Введіть назву');return;}
   const id=String(nextDocId++);
-  const inst=document.getElementById('fd-inst').value.trim()||'Не вказано';
+  const inst=document.getElementById('fd-inst')?.value.trim()||'';
   const deadline=document.getElementById('fd-deadline').value||null;
+  const validUntil=document.getElementById('fd-validuntil')?.value||null;
+  const issuedDate=document.getElementById('fd-issueddate')?.value||null;
+  const issuedBy=document.getElementById('fd-issuedby')?.value.trim()||'';
+  const docNumber=document.getElementById('fd-docnum')?.value.trim()||'';
   const assigneeIdx=parseInt(document.getElementById('fd-assignee').value);
+  const type=document.getElementById('fd-type').value;
 
-  docs.unshift({id,title,ref:`${new Date().getFullYear()}-${String(new Date().getMonth()+1).padStart(2,'0')}-${title}`,type:document.getElementById('fd-type').value,status:'active',deadline,assignees:[assigneeIdx],attachments:0,files:[],currentStage:0,
-    stages:[{name:'Підготовка',inst,date:new Date().toISOString().split('T')[0],result:null,status:'current'},{name:'Подання',inst:'',date:null,result:null,status:'pending'},{name:'Розгляд',inst:'',date:null,result:null,status:'pending'},{name:'Завершення',inst:'',date:null,result:null,status:'pending'}]
+  // Build stages from form
+  const stepRows=document.querySelectorAll('.fd-step-row');
+  let stages=[];
+  if(stepRows.length===0){
+    stages=[{name:'Крок 1',inst,date:new Date().toISOString().split('T')[0],result:null,status:'current',isFinal:true}];
+  } else {
+    stepRows.forEach((row,si)=>{
+      const name=row.querySelector('input[type=text],input:not([type])').value.trim()||`Крок ${si+1}`;
+      const isFinal=row.querySelector('.fd-step-final')?.checked||false;
+      stages.push({name,inst:si===0?inst:'',date:si===0?new Date().toISOString().split('T')[0]:null,result:null,status:si===0?'current':'pending',isFinal});
+    });
+    // Ensure at least last step is final if none selected
+    if(!stages.some(s=>s.isFinal)) stages[stages.length-1].isFinal=true;
+  }
+
+  docs.unshift({id,title,
+    docNumber, issuedBy, issuedDate, validUntil,
+    ref:`${new Date().getFullYear()}-${String(new Date().getMonth()+1).padStart(2,'0')}-${title}`,
+    type, status:'active', deadline, assignees:[assigneeIdx], attachments:0, files:[], currentStage:0,
+    stages
   });
 
-  // Create reminders from rows
-  let remError = false;
+  // Create reminders
+  let remError=false;
   document.querySelectorAll('.fd-rem-row').forEach(row=>{
     const type=row.querySelector('select').value;
     let remDate=null;
+    const checkDate=type==='valid'?validUntil:deadline;
+
     if(type==='date'){
       remDate=row.querySelector('.fd-rem-date').value;
-      if(remDate && deadline && remDate>=deadline){
-        remError=true; return;
-      }
-    } else if(deadline){
+      if(remDate && checkDate && remDate>=checkDate){ remError=true; return; }
+    } else if(checkDate){
       const days=parseInt(row.querySelector('.fd-rem-days').value)||0;
-      if(days>0){
-        const dt=new Date(deadline);
-        dt.setDate(dt.getDate()-days);
-        remDate=dt.toISOString().split('T')[0];
-      }
+      if(days>0){ const dt=new Date(checkDate); dt.setDate(dt.getDate()-days); remDate=dt.toISOString().split('T')[0]; }
     }
     if(remDate){
-      const days=type==='days'?row.querySelector('.fd-rem-days').value:'';
-      const label=type==='days'?`${title} — за ${days} днів`:`${title} — ${fmtDate(remDate)}`;
+      const days=row.querySelector('.fd-rem-days').value;
+      const label=type==='valid'?`${title} — закінчується за ${days} днів`:
+                  type==='days'?`${title} — за ${days} днів до дедлайну`:
+                  `${title} — ${fmtDate(remDate)}`;
       reminders.unshift({id:nextRemId++,title:label,docId:id,assignee:assigneeIdx,date:remDate,notify:['inapp'],repeat:'none',done:false});
     }
   });
-  if(remError){ alert('Дата нагадування має бути раніше дедлайну!'); return; }
+  if(remError){ alert('Дата нагадування має бути раніше дати завершення!'); return; }
 
   renderDocs(); showToast('📄 Документ створено');
   openDocForm(id);
@@ -2446,7 +2599,7 @@ async function handleFileUpload(event, docId){
     </button>
     <button class="mob-nav-btn" id="mob-nav-tasks" onclick="goPage('tasks')">
       <span class="mob-icon">✅</span>
-      <span class="mob-label" id="mob-lbl-tasks">Задачі</span>
+      <span class="mob-label" id="mob-lbl-tasks">Завдання</span>
       <span class="mob-badge accent" id="mob-bdg-tasks" style="display:none"></span>
     </button>
     <button class="mob-nav-btn" id="mob-nav-reminders" onclick="goPage('reminders')">
@@ -2606,7 +2759,7 @@ function updateMobLangBtns(){
 function updateMobI18n(){
   const el=id=>document.getElementById(id);
   const lbl={
-    uk:{role:'Адміністратор',lang:'Мова інтерфейсу',inst:'Інстанції',gov:'Держоргани',court:'Суди',org:'Організації',person:'Персони'},
+    uk:{role:'Адміністратор',lang:'Мова інтерфейсу',inst:'Організації',gov:'Держоргани',court:'Суди',org:'Організації',person:'Персони'},
     en:{role:'Administrator',lang:'Interface language',inst:'Instances',gov:'Government',court:'Courts',org:'Organizations',person:'Persons'},
     de:{role:'Administrator',lang:'Sprache',inst:'Instanzen',gov:'Behörden',court:'Gerichte',org:'Organisationen',person:'Personen'},
   };
