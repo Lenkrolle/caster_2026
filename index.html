@@ -296,6 +296,8 @@ body { background: var(--bg); color: var(--text); font-family: 'IBM Plex Mono', 
 .btn-copy { font-family:'IBM Plex Mono',monospace; font-size:11px; padding:5px 12px; border:1px solid var(--border); border-radius:6px; background:transparent; color:var(--muted); cursor:pointer; transition:all .15s; }
 .btn-copy:hover,.btn-copy.copied { background:var(--accent); color:white; border-color:var(--accent); }
 .filter-label { font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--muted); }
+.cost-item { display:flex; align-items:center; gap:8px; padding:8px 0; border-bottom:1px solid var(--border); }
+.cost-item:last-child { border-bottom:none; }
 
 /* ===== MOBILE NAV BAR ===== */
 .mobile-nav {
@@ -739,6 +741,11 @@ function getFieldTemplate(countryKey, catKey){
   const fallback=FIELD_TEMPLATES[`${countryKey}:other`]||FIELD_TEMPLATES['ua:other'];
   return JSON.parse(JSON.stringify(fallback));
 }
+
+const COST_CATS = { duty:'Держмито', service:'Послуги', transport:'Транспорт', fine:'Штраф', other:'Інше' };
+const COST_ICONS = { duty:'🏛️', service:'👤', transport:'🚗', fine:'⚠️', other:'💳' };
+
+function fmtMoney(n){ return Number(n).toLocaleString('uk-UA',{minimumFractionDigits:2,maximumFractionDigits:2}); }
 
 // Module filters state
 let docFilters = { country:'all', user:'all', cat:'all' };
@@ -1425,6 +1432,7 @@ function renderDocDetail(id){
         <button class="btn btn-ghost btn-sm" onclick="openAddLink('${id}')">🔗 Додати посилання</button>
       </div>
     </div>
+    ${costsHtml(doc)}
     <div class="modal-sec">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
         <div class="modal-sec-title" style="margin:0">🔔 Нагадування (${reminders.filter(r=>r.docId===id).length})</div>
@@ -2418,6 +2426,7 @@ function copyDocFields(docId){
     const pad=Math.max(0, 24-f.label.length);
     lines.push(`${f.label}:${' '.repeat(pad)}${f.value||'—'}`);
   });
+  lines.push(...costsCopyLines(doc));
   lines.push('─'.repeat(36));
   lines.push(`Скопійовано: ${new Date().toLocaleDateString('uk-UA')}`);
   const text=lines.join('\n');
@@ -2441,6 +2450,120 @@ function copyDocFields(docId){
     try{ document.execCommand('copy'); cb(); } catch(e){ showToast('❌ Скопіюйте текст нижче вручну'); }
     document.body.removeChild(ta);
   }
+}
+
+// ============================================================
+// COSTS MODULE
+// ============================================================
+function costsHtml(doc){
+  const id=doc.id, base=doc.baseCurrency||'UAH';
+  const total=(doc.costs||[]).reduce((s,c)=>s+(parseFloat(c.amount)*(parseFloat(c.rate)||1)||0),0);
+  return `<div class="modal-sec">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <div class="modal-sec-title" style="margin:0">💸 Витрати</div>
+      <div id="costs-total-${id}" style="font-size:12px;font-weight:500;color:var(--accent)">${total>0?'Разом: '+fmtMoney(total)+' '+base:''}</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;padding:8px 12px;background:var(--surface2);border-radius:7px;border:1px solid var(--border)">
+      <span style="font-size:11px;color:var(--muted)">Базова валюта:</span>
+      <input type="text" id="base-currency-${id}" value="${base}" style="width:70px;border:1px solid var(--border);border-radius:5px;padding:3px 7px;font-family:'IBM Plex Mono',monospace;font-size:12px;background:var(--surface);text-transform:uppercase" onchange="changeBaseCurrency('${id}',this.value)" placeholder="UAH">
+      <span style="font-size:10px;color:var(--muted)">(UAH, EUR, USD...)</span>
+    </div>
+    <div id="costs-list-${id}">${renderCosts(doc)}</div>
+    <div style="display:grid;grid-template-columns:1fr 80px 100px;gap:6px;margin-top:10px">
+      <input type="text" class="form-input" id="nc-name-${id}" placeholder="Назва витрати" style="font-size:12px">
+      <input type="number" class="form-input" id="nc-amount-${id}" placeholder="Сума" min="0" step="0.01" style="font-size:12px">
+      <input type="text" class="form-input" id="nc-currency-${id}" placeholder="Валюта" style="font-size:12px;text-transform:uppercase" value="${base}">
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:6px;margin-top:6px;align-items:center">
+      <select class="form-select" id="nc-cat-${id}" style="font-size:12px">
+        ${Object.entries(COST_CATS).map(([k,v])=>`<option value="${k}">${v}</option>`).join('')}
+      </select>
+      <input type="number" id="nc-rate-${id}" class="form-input" placeholder="Курс до ${base}" min="0" step="0.0001" style="font-size:12px">
+      <button class="btn btn-ghost btn-sm" onclick="addCost('${id}')">+</button>
+    </div>
+  </div>`;
+}
+
+function renderCosts(doc){
+  const costs=doc.costs||[], base=doc.baseCurrency||'UAH';
+  if(!costs.length) return '<div style="font-size:11px;color:var(--muted);padding:6px 0">Витрат немає</div>';
+  return costs.map((c,i)=>{
+    const curr=c.currency||base, rate=parseFloat(c.rate)||1, inBase=parseFloat(c.amount)*rate, sameBase=(curr===base);
+    return `<div class="cost-item">
+      <span style="font-size:16px">${COST_ICONS[c.cat]||'💳'}</span>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:12px;font-weight:500">${c.name}</div>
+        <div style="font-size:10px;color:var(--muted)">${COST_CATS[c.cat]||c.cat}${c.date?' · '+c.date:''}</div>
+      </div>
+      <div style="text-align:right;flex-shrink:0">
+        <div style="font-size:13px;font-weight:500">${fmtMoney(c.amount)} ${curr}</div>
+        ${!sameBase?`<div style="font-size:10px;color:var(--muted)">= ${fmtMoney(inBase)} ${base}</div>`:''}
+      </div>
+      <button class="field-action-btn" onclick="removeCost('${doc.id}',${i})" style="color:var(--danger)">✕</button>
+    </div>`;
+  }).join('');
+}
+
+function updateCostsUI(docId){
+  const doc=docs.find(d=>d.id===docId); if(!doc)return;
+  const base=doc.baseCurrency||'UAH';
+  const listEl=document.getElementById('costs-list-'+docId);
+  if(listEl) listEl.innerHTML=renderCosts(doc);
+  const total=(doc.costs||[]).reduce((s,c)=>s+(parseFloat(c.amount)*(parseFloat(c.rate)||1)||0),0);
+  const totalEl=document.getElementById('costs-total-'+docId);
+  if(totalEl) totalEl.textContent=total>0?'Разом: '+fmtMoney(total)+' '+base:'';
+}
+
+function changeBaseCurrency(docId,val){
+  const doc=docs.find(d=>d.id===docId); if(!doc)return;
+  doc.baseCurrency=val.toUpperCase().trim()||'UAH';
+  updateCostsUI(docId);
+}
+
+function addCost(docId){
+  const doc=docs.find(d=>d.id===docId); if(!doc)return;
+  const base=doc.baseCurrency||'UAH';
+  const name=document.getElementById('nc-name-'+docId).value.trim();
+  const amount=document.getElementById('nc-amount-'+docId).value;
+  const currency=(document.getElementById('nc-currency-'+docId).value.toUpperCase().trim())||base;
+  const cat=document.getElementById('nc-cat-'+docId).value;
+  const rateEl=document.getElementById('nc-rate-'+docId);
+  const rate=(currency!==base&&rateEl)?parseFloat(rateEl.value)||1:1;
+  if(!name){alert('Введіть назву витрати');return;}
+  if(!amount||isNaN(amount)){alert('Введіть суму');return;}
+  if(currency!==base&&rate===1&&rateEl&&!rateEl.value){
+    if(!confirm('Курс не вказано — буде використано 1:1. Продовжити?'))return;
+  }
+  if(!doc.costs)doc.costs=[];
+  doc.costs.push({name,amount:parseFloat(amount),currency,rate,cat,date:new Date().toLocaleDateString('uk-UA')});
+  document.getElementById('nc-name-'+docId).value='';
+  document.getElementById('nc-amount-'+docId).value='';
+  updateCostsUI(docId);
+  megaSaveData();
+  showToast('💸 Витрату додано');
+}
+
+function removeCost(docId,i){
+  const doc=docs.find(d=>d.id===docId); if(!doc||!doc.costs)return;
+  doc.costs.splice(i,1);
+  updateCostsUI(docId);
+  megaSaveData();
+  showToast('🗑 Видалено');
+}
+
+function costsCopyLines(doc){
+  const costs=doc.costs||[], base=doc.baseCurrency||'UAH';
+  if(!costs.length)return[];
+  const lines=['─'.repeat(36),'Витрати ('+base+'):'];
+  costs.forEach(c=>{
+    const curr=c.currency||base, rate=parseFloat(c.rate)||1, inBase=parseFloat(c.amount)*rate;
+    const pad=Math.max(1,26-c.name.length);
+    const amtStr=fmtMoney(c.amount)+' '+curr+(curr!==base?' = '+fmtMoney(inBase)+' '+base:'');
+    lines.push(c.name+':'+ ' '.repeat(pad)+amtStr);
+  });
+  const total=costs.reduce((s,c)=>s+(parseFloat(c.amount)*(parseFloat(c.rate)||1)||0),0);
+  lines.push('Разом:'+ ' '.repeat(20)+fmtMoney(total)+' '+base);
+  return lines;
 }
 
 // ============================================================
@@ -3346,8 +3469,6 @@ async function handleFileUpload(event, docId){
       <span class="mob-icon">📄</span>
       <span class="mob-label" id="mob-lbl-docs">Документи</span>
       <span class="mob-badge accent" id="mob-bdg-docs">4</span>
-      <span class="mob-icon">🏠</span>
-      <span class="mob-label">Дашборд</span>
     </button>
     <button class="mob-nav-btn" id="mob-nav-tasks" onclick="goPage('tasks')">
       <span class="mob-icon">✅</span>
