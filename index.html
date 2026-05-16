@@ -246,6 +246,57 @@ body { background: var(--bg); color: var(--text); font-family: 'IBM Plex Mono', 
 ::-webkit-scrollbar-track { background:transparent; }
 ::-webkit-scrollbar-thumb { background:var(--border); border-radius:4px; }
 
+/* ===== MODULE: DASHBOARD & DOC CARDS ===== */
+.dash-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:12px; margin-bottom:24px; }
+.dash-stat-card { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:16px 18px; box-shadow:var(--shadow); }
+.dash-stat-label { font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--muted); margin-bottom:8px; }
+.dash-stat-num { font-family:'Literata',serif; font-size:36px; font-weight:600; line-height:1; }
+.dash-stat-num.danger { color:var(--danger); }
+.dash-stat-num.warn { color:var(--warn); }
+.dash-stat-num.accent { color:var(--accent); }
+.dash-stat-sub { font-size:10px; color:var(--muted); margin-top:4px; }
+.dash-item { display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid var(--border); cursor:pointer; transition:all .15s; }
+.dash-item:last-child { border-bottom:none; }
+.dash-item:hover { opacity:.8; }
+.dash-item-ico { font-size:18px; width:30px; text-align:center; flex-shrink:0; }
+.dash-item-body { flex:1; min-width:0; }
+.dash-item-title { font-size:12px; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.dash-item-sub { font-size:10px; color:var(--muted); margin-top:1px; }
+.expiry-badge { font-size:10px; padding:2px 8px; border-radius:8px; font-weight:500; display:inline-flex; align-items:center; gap:4px; flex-shrink:0; }
+.expiry-badge.expired { background:var(--danger-light); color:var(--danger); }
+.expiry-badge.soon90 { background:var(--warn-light); color:var(--warn); }
+.expiry-badge.soon30 { background:var(--accent2-light); color:var(--accent2); }
+.expiry-badge.ok { background:var(--accent-light); color:var(--accent); }
+.doc-card { background:var(--surface); border:1px solid var(--border); border-radius:9px; padding:14px 18px; margin-bottom:8px; cursor:pointer; transition:all .2s; box-shadow:var(--shadow); display:flex; align-items:center; gap:12px; }
+.doc-card:hover { border-color:#c5c0b8; box-shadow:0 2px 10px rgba(0,0,0,0.08); }
+.doc-card-ico { font-size:22px; width:36px; text-align:center; flex-shrink:0; }
+.doc-card-body { flex:1; min-width:0; }
+.doc-card-title { font-size:13px; font-weight:500; margin-bottom:3px; }
+.doc-card-meta { font-size:10px; color:var(--muted); display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+.country-flag { font-size:14px; line-height:1; }
+.detail-header { display:flex; align-items:flex-start; gap:14px; margin-bottom:20px; padding-bottom:16px; border-bottom:1px solid var(--border); }
+.detail-ico { font-size:32px; width:50px; text-align:center; flex-shrink:0; }
+.detail-title { font-family:'Literata',serif; font-size:18px; font-weight:600; margin-bottom:4px; }
+.detail-sub { font-size:11px; color:var(--muted); display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+.doc-fields { border:1px solid var(--border); border-radius:8px; overflow:hidden; margin-bottom:16px; }
+.doc-field-row { display:flex; align-items:stretch; border-bottom:1px solid var(--border); }
+.doc-field-row:last-child { border-bottom:none; }
+.doc-field-label { font-size:10px; color:var(--muted); padding:9px 12px; background:var(--surface2); width:160px; flex-shrink:0; display:flex; align-items:center; letter-spacing:.5px; }
+.doc-field-value { font-size:12px; padding:9px 12px; flex:1; display:flex; align-items:center; gap:8px; }
+.doc-field-value input { flex:1; border:none; outline:none; font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--text); background:transparent; min-width:0; }
+.doc-field-value input::placeholder { color:var(--muted); }
+.doc-field-actions { display:flex; gap:4px; opacity:0; transition:opacity .15s; }
+.doc-field-row:hover .doc-field-actions { opacity:1; }
+.field-action-btn { background:none; border:none; cursor:pointer; font-size:12px; color:var(--muted); padding:2px 4px; border-radius:3px; }
+.field-action-btn:hover { background:var(--surface2); color:var(--text); }
+.add-field-row { display:flex; gap:8px; margin-top:10px; }
+.add-field-row input { flex:1; font-family:'IBM Plex Mono',monospace; font-size:12px; padding:6px 10px; border:1px dashed var(--border); border-radius:6px; background:transparent; color:var(--text); outline:none; }
+.add-field-row input:focus { border-color:var(--accent); border-style:solid; }
+.copy-preview { background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:14px; font-size:11px; line-height:1.9; white-space:pre-wrap; font-family:'IBM Plex Mono',monospace; color:var(--text); margin-top:12px; }
+.btn-copy { font-family:'IBM Plex Mono',monospace; font-size:11px; padding:5px 12px; border:1px solid var(--border); border-radius:6px; background:transparent; color:var(--muted); cursor:pointer; transition:all .15s; }
+.btn-copy:hover,.btn-copy.copied { background:var(--accent); color:white; border-color:var(--accent); }
+.filter-label { font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--muted); }
+
 /* ===== MOBILE NAV BAR ===== */
 .mobile-nav {
   display: none;
@@ -386,6 +437,83 @@ body { background: var(--bg); color: var(--text); font-family: 'IBM Plex Mono', 
     margin: 10px auto 0;
   }
 }
+/* ===== MODULE: DOC CARDS ===== */
+.dash-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 24px; }
+.dash-stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px 18px; box-shadow: var(--shadow); }
+.dash-stat-label { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+.dash-stat-num { font-family: 'Literata', serif; font-size: 32px; font-weight: 600; line-height: 1; }
+.dash-stat-num.danger { color: var(--danger); }
+.dash-stat-num.warn { color: var(--warn); }
+.dash-stat-num.accent { color: var(--accent); }
+.dash-stat-sub { font-size: 10px; color: var(--muted); margin-top: 4px; }
+.expiry-badge { font-size: 10px; padding: 2px 8px; border-radius: 8px; font-weight: 500; display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0; }
+.expiry-badge.expired { background: var(--danger-light); color: var(--danger); }
+.expiry-badge.soon90 { background: var(--warn-light); color: var(--warn); }
+.expiry-badge.soon30 { background: var(--accent2-light); color: var(--accent2); }
+.expiry-badge.ok { background: var(--accent-light); color: var(--accent); }
+.doc-card-new { background: var(--surface); border: 1px solid var(--border); border-radius: 9px; padding: 14px 18px; margin-bottom: 8px; cursor: pointer; transition: all .2s; box-shadow: var(--shadow); display: flex; align-items: center; gap: 12px; }
+.doc-card-new:hover { border-color: #c5c0b8; box-shadow: 0 2px 10px rgba(0,0,0,0.08); }
+.doc-card-ico { font-size: 22px; width: 36px; text-align: center; flex-shrink: 0; }
+.doc-card-body { flex: 1; min-width: 0; }
+.doc-card-title-new { font-size: 13px; font-weight: 500; margin-bottom: 3px; }
+.doc-card-meta { font-size: 10px; color: var(--muted); display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.country-flag { font-size: 14px; line-height: 1; }
+.detail-header { display: flex; align-items: flex-start; gap: 14px; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
+.detail-ico { font-size: 32px; width: 50px; text-align: center; flex-shrink: 0; }
+.detail-title-new { font-family: 'Literata', serif; font-size: 18px; font-weight: 600; margin-bottom: 4px; }
+.detail-sub { font-size: 11px; color: var(--muted); display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.doc-fields { border: 1px solid var(--border); border-radius: 8px; overflow: hidden; margin-bottom: 16px; }
+.doc-field-row { display: flex; align-items: stretch; border-bottom: 1px solid var(--border); }
+.doc-field-row:last-child { border-bottom: none; }
+.doc-field-label { font-size: 10px; color: var(--muted); padding: 9px 12px; background: var(--surface2); width: 160px; flex-shrink: 0; display: flex; align-items: center; letter-spacing: .5px; }
+.doc-field-value { font-size: 12px; padding: 9px 12px; flex: 1; display: flex; align-items: center; gap: 8px; }
+.doc-field-value input { flex: 1; border: none; outline: none; font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--text); background: transparent; min-width: 0; }
+.doc-field-value input::placeholder { color: var(--muted); }
+.doc-field-actions { display: flex; gap: 4px; opacity: 0; transition: opacity .15s; }
+.doc-field-row:hover .doc-field-actions { opacity: 1; }
+.field-action-btn { background: none; border: none; cursor: pointer; font-size: 12px; color: var(--muted); padding: 2px 4px; border-radius: 3px; }
+.field-action-btn:hover { background: var(--surface2); color: var(--text); }
+.add-field-row { display: flex; gap: 8px; margin-top: 10px; }
+.add-field-row input { flex: 1; font-family: 'IBM Plex Mono', monospace; font-size: 12px; padding: 6px 10px; border: 1px dashed var(--border); border-radius: 6px; background: transparent; color: var(--text); outline: none; }
+.add-field-row input:focus { border-color: var(--accent); border-style: solid; }
+.copy-preview { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 14px; font-size: 11px; line-height: 1.9; white-space: pre-wrap; font-family: 'IBM Plex Mono', monospace; color: var(--text); margin-top: 12px; }
+.btn-copy { background: var(--accent-light); color: var(--accent); border: 1px solid var(--accent); font-size: 11px; padding: 5px 12px; border-radius: 6px; cursor: pointer; font-family: 'IBM Plex Mono', monospace; transition: all .15s; }
+.btn-copy:hover, .btn-copy.copied { background: var(--accent); color: white; }
+.filter-label { font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); white-space: nowrap; }
+/* DASHBOARD */
+.dash-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 24px; }
+.dash-stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px 18px; box-shadow: var(--shadow); }
+.dash-stat-label { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+.dash-stat-num { font-family: 'Literata', serif; font-size: 36px; font-weight: 600; line-height: 1; }
+.dash-stat-num.danger { color: var(--danger); }
+.dash-stat-num.warn { color: var(--warn); }
+.dash-stat-num.accent { color: var(--accent); }
+.dash-stat-sub { font-size: 10px; color: var(--muted); margin-top: 4px; }
+/* DOC FIELDS */
+.detail-header { display: flex; align-items: flex-start; gap: 14px; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
+.detail-ico { font-size: 32px; width: 50px; text-align: center; flex-shrink: 0; }
+.detail-title { font-family: 'Literata', serif; font-size: 18px; font-weight: 600; margin-bottom: 4px; }
+.detail-sub { font-size: 11px; color: var(--muted); display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.doc-fields { border: 1px solid var(--border); border-radius: 8px; overflow: hidden; margin-bottom: 16px; }
+.doc-field-row { display: flex; align-items: stretch; border-bottom: 1px solid var(--border); }
+.doc-field-row:last-child { border-bottom: none; }
+.doc-field-label { font-size: 10px; color: var(--muted); padding: 9px 12px; background: var(--surface2); width: 160px; flex-shrink: 0; display: flex; align-items: center; }
+.doc-field-value { font-size: 12px; padding: 9px 12px; flex: 1; display: flex; align-items: center; gap: 8px; }
+.doc-field-value input { flex: 1; border: none; outline: none; font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--text); background: transparent; min-width: 0; }
+.doc-field-value input::placeholder { color: var(--muted); }
+.doc-field-actions { display: flex; gap: 4px; opacity: 0; transition: opacity .15s; }
+.doc-field-row:hover .doc-field-actions { opacity: 1; }
+.field-action-btn { background: none; border: none; cursor: pointer; font-size: 12px; color: var(--muted); padding: 2px 4px; border-radius: 3px; }
+.field-action-btn:hover { background: var(--surface2); color: var(--text); }
+.add-field-row { display: flex; gap: 8px; margin-top: 10px; }
+.add-field-row input { flex: 1; font-family: 'IBM Plex Mono', monospace; font-size: 12px; padding: 6px 10px; border: 1px dashed var(--border); border-radius: 6px; background: transparent; color: var(--text); outline: none; }
+.add-field-row input:focus { border-color: var(--accent); border-style: solid; }
+.expiry-badge { font-size: 10px; padding: 2px 8px; border-radius: 8px; font-weight: 500; display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0; }
+.expiry-badge.expired { background: var(--danger-light); color: var(--danger); }
+.expiry-badge.soon90 { background: var(--warn-light); color: var(--warn); }
+.expiry-badge.soon30 { background: var(--accent2-light); color: var(--accent2); }
+.expiry-badge.ok { background: var(--accent-light); color: var(--accent); }
+.country-flag { font-size: 14px; line-height: 1; }
 </style>
 </head>
 <body>
@@ -407,6 +535,7 @@ body { background: var(--bg); color: var(--text); font-family: 'IBM Plex Mono', 
   <div class="sidebar-section">
     <div class="sidebar-label" id="sl-nav">Навігація</div>
     <ul class="sidebar-nav">
+      <li><a onclick="goPage('dashboard')" id="nav-dashboard"><span class="icon">🏠</span> <span id="sl-dashboard">Дашборд</span></a></li>
       <li><a onclick="goPage('docs')" id="nav-docs"><span class="icon">📄</span> <span id="sl-docs">Документи</span> <span class="badge" id="bdg-docs">4</span></a></li>
       <li><a onclick="goPage('tasks')" id="nav-tasks"><span class="icon">✅</span> <span id="sl-tasks">Завдання</span> <span class="badge" id="bdg-tasks">5</span></a></li>
       <li><a onclick="goPage('reminders')" id="nav-reminders"><span class="icon">🔔</span> <span id="sl-reminders">Нагадування</span> <span class="badge warn" id="bdg-rem">3</span></a></li>
@@ -457,6 +586,11 @@ body { background: var(--bg); color: var(--text); font-family: 'IBM Plex Mono', 
   <div class="page-content" id="page-reminders-cal" style="display:none;padding:0;overflow-y:auto;"></div>
   <div class="page-content" id="page-team"></div>
   <div class="page-content" id="page-instances"></div>
+  <div class="page-content" id="page-dashboard">
+    <div class="dash-grid" id="dash-stats"></div>
+    <div id="dash-content"></div>
+  </div>
+  <div class="page-content" id="page-dashboard"></div>
 </main>
 </div>
 
@@ -520,6 +654,128 @@ function isAdmin(){ return team[currentUser]?.role === 'admin'; }
 
 function getDocRef(id){ const d=docs.find(x=>x.id===id); return d?d.ref:''; }
 function getDocName(id){ const d=docs.find(x=>x.id===id); return d?d.title:''; }
+
+// ============================================================
+// MODULE: COUNTRIES, CATEGORIES, FIELD TEMPLATES
+// ============================================================
+let countries = [
+  { key:'ua', flag:'🇺🇦', label:'Україна',   lang:'uk' },
+  { key:'de', flag:'🇩🇪', label:'Німеччина', lang:'de' },
+  { key:'other', flag:'🌍', label:'Інша',    lang:'uk' },
+];
+function getCountry(val){ if(!val) return { flag:'🇺🇦', label:'Україна' }; const found=countries.find(c=>c.flag+' '+c.label===val||c.key===val); return found||{ flag:val.split(' ')[0]||'🌍', label:val.split(' ').slice(1).join(' ')||val }; }
+
+// Country flags lookup table
+const COUNTRY_FLAGS = {
+  'україна':'🇺🇦','украина':'🇺🇦','ukraine':'🇺🇦',
+  'німеччина':'🇩🇪','германия':'🇩🇪','germany':'🇩🇪','deutschland':'🇩🇪',
+  'польща':'🇵🇱','польша':'🇵🇱','poland':'🇵🇱','polska':'🇵🇱',
+  'австрія':'🇦🇹','австрия':'🇦🇹','austria':'🇦🇹',
+  'швейцарія':'🇨🇭','швейцария':'🇨🇭','switzerland':'🇨🇭',
+  'чехія':'🇨🇿','чехия':'🇨🇿','czechia':'🇨🇿',
+  'словаччина':'🇸🇰','словакия':'🇸🇰','slovakia':'🇸🇰',
+  'угорщина':'🇭🇺','венгрия':'🇭🇺','hungary':'🇭🇺',
+  'румунія':'🇷🇴','румыния':'🇷🇴','romania':'🇷🇴',
+  'болгарія':'🇧🇬','болгария':'🇧🇬','bulgaria':'🇧🇬',
+  'хорватія':'🇭🇷','хорватия':'🇭🇷','croatia':'🇭🇷',
+  'сербія':'🇷🇸','сербия':'🇷🇸','serbia':'🇷🇸',
+  'франція':'🇫🇷','франция':'🇫🇷','france':'🇫🇷',
+  'іспанія':'🇪🇸','испания':'🇪🇸','spain':'🇪🇸',
+  'італія':'🇮🇹','италия':'🇮🇹','italy':'🇮🇹',
+  'португалія':'🇵🇹','португалия':'🇵🇹','portugal':'🇵🇹',
+  'нідерланди':'🇳🇱','нидерланды':'🇳🇱','netherlands':'🇳🇱',
+  'бельгія':'🇧🇪','бельгия':'🇧🇪','belgium':'🇧🇪',
+  'велика британія':'🇬🇧','великобритания':'🇬🇧','uk':'🇬🇧','united kingdom':'🇬🇧',
+  'ірландія':'🇮🇪','ирландия':'🇮🇪','ireland':'🇮🇪',
+  'швеція':'🇸🇪','швеция':'🇸🇪','sweden':'🇸🇪',
+  'норвегія':'🇳🇴','норвегия':'🇳🇴','norway':'🇳🇴',
+  'данія':'🇩🇰','дания':'🇩🇰','denmark':'🇩🇰',
+  'фінляндія':'🇫🇮','финляндия':'🇫🇮','finland':'🇫🇮',
+  'греція':'🇬🇷','греция':'🇬🇷','greece':'🇬🇷',
+  'туреччина':'🇹🇷','турция':'🇹🇷','turkey':'🇹🇷',
+  'ізраїль':'🇮🇱','израиль':'🇮🇱','israel':'🇮🇱',
+  'сша':'🇺🇸','usa':'🇺🇸','united states':'🇺🇸',
+  'канада':'🇨🇦','canada':'🇨🇦',
+  'австралія':'🇦🇺','австралия':'🇦🇺','australia':'🇦🇺',
+  'японія':'🇯🇵','япония':'🇯🇵','japan':'🇯🇵',
+  'китай':'🇨🇳','china':'🇨🇳',
+  'молдова':'🇲🇩','moldova':'🇲🇩',
+  'литва':'🇱🇹','lithuania':'🇱🇹',
+  'латвія':'🇱🇻','латвия':'🇱🇻','latvia':'🇱🇻',
+  'естонія':'🇪🇪','эстония':'🇪🇪','estonia':'🇪🇪',
+  'білорусь':'🇧🇾','беларусь':'🇧🇾','belarus':'🇧🇾',
+};
+
+function autoFillCountryFlag(input){
+  const val = input.value.trim();
+  if(!val) return;
+  if(/\p{Emoji}/u.test(val.charAt(0))) return;
+  const flag = COUNTRY_FLAGS[val.toLowerCase()];
+  if(flag) input.value = flag + ' ' + val.charAt(0).toUpperCase() + val.slice(1);
+}
+
+
+const FIELD_TEMPLATES = {
+  'ua:passport':  [{label:'Серія та номер',key:'number',placeholder:'AB 123456'},{label:'Дата видачі',key:'issue',placeholder:'дд.мм.рррр'},{label:'Дійсний до',key:'expiry',placeholder:'дд.мм.рррр'},{label:'Ким видано',key:'issuer',placeholder:'ДМС, назва відділу'},{label:'Адреса реєстрації',key:'address',placeholder:'вул. ...'},{label:'РНОКПП (ІПН)',key:'tax_id',placeholder:'1234567890'},{label:'Контакт органу',key:'contact',placeholder:'телефон, сайт'}],
+  'ua:car':       [{label:'Держ. номер',key:'plate',placeholder:'АА 1234 ВВ'},{label:'VIN',key:'vin',placeholder:'WAUZZZ...'},{label:'Марка / Модель',key:'model',placeholder:'Honda Civic'},{label:'Рік випуску',key:'year',placeholder:'2020'},{label:'Тех. паспорт №',key:'regnum',placeholder:'СХН 123456'},{label:'ОСАГО до',key:'osago',placeholder:'дд.мм.рррр'},{label:'КАСКО до',key:'kasko',placeholder:'дд.мм.рррр'},{label:'Техогляд до',key:'tech',placeholder:'дд.мм.рррр'},{label:'СТО (контакт)',key:'sto',placeholder:'назва, телефон'}],
+  'ua:property':  [{label:'Адреса',key:'address',placeholder:'вул. ...'},{label:'Кадастровий №',key:'cadastre',placeholder:'1234567890:01:...'},{label:'Площа',key:'area',placeholder:'54 м²'},{label:'Власник',key:'owner',placeholder:'ПІБ'},{label:'Договір №',key:'contract',placeholder:'...'},{label:'Нотаріус',key:'notary',placeholder:'ПІБ, контакт'},{label:'Оренда до',key:'rent_end',placeholder:'дд.мм.рррр'},{label:'Орендодавець',key:'landlord',placeholder:'ПІБ, телефон'}],
+  'ua:medical':   [{label:'№ полісу',key:'policy',placeholder:'МС-2024-...'},{label:'Страхова',key:'insurer',placeholder:'назва компанії'},{label:'Дійсний до',key:'expiry',placeholder:'дд.мм.рррр'},{label:'Гаряча лінія',key:'hotline',placeholder:'0800-...'},{label:'Сімейний лікар',key:'doctor',placeholder:'ПІБ, адреса, телефон'},{label:'Група крові',key:'blood',placeholder:'A(II) Rh+'},{label:'Алергії',key:'allergies',placeholder:'...'}],
+  'ua:finance':   [{label:'Банк',key:'bank',placeholder:'ПриватБанк'},{label:'№ рахунку',key:'account',placeholder:'UA...'},{label:'IBAN',key:'iban',placeholder:'UA...'},{label:'МФО',key:'mfo',placeholder:'305299'},{label:'Картка №',key:'card',placeholder:'•••• •••• •••• 1234'},{label:'Відділення',key:'branch',placeholder:'адреса, телефон'},{label:'Кредит до',key:'loan_end',placeholder:'дд.мм.рррр'}],
+  'ua:education': [{label:'Документ',key:'doctype',placeholder:'Диплом / Атестат'},{label:'Серія та номер',key:'number',placeholder:'...'},{label:'Дата видачі',key:'issue',placeholder:'дд.мм.рррр'},{label:'Заклад',key:'school',placeholder:'назва закладу'},{label:'Спеціальність',key:'major',placeholder:'...'},{label:'Кваліфікація',key:'degree',placeholder:'бакалавр / магістр'}],
+  'ua:legal':     [{label:'Тип документа',key:'doctype',placeholder:'Договір / Довіреність'},{label:'Номер',key:'number',placeholder:'...'},{label:'Дата',key:'date',placeholder:'дд.мм.рррр'},{label:'Дійсний до',key:'expiry',placeholder:'дд.мм.рррр'},{label:'Нотаріус',key:'notary',placeholder:'ПІБ, реєстровий №'},{label:'Сторони',key:'parties',placeholder:'...'},{label:'Суд / Орган',key:'court',placeholder:'назва, адреса'}],
+  'ua:other':     [{label:'Назва документа',key:'name',placeholder:'...'},{label:'Номер',key:'number',placeholder:'...'},{label:'Дата видачі',key:'issue',placeholder:'дд.мм.рррр'},{label:'Дійсний до',key:'expiry',placeholder:'дд.мм.рррр'},{label:'Ким видано',key:'issuer',placeholder:'...'},{label:'Контакт',key:'contact',placeholder:'телефон, адреса'}],
+  'de:passport':  [{label:'Ausweisnummer',key:'number',placeholder:'L01X00T47'},{label:'Ausstellungsdatum',key:'issue',placeholder:'TT.MM.JJJJ'},{label:'Ablaufdatum',key:'expiry',placeholder:'TT.MM.JJJJ'},{label:'Ausstellungsbehörde',key:'issuer',placeholder:'Bürgeramt ...'},{label:'Meldeadresse',key:'address',placeholder:'Musterstraße 1, 12345 Berlin'},{label:'Steuer-ID',key:'tax_id',placeholder:'12 345 678 901'},{label:'Kontakt Bürgeramt',key:'contact',placeholder:'Tel., Website'}],
+  'de:car':       [{label:'Kennzeichen',key:'plate',placeholder:'K-AB 1234'},{label:'FIN',key:'vin',placeholder:'WAUZZZ...'},{label:'Marke / Modell',key:'model',placeholder:'VW Golf'},{label:'Baujahr',key:'year',placeholder:'2020'},{label:'TÜV bis',key:'tuev',placeholder:'MM/JJJJ'},{label:'Versicherung',key:'insurer',placeholder:'HUK-Coburg, Pol.-Nr.'},{label:'Versicherung bis',key:'ins_end',placeholder:'TT.MM.JJJJ'},{label:'Zulassungsstelle',key:'office',placeholder:'Adresse, Tel.'},{label:'Werkstatt',key:'garage',placeholder:'Name, Tel.'}],
+  'de:property':  [{label:'Adresse',key:'address',placeholder:'Musterstr. 1, 12345 Berlin'},{label:'Grundbuchnummer',key:'land_reg',placeholder:'...'},{label:'Wohnfläche',key:'area',placeholder:'54 m²'},{label:'Eigentümer',key:'owner',placeholder:'Name'},{label:'Mietvertrag bis',key:'rent_end',placeholder:'TT.MM.JJJJ'},{label:'Vermieter',key:'landlord',placeholder:'Name, Tel., Email'},{label:'Hausverwaltung',key:'mgmt',placeholder:'Firma, Tel.'},{label:'Notar',key:'notary',placeholder:'Name, Kontakt'}],
+  'de:medical':   [{label:'Versicherungsnummer',key:'policy',placeholder:'A123456789'},{label:'Krankenkasse',key:'insurer',placeholder:'TK / AOK / DAK'},{label:'Versichert bis',key:'expiry',placeholder:'TT.MM.JJJJ'},{label:'Servicenummer',key:'hotline',placeholder:'0800-...'},{label:'Hausarzt',key:'doctor',placeholder:'Dr. ..., Adresse, Tel.'},{label:'Blutgruppe',key:'blood',placeholder:'A Rh+'},{label:'Allergien',key:'allergies',placeholder:'...'}],
+  'de:finance':   [{label:'Bank',key:'bank',placeholder:'Deutsche Bank / Sparkasse'},{label:'IBAN',key:'iban',placeholder:'DE89 3704 0044 ...'},{label:'BIC',key:'bic',placeholder:'COBADEFFXXX'},{label:'Kontonummer',key:'account',placeholder:'...'},{label:'Karte Nr.',key:'card',placeholder:'•••• •••• •••• 1234'},{label:'Filiale',key:'branch',placeholder:'Adresse, Tel.'},{label:'Kredit bis',key:'loan_end',placeholder:'TT.MM.JJJJ'}],
+  'de:education': [{label:'Dokument',key:'doctype',placeholder:'Zeugnis / Diplom'},{label:'Nummer',key:'number',placeholder:'...'},{label:'Ausstellungsdatum',key:'issue',placeholder:'TT.MM.JJJJ'},{label:'Bildungseinrichtung',key:'school',placeholder:'Universität / Schule'},{label:'Studiengang',key:'major',placeholder:'...'},{label:'Abschluss',key:'degree',placeholder:'Bachelor / Master'}],
+  'de:legal':     [{label:'Dokumententyp',key:'doctype',placeholder:'Vertrag / Vollmacht'},{label:'Nummer',key:'number',placeholder:'...'},{label:'Datum',key:'date',placeholder:'TT.MM.JJJJ'},{label:'Gültig bis',key:'expiry',placeholder:'TT.MM.JJJJ'},{label:'Notar',key:'notary',placeholder:'Name, Urkundenrolle'},{label:'Parteien',key:'parties',placeholder:'...'},{label:'Gericht / Behörde',key:'court',placeholder:'Name, Adresse'}],
+  'de:other':     [{label:'Dokumentenname',key:'name',placeholder:'...'},{label:'Nummer',key:'number',placeholder:'...'},{label:'Ausstellungsdatum',key:'issue',placeholder:'TT.MM.JJJJ'},{label:'Ablaufdatum',key:'expiry',placeholder:'TT.MM.JJJJ'},{label:'Ausstellende Behörde',key:'issuer',placeholder:'...'},{label:'Kontakt',key:'contact',placeholder:'Tel., Adresse'}],
+};
+function getFieldTemplate(countryKey, catKey){
+  const k=`${countryKey}:${catKey}`;
+  if(FIELD_TEMPLATES[k]) return JSON.parse(JSON.stringify(FIELD_TEMPLATES[k]));
+  const fallback=FIELD_TEMPLATES[`${countryKey}:other`]||FIELD_TEMPLATES['ua:other'];
+  return JSON.parse(JSON.stringify(fallback));
+}
+
+// Module filters state
+let docFilters = { country:'all', user:'all', cat:'all' };
+
+function expiryBadge(expiryDate){
+  if(!expiryDate)return '';
+  const days=daysFromNow(expiryDate);
+  if(days===null)return '';
+  if(days<0) return `<span class="expiry-badge expired">⚠️ Прострочено ${Math.abs(days)} дн. тому</span>`;
+  if(days<=30) return `<span class="expiry-badge soon30">⏳ Закінчується через ${days} дн.</span>`;
+  if(days<=90) return `<span class="expiry-badge soon90">📅 Дійсний ще ${days} дн.</span>`;
+  return `<span class="expiry-badge ok">✓ до ${fmtDate(expiryDate)}</span>`;
+}
+
+function getCat(key){ return DOC_CATEGORIES[key]||{icon:'📦',label:'Інше'}; }
+
+function getFilteredDocs(){
+  return docs.filter(d=>{
+    const docCountry = d.country || '🇺🇦 Україна';
+    if(docFilters.country!=='all' && docCountry!==docFilters.country) return false;
+    if(docFilters.user!=='all' && String(d.assignees?.[0])!==docFilters.user) return false;
+    if(docFilters.cat!=='all' && d.type!==docFilters.cat) return false;
+    return true;
+  });
+}
+
+// ============================================================
+// COUNTRIES & FIELD TEMPLATES
+// ============================================================
+
+function getFieldTemplate(countryKey, catKey){
+  const k=`${countryKey}:${catKey}`;
+  if(FIELD_TEMPLATES[k]) return JSON.parse(JSON.stringify(FIELD_TEMPLATES[k]));
+  const fallback=FIELD_TEMPLATES[`${countryKey}:other`]||FIELD_TEMPLATES['ua:other'];
+  return JSON.parse(JSON.stringify(fallback));
+}
+
 const DOC_CATEGORIES = {
   passport: { label:'Паспорти та ID',      icon:'🛂' },
   property: { label:'Нерухомість',          icon:'🏠' },
@@ -716,6 +972,10 @@ function renderCurrent(){
     const el=document.getElementById('page-instances');
     el.style.display='block'; el.classList.add('active');
     renderInstances();
+  } else if(currentPage==='dashboard'){
+    const el=document.getElementById('page-dashboard');
+    el.style.display='block'; el.classList.add('active');
+    renderDashboard();
   }
 }
 
@@ -782,13 +1042,11 @@ function docChip(docId){
 // DOCS PAGE
 // ============================================================
 function renderDocs(){
-  // filterbar
-  const fb=document.getElementById('filterbar');
-  fb.innerHTML=['all','active','urgent','waiting','done'].map(f=>`<button class="filter-chip ${currentFilter===f?'active':''}" onclick="setFilter('${f}',this)">${t(f)}</button>`).join('');
+  renderDocFilters();
 
   const q=document.getElementById('search-inp').value.toLowerCase();
-  const filtered=docs.filter(d=>{
-    if(q&&!d.title.toLowerCase().includes(q)&&!d.ref.toLowerCase().includes(q))return false;
+  const filtered=getFilteredDocs().filter(d=>{
+    if(q&&!d.title.toLowerCase().includes(q))return false;
     return currentFilter==='all'||d.status===currentFilter;
   });
 
@@ -804,12 +1062,13 @@ function renderDocs(){
       return `<div class="stage-dot ${dc}"></div>${si<doc.stages.length-1?`<div class="stage-line ${lc}"></div>`:''}`;
     }).join('');
     const statusLabel={active:t('active'),urgent:t('urgent'),waiting:t('waiting'),done:t('done')};
+    const country=getCountry(doc.country||'ua');
     return `<div class="card" onclick="openDocDetail('${doc.id}')" style="animation-delay:${i*.04}s">
       <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:10px">
         <div style="font-size:22px;width:34px;text-align:center">${DOC_CATEGORIES[doc.type]?.icon||'📄'}</div>
         <div style="flex:1;min-width:0">
           <div style="font-family:'Literata',serif;font-size:14px;font-weight:600;margin-bottom:2px">${doc.title}</div>
-          <div style="font-size:10px;color:var(--muted)">${DOC_CATEGORIES[doc.type]?.label||''} ${doc.docNumber?'· №'+doc.docNumber:''}</div>
+          <div style="font-size:10px;color:var(--muted)">${country.flag} ${DOC_CATEGORIES[doc.type]?.label||''} ${doc.docNumber?'· №'+doc.docNumber:''}</div>
         </div>
         <span class="chip chip-${doc.status}">${statusLabel[doc.status]}</span>
       </div>
@@ -817,7 +1076,7 @@ function renderDocs(){
       <div style="font-size:10px;color:var(--muted);margin-bottom:10px;display:flex;gap:12px;flex-wrap:wrap">
         <span style="color:var(--accent);font-weight:500">▶ ${cur?cur.name:'—'}</span>
         <span>${done}/${doc.stages.length} кроків</span>
-        ${doc.validUntil?`<span style="color:var(--danger)">⏱ до ${fmtShort(doc.validUntil)}</span>`:''}
+        ${doc.validUntil?expiryBadge(doc.validUntil):''}
         ${doc.deadline&&!doc.validUntil?`<span style="color:var(--warn)">📅 ${fmtShort(doc.deadline)}</span>`:''}
       </div>
       <div style="display:flex;align-items:center;gap:10px;padding-top:10px;border-top:1px solid var(--border)">
@@ -1042,122 +1301,170 @@ function openRemDetail(id){ openRemForm(id); }
 // ============================================================
 // DOC FORM
 // ============================================================
+function renderDocDetail(id){
+  const doc=docs.find(d=>d.id===id);
+  if(!doc) return;
+  const statusLabel={active:t('active'),urgent:t('urgent'),waiting:t('waiting'),done:t('done')};
+  const tl=doc.stages.map((s,si)=>{
+    const dc=s.status==='done'?'done':s.status==='current'?'current':'';
+    const isDone=s.status==='done';
+    const editBtns=isDone?`
+      <div style="display:flex;gap:6px;margin-top:6px">
+        <button class="btn btn-ghost btn-sm" onclick="editStageResult('${id}',${si})" style="font-size:10px">✏️ Редагувати</button>
+        ${si>0?`<button class="btn btn-ghost btn-sm" onclick="revertStage('${id}',${si})" style="font-size:10px;color:var(--warn)">↩ Повернути</button>`:''}
+      </div>`
+      : s.status==='current' ? `
+      <div style="margin-top:6px">
+        <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);cursor:pointer">
+          <input type="checkbox" ${s.isFinal?'checked':''} onchange="toggleFinalStep('${id}',${si})" style="accent-color:var(--accent)">
+          Це фінальний крок
+        </label>
+      </div>` : '';
+    return `<div class="tl-item">
+      <div class="tl-dot ${dc}"></div>
+      <div class="tl-body">
+        <div class="tl-name ${dc==='current'?'current':''}">${s.name}</div>
+        ${s.inst?`<div class="tl-inst">📍 ${s.inst}</div>`:''}
+        <div class="tl-result ${s.result?'':'pending'}">${s.result||'Результат не зафіксовано'}</div>
+        ${s.date?`<div class="tl-date">📅 ${s.status==='done'?'Завершено':'Дата початку'}: ${fmtDate(s.date)}</div>`:''}
+        ${s.expectedDate&&s.status!=='done'?`<div class="tl-date" style="color:var(--warn)">⏱ Очікується: ${fmtDate(s.expectedDate)}</div>`:''}
+        ${editBtns}
+      </div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('modal-title').textContent=doc.title;
+  document.getElementById('modal-body').innerHTML=`
+    <div class="modal-sec">
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap">
+        <span style="font-size:20px">${DOC_CATEGORIES[doc.type]?.icon||'📄'}</span>
+        <span class="chip chip-${doc.status}">${statusLabel[doc.status]}</span>
+        ${doc.validUntil?`<span style="font-size:11px;color:var(--danger)">⏱ Дійсний до: ${fmtDate(doc.validUntil)}</span>`:''}
+        ${doc.deadline?`<span style="font-size:11px;color:var(--warn)">📅 Дедлайн: ${fmtDate(doc.deadline)}</span>`:''}
+        <button class="btn btn-ghost btn-sm" onclick="deleteDoc('${id}')" style="margin-left:auto;color:var(--danger)">🗑</button>
+      </div>
+      ${doc.docNumber||doc.issuedBy||doc.issuedDate?`
+      <div style="background:var(--surface2);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:11px;display:flex;flex-wrap:wrap;gap:12px">
+        ${doc.docNumber?`<span>📋 №${doc.docNumber}</span>`:''}
+        ${doc.issuedBy?`<span>🏛 ${doc.issuedBy}</span>`:''}
+        ${doc.issuedDate?`<span>📅 Видано: ${fmtDate(doc.issuedDate)}</span>`:''}
+      </div>`:''}
+      <div class="modal-sec-title">Кроки</div>
+      <div class="timeline">${tl}</div>
+      <button class="btn btn-ghost btn-sm" style="margin-top:8px" onclick="addStepToDoc('${id}')">+ Додати крок</button>
+    </div>
+    <div class="modal-sec">
+      <div class="modal-sec-title">Результат кроку</div>
+      <div class="form-group">
+        <label class="form-label">Що зроблено</label>
+        <textarea class="form-ta" id="stage-res" placeholder="Запишіть що зробили..."></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Організація (необов'язково)</label>
+        <datalist id="inst-list-stage">${instances.map(i=>`<option value="${i.name}">`).join('')}</datalist>
+        <input class="form-input" list="inst-list-stage" id="stage-next-inst" placeholder="Вибери або введи...">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Очікувана дата завершення кроку (необов'язково)</label>
+        <input type="date" class="form-input" id="stage-next-deadline">
+      </div>
+      <div class="form-group">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+          <label class="form-label" style="margin:0">🔔 Нагадування для наступного кроку</label>
+          <button type="button" onclick="addRemRow('doc-stage-rem-rows')" style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--accent);background:none;border:none;cursor:pointer">+ Додати</button>
+        </div>
+        <div id="doc-stage-rem-rows"></div>
+      </div>
+      <button class="btn btn-primary" onclick="saveStageResult('${id}')">Зберегти</button>
+    </div>
+    <div class="modal-sec">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div class="modal-sec-title" style="margin:0">📋 Поля документа</div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <datalist id="country-list-detail">
+            ${countries.map(c=>`<option value="${c.flag} ${c.label}">${c.flag} ${c.label}</option>`).join('')}
+          </datalist>
+          <input class="form-input" list="country-list-detail" style="font-size:11px;padding:3px 8px;width:160px" 
+            value="${doc.country||'🇺🇦 Україна'}" placeholder="ua / de / ..."
+            onblur="autoFillCountryFlag(this); updateDocCountry('${id}',this.value)"
+            onchange="autoFillCountryFlag(this); updateDocCountry('${id}',this.value)">
+        </div>
+      </div>
+      ${(doc.fields&&doc.fields.length)?`
+      <div class="doc-fields">
+        ${doc.fields.map((f,fi)=>`
+          <div class="doc-field-row">
+            <div class="doc-field-label">${f.label}</div>
+            <div class="doc-field-value">
+              <input type="text" value="${(f.value||'').replace(/"/g,'&quot;')}" placeholder="${f.placeholder||'—'}"
+                onchange="updateField('${id}',${fi},this.value)" onblur="updateField('${id}',${fi},this.value)">
+              <div class="doc-field-actions">
+                <button class="field-action-btn" onclick="renameField('${id}',${fi})" title="Перейменувати">✏️</button>
+                <button class="field-action-btn" onclick="removeField('${id}',${fi})" title="Видалити" style="color:var(--danger)">✕</button>
+              </div>
+            </div>
+          </div>`).join('')}
+      </div>`:`<div style="font-size:11px;color:var(--muted);margin-bottom:10px">Поля не заповнені</div>`}
+      <div class="add-field-row">
+        <input type="text" id="new-field-label-${id}" placeholder="Назва нового поля...">
+        <button class="btn btn-ghost btn-sm" onclick="addField('${id}')">+ Поле</button>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;margin-top:12px">
+        <button id="copy-btn-${id}" class="btn-copy" onclick="copyDocFields('${id}')">📋 Скопіювати</button>
+      </div>
+      <div class="copy-preview" id="copy-preview-${id}" style="display:none"></div>
+    </div>
+    <div class="modal-sec">
+      <div class="modal-sec-title">Вкладення (${(doc.files||[]).length})</div>
+      <div id="attach-list">${renderAttachList(doc)}</div>
+      <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+        <label class="btn btn-ghost btn-sm" style="cursor:pointer">
+          📎 Завантажити файл
+          <input type="file" style="display:none" multiple onchange="handleFileUpload(event,'${id}')">
+        </label>
+        <button class="btn btn-ghost btn-sm" onclick="openAddLink('${id}')">🔗 Додати посилання</button>
+      </div>
+    </div>
+    <div class="modal-sec">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div class="modal-sec-title" style="margin:0">🔔 Нагадування (${reminders.filter(r=>r.docId===id).length})</div>
+        <button type="button" onclick="addRemRow('fd-rem-rows')" style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--accent);background:none;border:none;cursor:pointer">+ Додати</button>
+      </div>
+      <div style="margin-bottom:10px">
+        ${reminders.filter(r=>r.docId===id).map(r=>`
+          <div style="display:flex;align-items:center;gap:8px;padding:7px 10px;border:1px solid var(--border);border-radius:7px;margin-bottom:6px;background:var(--surface2);font-size:11px">
+            <span>${r.done?'✅':'🔔'}</span>
+            <span style="flex:1">${r.title}</span>
+            <span style="color:var(--muted)">${fmtDate(r.date)}</span>
+          </div>`).join('')}
+      </div>
+      <div id="fd-rem-rows"></div>
+      <div id="doc-rem-save" style="display:none">
+        <button class="btn btn-primary btn-sm" onclick="saveDocReminders('${id}')">Зберегти нагадування</button>
+      </div>
+    </div>`;
+}
+
 function openDocForm(id){
   modalMode='doc';
-  const doc=id?docs.find(d=>d.id===id):null;
-  document.getElementById('modal-title').textContent=doc?doc.title:'Новий документ';
   document.getElementById('overlay').style.display='flex';
 
-  if(doc){
-    const cur=doc.stages[doc.currentStage];
-    const statusLabel={active:t('active'),urgent:t('urgent'),waiting:t('waiting'),done:t('done')};
-    const tl=doc.stages.map((s,si)=>{
-      const dc=s.status==='done'?'done':s.status==='current'?'current':'';
-      const isDone=s.status==='done';
-      const editBtns=isDone?`
-        <div style="display:flex;gap:6px;margin-top:6px">
-          <button class="btn btn-ghost btn-sm" onclick="editStageResult('${id}',${si})" style="font-size:10px">✏️ Редагувати</button>
-          ${si>0?`<button class="btn btn-ghost btn-sm" onclick="revertStage('${id}',${si})" style="font-size:10px;color:var(--warn)">↩ Повернути</button>`:''}
-        </div>`
-        : s.status==='current' ? `
-        <div style="margin-top:6px">
-          <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);cursor:pointer">
-            <input type="checkbox" ${s.isFinal?'checked':''} onchange="toggleFinalStep('${id}',${si})" style="accent-color:var(--accent)">
-            Це фінальний крок
-          </label>
-        </div>` : '';
-      return `<div class="tl-item">
-        <div class="tl-dot ${dc}"></div>
-        <div class="tl-body">
-          <div class="tl-name ${dc==='current'?'current':''}">${s.name}</div>
-          <div class="tl-inst">📍 ${s.inst}</div>
-          <div class="tl-result ${s.result?'':'pending'}" id="stage-result-${si}">${s.result||'Результат не зафіксовано'}</div>
-          ${s.date?`<div class="tl-date">📅 ${s.status==='done'?'Завершено':'Дата початку'}: ${fmtDate(s.date)}</div>`:''}
-          ${s.expectedDate&&s.status!=='done'?`<div class="tl-date" style="color:var(--warn)">⏱ Очікується: ${fmtDate(s.expectedDate)}</div>`:''}
-          ${editBtns}
-        </div>
-      </div>`;
-    }).join('');
-
-    document.getElementById('modal-body').innerHTML=`
-      <div class="modal-sec">
-        <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap">
-          <span style="font-size:20px">${DOC_CATEGORIES[doc.type]?.icon||'📄'}</span>
-          <span class="chip chip-${doc.status}">${statusLabel[doc.status]}</span>
-          ${doc.validUntil?`<span style="font-size:11px;color:var(--danger)">⏱ Дійсний до: ${fmtDate(doc.validUntil)}</span>`:''}
-          ${doc.deadline?`<span style="font-size:11px;color:var(--warn)">📅 Дедлайн: ${fmtDate(doc.deadline)}</span>`:''}
-          <button class="btn btn-ghost btn-sm" onclick="deleteDoc('${id}')" style="margin-left:auto;color:var(--danger)">🗑</button>
-        </div>
-        ${doc.docNumber||doc.issuedBy||doc.issuedDate?`
-        <div style="background:var(--surface2);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:11px;display:flex;flex-wrap:wrap;gap:12px">
-          ${doc.docNumber?`<span>📋 <b>№</b> ${doc.docNumber}</span>`:''}
-          ${doc.issuedBy?`<span>🏛 ${doc.issuedBy}</span>`:''}
-          ${doc.issuedDate?`<span>📅 Видано: ${fmtDate(doc.issuedDate)}</span>`:''}
-        </div>`:''}
-        <div class="modal-sec-title">Кроки</div>
-        <div class="timeline">${tl}</div>
-        <button class="btn btn-ghost btn-sm" style="margin-top:8px" onclick="addStepToDoc('${id}')">+ Додати крок</button>
-      </div>
-      <div class="modal-sec">
-        <div class="modal-sec-title">Результат кроку</div>
-        <div class="form-group">
-          <label class="form-label">Що зроблено</label>
-          <textarea class="form-ta" id="stage-res" placeholder="Запишіть що зробили..."></textarea>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Організація (необов'язково)</label>
-          <datalist id="inst-list-stage">${instances.map(i=>`<option value="${i.name}">`).join('')}</datalist>
-          <input class="form-input" list="inst-list-stage" id="stage-next-inst" placeholder="Вибери або введи...">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Очікувана дата завершення кроку (необов'язково)</label>
-          <input type="date" class="form-input" id="stage-next-deadline">
-        </div>
-        <div class="form-group">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-            <label class="form-label" style="margin:0">🔔 Нагадування для наступного етапу</label>
-            <button type="button" onclick="addDocRemRow()" style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--accent);background:none;border:none;cursor:pointer">+ Додати</button>
-          </div>
-          <div id="fd-rem-rows"></div>
-        </div>
-        <button class="btn btn-primary" onclick="saveStageResult('${id}')">Зберегти</button>
-      </div>
-      <div class="modal-sec">
-        <div class="modal-sec-title">Вкладення (${(doc.files||[]).length})</div>
-        <div id="attach-list">${renderAttachList(doc)}</div>
-        <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
-          <label class="btn btn-ghost btn-sm" style="cursor:pointer">
-            📎 Завантажити файл
-            <input type="file" style="display:none" multiple onchange="handleFileUpload(event,'${id}')">
-          </label>
-          <button class="btn btn-ghost btn-sm" onclick="openAddLink('${id}')">🔗 Додати посилання</button>
-        </div>
-      </div>
-      <div class="modal-sec">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-          <div class="modal-sec-title" style="margin:0">🔔 Нагадування (${reminders.filter(r=>r.docId===id).length})</div>
-          <button type="button" onclick="addDocRemRow()" style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--accent);background:none;border:none;cursor:pointer">+ Додати</button>
-        </div>
-        <div style="margin-bottom:10px">
-          ${reminders.filter(r=>r.docId===id).map(r=>`
-            <div style="display:flex;align-items:center;gap:8px;padding:7px 10px;border:1px solid var(--border);border-radius:7px;margin-bottom:6px;background:var(--surface2);font-size:11px">
-              <span>${r.done?'✅':'🔔'}</span>
-              <span style="flex:1">${r.title}</span>
-              <span style="color:var(--muted)">${fmtDate(r.date)}</span>
-            </div>`).join('')}
-        </div>
-        <div id="fd-rem-rows"></div>
-        <div id="doc-rem-save" style="display:none">
-          <button class="btn btn-primary btn-sm" onclick="saveDocReminders('${id}')">Зберегти нагадування</button>
-        </div>
-      </div>`;
+  if(id){
+    renderDocDetail(id);
   } else {
+    document.getElementById('modal-title').textContent='Новий документ';
     document.getElementById('modal-body').innerHTML=`
       <div class="form-group"><label class="form-label">Назва документа</label><input class="form-input" id="fd-title" placeholder="Паспорт, Страховка, Договір оренди..."></div>
       <div class="form-group"><label class="form-label">Категорія</label>
         <select class="form-select" id="fd-type">
           ${Object.entries(DOC_CATEGORIES).map(([k,v])=>`<option value="${k}">${v.icon} ${v.label}</option>`).join('')}
         </select>
+      </div>
+      <div class="form-group"><label class="form-label">Країна</label>
+        <datalist id="country-list">
+          ${countries.map(c=>`<option value="${c.flag} ${c.label}">${c.flag} ${c.label}</option>`).join('')}
+        </datalist>
+        <input class="form-input" list="country-list" id="fd-country" placeholder="🇺🇦 ua / 🇩🇪 de / або напишіть свою..." onblur="autoFillCountryFlag(this)">
       </div>
       <div class="form-row">
         <div class="form-group"><label class="form-label">Номер документа</label><input class="form-input" id="fd-docnum" placeholder="Серія та номер..."></div>
@@ -1193,7 +1500,7 @@ function openDocForm(id){
       <div class="form-group">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
           <label class="form-label" style="margin:0">🔔 Нагадування</label>
-          <button type="button" onclick="addDocRemRow()" style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--accent);background:none;border:none;cursor:pointer">+ Додати</button>
+          <button type="button" onclick="addRemRow('fd-rem-rows')" style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--accent);background:none;border:none;cursor:pointer">+ Додати</button>
         </div>
         <div id="fd-rem-rows">
           <div class="fd-rem-row" style="display:flex;gap:8px;align-items:center;margin-bottom:7px">
@@ -1239,23 +1546,25 @@ function removeStepRow(btn){
   btn.closest('.fd-step-row').remove();
 }
 
-function addDocRemRow(){
+function addRemRow(containerId){
   const row=document.createElement('div');
   row.className='fd-rem-row';
   row.style.cssText='display:flex;gap:8px;align-items:center;margin-bottom:7px';
   row.innerHTML=`
     <select class="form-select" style="flex:1;font-size:12px" onchange="fdRemTypeChange(this)">
+      <option value="valid">За N днів до закінчення терміну</option>
       <option value="days">За N днів до дедлайну</option>
       <option value="date">Конкретна дата</option>
     </select>
     <input type="number" class="form-input fd-rem-days" min="1" max="365" value="7" style="width:70px;font-size:12px">
     <input type="date" class="form-input fd-rem-date" style="display:none;font-size:12px">
     <button type="button" onclick="this.closest('.fd-rem-row').remove()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px;padding:0 4px">✕</button>`;
-  const rows=document.getElementById('fd-rem-rows');
-  if(rows) rows.appendChild(row);
+  const container=document.getElementById(containerId||'fd-rem-rows');
+  if(container) container.appendChild(row);
   const saveBtn=document.getElementById('doc-rem-save');
   if(saveBtn) saveBtn.style.display='block';
 }
+function addDocRemRow(){ addRemRow('fd-rem-rows'); }
 
 function saveDocReminders(docId){
   const doc=docs.find(d=>d.id===docId);
@@ -1284,7 +1593,7 @@ function saveDocReminders(docId){
   if(hasError){ alert('Дата нагадування має бути раніше дедлайну!'); return; }
   megaSaveData();
   showToast('🔔 Нагадування збережено');
-  openDocForm(docId);
+  renderDocDetail(docId);
 }
 
 function fdRemTypeChange(sel){
@@ -1460,7 +1769,7 @@ function addStepToDoc(docId){
   doc.stages.forEach(s=>s.isFinal=false);
   doc.stages.push({name:name.trim(),inst:'',date:null,result:null,status:'pending',isFinal:true});
   renderDocs(); megaSaveData();
-  openDocForm(docId);
+  renderDocDetail(docId);
   showToast('📋 Крок додано');
 }
 
@@ -1491,7 +1800,7 @@ function saveStageResult(docId){
   // Validate reminders against next deadline or doc deadline
   const checkDeadline=nextDeadline||doc.deadline||'';
   let remError=false;
-  document.querySelectorAll('.fd-rem-row').forEach(row=>{
+  document.querySelectorAll('#doc-stage-rem-rows .fd-rem-row').forEach(row=>{
     const type=row.querySelector('select').value;
     if(type==='date'){
       const rd=row.querySelector('.fd-rem-date').value;
@@ -1516,7 +1825,7 @@ function saveStageResult(docId){
 
     // Create reminders for next stage
     const assigneeIdx=doc.assignees[0]||0;
-    document.querySelectorAll('.fd-rem-row').forEach(row=>{
+    document.querySelectorAll('#doc-stage-rem-rows .fd-rem-row').forEach(row=>{
       const type=row.querySelector('select').value;
       let remDate=null;
       if(type==='date'){
@@ -1536,7 +1845,7 @@ function saveStageResult(docId){
   renderDocs(); megaSaveData();
   showToast('✅ Результат збережено');
   // Update modal content without closing
-  openDocForm(docId);
+  renderDocDetail(docId);
 }
 
 function saveDoc(){
@@ -1551,6 +1860,9 @@ function saveDoc(){
   const docNumber=document.getElementById('fd-docnum')?.value.trim()||'';
   const assigneeIdx=parseInt(document.getElementById('fd-assignee').value);
   const type=document.getElementById('fd-type').value;
+
+  const country=document.getElementById('fd-country')?.value||'🇺🇦 Україна';
+  const countryKey=countries.find(ct=>ct.flag+' '+ct.label===country)?.key||'ua'; const fields=getFieldTemplate(countryKey, type).map(f=>({...f, value:''}));
 
   // Build stages from form
   const stepRows=document.querySelectorAll('.fd-step-row');
@@ -1569,6 +1881,7 @@ function saveDoc(){
 
   docs.unshift({id,title,
     docNumber, issuedBy, issuedDate, validUntil,
+    country, fields,
     ref:`${new Date().getFullYear()}-${String(new Date().getMonth()+1).padStart(2,'0')}-${title}`,
     type, status:'active', deadline, assignees:[assigneeIdx], attachments:0, files:[], currentStage:0,
     stages
@@ -1599,7 +1912,7 @@ function saveDoc(){
   if(remError){ alert('Дата нагадування має бути раніше дати завершення!'); return; }
 
   renderDocs(); showToast('📄 Документ створено');
-  openDocForm(id);
+  renderDocDetail(id);
 }
 
 // ============================================================
@@ -1629,7 +1942,7 @@ function openTaskForm(id, defaultStatus='todo'){
     ${!tk?`<div class="form-group">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
         <label class="form-label" style="margin:0">🔔 Нагадування</label>
-        <button type="button" onclick="addDocRemRow()" style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--accent);background:none;border:none;cursor:pointer">+ Додати</button>
+        <button type="button" onclick="addRemRow('fd-rem-rows')" style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--accent);background:none;border:none;cursor:pointer">+ Додати</button>
       </div>
       <div id="fd-rem-rows">
         <div class="fd-rem-row" style="display:flex;gap:8px;align-items:center;margin-bottom:7px">
@@ -1932,6 +2245,202 @@ function fmtFileSize(bytes){
   if(bytes<1024) return bytes+'B';
   if(bytes<1048576) return Math.round(bytes/1024)+'KB';
   return (bytes/1048576).toFixed(1)+'MB';
+}
+
+// ============================================================
+// DASHBOARD
+// ============================================================
+function renderDashboard(){
+  document.getElementById('filterbar').innerHTML='';
+  document.getElementById('view-toggle').style.display='none';
+
+  const expired = docs.filter(d=>d.validUntil&&daysFromNow(d.validUntil)<0);
+  const soon30  = docs.filter(d=>d.validUntil&&daysFromNow(d.validUntil)>=0&&daysFromNow(d.validUntil)<=30);
+  const soon90  = docs.filter(d=>d.validUntil&&daysFromNow(d.validUntil)>30&&daysFromNow(d.validUntil)<=90);
+  const ok      = docs.filter(d=>!d.validUntil||(daysFromNow(d.validUntil)!==null&&daysFromNow(d.validUntil)>90));
+
+  document.getElementById('dash-stats').innerHTML=`
+    <div class="dash-stat-card" id="sc-expired" style="border-left:3px solid var(--danger);${expired.length?'cursor:pointer':''}">
+      <div class="dash-stat-label">⚠️ Прострочені</div>
+      <div class="dash-stat-num danger">${expired.length}</div>
+      <div class="dash-stat-sub">${expired.length?'↓ Натисніть щоб побачити':'Все гаразд'}</div>
+    </div>
+    <div class="dash-stat-card" id="sc-soon30" style="border-left:3px solid var(--accent2);${soon30.length?'cursor:pointer':''}">
+      <div class="dash-stat-label">⏳ До 30 днів</div>
+      <div class="dash-stat-num" style="color:var(--accent2)">${soon30.length}</div>
+      <div class="dash-stat-sub">${soon30.length?'↓ Натисніть щоб побачити':'Все гаразд'}</div>
+    </div>
+    <div class="dash-stat-card" id="sc-soon90" style="border-left:3px solid var(--warn);${soon90.length?'cursor:pointer':''}">
+      <div class="dash-stat-label">📅 До 90 днів</div>
+      <div class="dash-stat-num warn">${soon90.length}</div>
+      <div class="dash-stat-sub">${soon90.length?'↓ Натисніть щоб побачити':'Все гаразд'}</div>
+    </div>
+    <div class="dash-stat-card" id="sc-ok" style="border-left:3px solid var(--accent);cursor:pointer">
+      <div class="dash-stat-label">✅ Все гаразд</div>
+      <div class="dash-stat-num accent">${ok.length}</div>
+      <div class="dash-stat-sub">${ok.length?'↓ Натисніть щоб побачити':'Немає'}</div>
+    </div>
+    <div class="dash-stat-card" style="border-left:3px solid var(--muted)">
+      <div class="dash-stat-label">📄 Всього</div>
+      <div class="dash-stat-num" style="color:var(--muted)">${docs.length}</div>
+    </div>`;
+
+  function dashSection(id, color, title, count){
+    return `<div id="${id}" style="margin:18px 0 10px;display:flex;align-items:center;gap:8px">
+      <div style="font-size:13px;font-weight:500;color:${color};white-space:nowrap">${title}</div>
+      <div style="font-size:11px;background:${color}22;color:${color};padding:1px 8px;border-radius:8px">${count}</div>
+      <div style="flex:1;height:1px;background:var(--border)"></div></div>`;
+  }
+  function dashCard(d, borderColor){
+    const cat=DOC_CATEGORIES[d.type]||{icon:'📄',label:'Інше'};
+    const country=getCountry(d.country||'ua');
+    return `<div class="card" onclick="openDocDetail('${d.id}')" style="border-left:3px solid ${borderColor};cursor:pointer">
+      <div style="display:flex;align-items:center;gap:12px">
+        <span style="font-size:20px">${cat.icon}</span>
+        <div style="flex:1"><div style="font-size:13px;font-weight:500">${d.title}</div>
+        <div style="font-size:10px;color:var(--muted)">${country.flag} ${country.label} · ${cat.label}</div></div>
+        ${d.validUntil?expiryBadge(d.validUntil):'<span class="expiry-badge ok">✓ Безстроковий</span>'}
+      </div></div>`;
+  }
+
+  let html='';
+  if(expired.length) html += dashSection('list-expired','var(--danger)','⚠️ Прострочені',expired.length) + expired.map(d=>dashCard(d,'var(--danger)')).join('');
+  if(soon30.length)  html += dashSection('list-soon30','var(--accent2)','⏳ До 30 днів',soon30.length)   + soon30.map(d=>dashCard(d,'var(--accent2)')).join('');
+  if(soon90.length)  html += dashSection('list-soon90','var(--warn)','📅 До 90 днів',soon90.length)      + soon90.map(d=>dashCard(d,'var(--warn)')).join('');
+  if(ok.length)      html += dashSection('list-ok','var(--accent)','✅ Все гаразд',ok.length)            + ok.map(d=>dashCard(d,'var(--accent)')).join('');
+  if(!docs.length)   html  = `<div style="text-align:center;padding:30px;color:var(--muted)"><div style="font-size:32px;margin-bottom:8px">🗂️</div><p>Документів немає</p></div>`;
+  document.getElementById('dash-content').innerHTML=html;
+
+  const g=id=>document.getElementById(id);
+  if(expired.length) g('sc-expired').onclick=()=>g('list-expired')?.scrollIntoView({behavior:'smooth'});
+  if(soon30.length)  g('sc-soon30').onclick =()=>g('list-soon30')?.scrollIntoView({behavior:'smooth'});
+  if(soon90.length)  g('sc-soon90').onclick =()=>g('list-soon90')?.scrollIntoView({behavior:'smooth'});
+  if(ok.length)      g('sc-ok').onclick     =()=>g('list-ok')?.scrollIntoView({behavior:'smooth'});
+}
+
+// ============================================================
+// DOC FILTERS (extended)
+// ============================================================
+function renderDocFilters(){
+  const fb=document.getElementById('filterbar');
+  fb.innerHTML=`
+    <span class="filter-label">Статус:</span>
+    ${['all','active','urgent','waiting','done'].map(f=>`<button class="filter-chip ${currentFilter===f?'active':''}" onclick="setFilter('${f}',this)">${t(f)}</button>`).join('')}
+    <div style="width:1px;height:18px;background:var(--border);margin:0 4px"></div>
+    <span class="filter-label">Країна:</span>
+    <button class="filter-chip ${docFilters.country==='all'?'active':''}" onclick="setDocFilter('country','all',this)">Всі</button>
+    ${countries.map(c=>`<button class="filter-chip ${docFilters.country===c.flag+' '+c.label?'active':''}" onclick="setDocFilter('country','${c.flag} ${c.label}',this)">${c.flag} ${c.label}</button>`).join('')}
+    <div style="width:1px;height:18px;background:var(--border);margin:0 4px"></div>
+    <span class="filter-label">Особа:</span>
+    <button class="filter-chip ${docFilters.user==='all'?'active':''}" onclick="setDocFilter('user','all',this)">Всі</button>
+    ${team.filter(m=>m.active).map(m=>`<button class="filter-chip ${docFilters.user===String(m.id)?'active':''}" onclick="setDocFilter('user','${m.id}',this)">${m.name}</button>`).join('')}`;
+}
+
+function setDocFilter(type, val, el){
+  docFilters[type]=val;
+  document.querySelectorAll('.filterbar .filter-chip').forEach(c=>{
+    if(c.onclick?.toString().includes('setDocFilter')) c.classList.remove('active');
+  });
+  el.classList.add('active');
+  renderDocs();
+}
+
+// ============================================================
+// FIELD OPERATIONS (from module)
+// ============================================================
+function updateField(docId, idx, value){
+  const doc=docs.find(d=>d.id===docId);
+  if(doc&&doc.fields&&doc.fields[idx]) doc.fields[idx].value=value;
+  megaSaveData();
+}
+
+function renameField(docId, idx){
+  const doc=docs.find(d=>d.id===docId);
+  if(!doc)return;
+  const f=doc.fields[idx];
+  const newLabel=prompt('Нова назва поля:', f.label);
+  if(!newLabel||!newLabel.trim())return;
+  f.label=newLabel.trim();
+  megaSaveData();
+  renderDocDetail(docId);
+}
+
+function removeField(docId, idx){
+  const doc=docs.find(d=>d.id===docId);
+  if(!doc)return;
+  if(!confirm(`Видалити поле "${doc.fields[idx].label}"?`))return;
+  doc.fields.splice(idx,1);
+  megaSaveData();
+  renderDocDetail(docId);
+}
+
+function addField(docId){
+  const doc=docs.find(d=>d.id===docId);
+  if(!doc)return;
+  const label=document.getElementById(`new-field-label-${docId}`)?.value.trim();
+  if(!label){alert('Введіть назву поля');return;}
+  if(!doc.fields) doc.fields=[];
+  doc.fields.push({label, key:'custom_'+Date.now(), value:''});
+  megaSaveData();
+  renderDocDetail(docId);
+  showToast('✅ Поле додано');
+}
+
+function updateDocCountry(docId, val){
+  const doc=docs.find(d=>d.id===docId);
+  if(!doc)return;
+  if(confirm('Змінити країну? Поля картки будуть скинуті до шаблону нової країни.')){
+    doc.country=val;
+    const ck=countries.find(ct=>ct.flag+' '+ct.label===val)?.key||'ua'; doc.fields=getFieldTemplate(ck, doc.type).map(f=>({...f, value:''}));
+    megaSaveData();
+    renderDocDetail(docId);
+    renderDocs();
+    showToast('🔄 Країну змінено');
+  }
+}
+
+function copyDocFields(docId){
+  const doc=docs.find(d=>d.id===docId);
+  if(!doc)return;
+  const cat=DOC_CATEGORIES[doc.type]||{icon:'📄',label:'Інше'};
+  const country=getCountry(doc.country||'ua');
+  const member=team[doc.assignees?.[0]||0];
+  const lines=[];
+  lines.push(`${cat.icon} ${doc.title}`);
+  lines.push(`${country.flag} ${country.label}${member?' · '+member.name:''}`);
+  if(doc.validUntil){
+    const days=daysFromNow(doc.validUntil);
+    const status=days<0?`⚠️ Прострочено ${Math.abs(days)} дн. тому`:days<=30?`⏳ Закінчується через ${days} дн.`:`✓ Дійсний до ${fmtDate(doc.validUntil)}`;
+    lines.push(status);
+  }
+  lines.push('─'.repeat(36));
+  (doc.fields||[]).forEach(f=>{
+    const pad=Math.max(0, 24-f.label.length);
+    lines.push(`${f.label}:${' '.repeat(pad)}${f.value||'—'}`);
+  });
+  lines.push('─'.repeat(36));
+  lines.push(`Скопійовано: ${new Date().toLocaleDateString('uk-UA')}`);
+  const text=lines.join('\n');
+
+  const preview=document.getElementById(`copy-preview-${docId}`);
+  if(preview){ preview.style.display='block'; preview.textContent=text; }
+
+  function doCopy(){
+    const btn=document.getElementById(`copy-btn-${docId}`);
+    if(btn){ btn.textContent='✅ Скопійовано!'; btn.classList.add('copied'); setTimeout(()=>{btn.textContent='📋 Скопіювати'; btn.classList.remove('copied');},2000); }
+    showToast('📋 Скопійовано в буфер обміну');
+  }
+  if(navigator.clipboard&&window.isSecureContext){
+    navigator.clipboard.writeText(text).then(doCopy).catch(()=>fallbackCopy(text,doCopy));
+  } else { fallbackCopy(text,doCopy); }
+
+  function fallbackCopy(t,cb){
+    const ta=document.createElement('textarea');
+    ta.value=t; ta.style.cssText='position:fixed;top:-9999px;left:-9999px;opacity:0';
+    document.body.appendChild(ta); ta.focus(); ta.select();
+    try{ document.execCommand('copy'); cb(); } catch(e){ showToast('❌ Скопіюйте текст нижче вручну'); }
+    document.body.removeChild(ta);
+  }
 }
 
 // ============================================================
@@ -2305,6 +2814,243 @@ function instSelectHTML(selectedName=''){
 }
 
 // ============================================================
+// MODULE: DOC CARDS — COUNTRIES, CATEGORIES, TEMPLATES
+// ============================================================
+
+
+function getFieldTemplate(countryKey, catKey){
+  const k=`${countryKey}:${catKey}`;
+  if(FIELD_TEMPLATES[k]) return JSON.parse(JSON.stringify(FIELD_TEMPLATES[k]));
+  const fallback=FIELD_TEMPLATES[`${countryKey}:other`]||FIELD_TEMPLATES['ua:other'];
+  return JSON.parse(JSON.stringify(fallback));
+}
+
+// ============================================================
+// MODULE: FILTERS STATE
+// ============================================================
+
+function setDocFilter(type, val, el){
+  docFilters[type]=val;
+  const bar=document.getElementById('filterbar-'+type);
+  if(bar) bar.querySelectorAll('.filter-chip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+  renderDocs();
+}
+
+function initDocFilters(){
+  const fb1=document.getElementById('filterbar-country');
+  const fb2=document.getElementById('filterbar-user');
+  const fb3=document.getElementById('filterbar-cat');
+  if(!fb1||!fb2||!fb3) return;
+  countries.forEach(c=>{
+    const btn=document.createElement('button');
+    btn.className='filter-chip'; btn.textContent=`${c.flag} ${c.label}`;
+    btn.onclick=function(){ setDocFilter('country',c.key,this); };
+    fb1.appendChild(btn);
+  });
+  team.forEach(m=>{
+    const btn=document.createElement('button');
+    btn.className='filter-chip'; btn.textContent=m.name;
+    btn.onclick=function(){ setDocFilter('user',String(m.id),this); };
+    fb2.appendChild(btn);
+  });
+  Object.entries(DOC_CATEGORIES).forEach(([k,v])=>{
+    const btn=document.createElement('button');
+    btn.className='filter-chip'; btn.textContent=`${v.icon} ${v.label}`;
+    btn.onclick=function(){ setDocFilter('cat',k,this); };
+    fb3.appendChild(btn);
+  });
+}
+
+// ============================================================
+// MODULE: EXPIRY BADGE
+// ============================================================
+function expiryBadge(expiryDate){
+  if(!expiryDate) return '';
+  const days=daysFromNow(expiryDate);
+  if(days===null) return '';
+  if(days<0)  return `<span class="expiry-badge expired">⚠️ Прострочено ${Math.abs(days)} дн.</span>`;
+  if(days<=30) return `<span class="expiry-badge soon30">⏳ ${days} дн.</span>`;
+  if(days<=90) return `<span class="expiry-badge soon90">📅 ${days} дн.</span>`;
+  return `<span class="expiry-badge ok">✓ до ${fmtShort(expiryDate)}</span>`;
+}
+
+// ============================================================
+// MODULE: DASHBOARD
+// ============================================================
+function renderDashboard(){
+  document.getElementById('filterbar').innerHTML='';
+  document.getElementById('view-toggle').style.display='none';
+  const el=document.getElementById('page-dashboard');
+
+  const expired = docs.filter(d=>d.validUntil&&daysFromNow(d.validUntil)<0);
+  const soon30  = docs.filter(d=>d.validUntil&&daysFromNow(d.validUntil)>=0&&daysFromNow(d.validUntil)<=30);
+  const soon90  = docs.filter(d=>d.validUntil&&daysFromNow(d.validUntil)>30&&daysFromNow(d.validUntil)<=90);
+  const ok      = docs.filter(d=>!d.validUntil||(daysFromNow(d.validUntil)!==null&&daysFromNow(d.validUntil)>90));
+
+  function dashSection(id, color, title, count){
+    return `<div id="${id}" style="margin:18px 0 10px;display:flex;align-items:center;gap:8px">
+      <div style="font-size:13px;font-weight:500;color:${color}">${title}</div>
+      <div style="font-size:11px;background:${color}22;color:${color};padding:1px 8px;border-radius:8px">${count}</div>
+      <div style="flex:1;height:1px;background:var(--border)"></div>
+    </div>`;
+  }
+  function dashCard(d, borderColor){
+    const cat=DOC_CATEGORIES[d.type]||{icon:'📄',label:'Документ'};
+    return `<div class="card" onclick="openDocDetail('${d.id}')" style="border-left:3px solid ${borderColor};cursor:pointer">
+      <div style="display:flex;align-items:center;gap:12px">
+        <span style="font-size:20px">${cat.icon}</span>
+        <div style="flex:1"><div style="font-size:13px;font-weight:500">${d.title}</div>
+        <div style="font-size:10px;color:var(--muted)">${cat.label}</div></div>
+        ${d.validUntil?expiryBadge(d.validUntil):'<span class="expiry-badge ok">✓ Безстроковий</span>'}
+      </div>
+    </div>`;
+  }
+
+  let statsHTML=`
+    <div class="dash-stat-card" id="sc-expired" style="border-left:3px solid var(--danger);${expired.length?'cursor:pointer':''}">
+      <div class="dash-stat-label">⚠️ Прострочені</div>
+      <div class="dash-stat-num danger">${expired.length}</div>
+      <div class="dash-stat-sub">${expired.length?'↓ Натисніть':'Все гаразд'}</div>
+    </div>
+    <div class="dash-stat-card" id="sc-soon30" style="border-left:3px solid var(--accent2);${soon30.length?'cursor:pointer':''}">
+      <div class="dash-stat-label">⏳ До 30 днів</div>
+      <div class="dash-stat-num" style="color:var(--accent2)">${soon30.length}</div>
+      <div class="dash-stat-sub">${soon30.length?'↓ Натисніть':'Все гаразд'}</div>
+    </div>
+    <div class="dash-stat-card" id="sc-soon90" style="border-left:3px solid var(--warn);${soon90.length?'cursor:pointer':''}">
+      <div class="dash-stat-label">📅 До 90 днів</div>
+      <div class="dash-stat-num warn">${soon90.length}</div>
+      <div class="dash-stat-sub">${soon90.length?'↓ Натисніть':'Все гаразд'}</div>
+    </div>
+    <div class="dash-stat-card" id="sc-ok" style="border-left:3px solid var(--accent);cursor:pointer">
+      <div class="dash-stat-label">✅ Все гаразд</div>
+      <div class="dash-stat-num accent">${ok.length}</div>
+      <div class="dash-stat-sub">↓ Натисніть</div>
+    </div>
+    <div class="dash-stat-card" style="border-left:3px solid var(--muted)">
+      <div class="dash-stat-label">📄 Всього</div>
+      <div class="dash-stat-num" style="color:var(--muted)">${docs.length}</div>
+      <div class="dash-stat-sub">документів</div>
+    </div>`;
+
+  let listHTML='';
+  if(expired.length) listHTML += dashSection('list-expired','var(--danger)','⚠️ Прострочені',expired.length) + expired.map(d=>dashCard(d,'var(--danger)')).join('');
+  if(soon30.length)  listHTML += dashSection('list-soon30','var(--accent2)','⏳ До 30 днів',soon30.length)   + soon30.map(d=>dashCard(d,'var(--accent2)')).join('');
+  if(soon90.length)  listHTML += dashSection('list-soon90','var(--warn)','📅 До 90 днів',soon90.length)      + soon90.map(d=>dashCard(d,'var(--warn)')).join('');
+  if(ok.length)      listHTML += dashSection('list-ok','var(--accent)','✅ Все гаразд',ok.length)            + ok.map(d=>dashCard(d,'var(--accent)')).join('');
+  if(!docs.length)   listHTML  = `<div style="text-align:center;padding:30px;color:var(--muted)"><div style="font-size:32px;margin-bottom:8px">🗂️</div><p>Документів немає</p></div>`;
+
+  el.innerHTML=`<div class="dash-grid" id="dash-stats">${statsHTML}</div><div id="dash-content">${listHTML}</div>`;
+
+  const g=id=>document.getElementById(id);
+  setTimeout(()=>{
+    if(expired.length&&g('sc-expired')) g('sc-expired').onclick=()=>g('list-expired')?.scrollIntoView({behavior:'smooth'});
+    if(soon30.length&&g('sc-soon30'))   g('sc-soon30').onclick =()=>g('list-soon30')?.scrollIntoView({behavior:'smooth'});
+    if(soon90.length&&g('sc-soon90'))   g('sc-soon90').onclick =()=>g('list-soon90')?.scrollIntoView({behavior:'smooth'});
+    if(ok.length&&g('sc-ok'))           g('sc-ok').onclick     =()=>g('list-ok')?.scrollIntoView({behavior:'smooth'});
+  },50);
+}
+
+// ============================================================
+// MODULE: FIELD OPERATIONS
+// ============================================================
+function updateField(docId, idx, value){
+  const doc=docs.find(d=>d.id===docId);
+  if(doc&&doc.fields&&doc.fields[idx]) { doc.fields[idx].value=value; megaSaveData(); }
+}
+
+function renameField(docId, idx){
+  const doc=docs.find(d=>d.id===docId);
+  if(!doc||!doc.fields) return;
+  const newLabel=prompt('Нова назва поля:', doc.fields[idx].label);
+  if(!newLabel||!newLabel.trim()) return;
+  doc.fields[idx].label=newLabel.trim();
+  megaSaveData(); renderDocDetail(docId);
+}
+
+function removeField(docId, idx){
+  const doc=docs.find(d=>d.id===docId);
+  if(!doc||!doc.fields) return;
+  if(!confirm(`Видалити поле "${doc.fields[idx].label}"?`)) return;
+  doc.fields.splice(idx,1);
+  megaSaveData(); renderDocDetail(docId);
+}
+
+function addField(docId){
+  const doc=docs.find(d=>d.id===docId);
+  if(!doc) return;
+  if(!doc.fields) doc.fields=[];
+  const label=document.getElementById(`new-field-label-${docId}`)?.value.trim();
+  if(!label){ alert('Введіть назву поля'); return; }
+  doc.fields.push({label, key:'custom_'+Date.now(), value:''});
+  megaSaveData(); renderDocDetail(docId);
+  showToast('✅ Поле додано');
+}
+
+function updateDocCountry(docId, val){
+  const doc=docs.find(d=>d.id===docId);
+  if(!doc) return;
+  if(confirm('Змінити країну? Поля будуть скинуті до шаблону нової країни.')){
+    doc.country=val;
+    const ck=countries.find(ct=>ct.flag+' '+ct.label===val)?.key||'ua'; doc.fields=getFieldTemplate(ck, doc.type).map(f=>({...f, value:''}));
+    megaSaveData(); renderDocDetail(docId); renderDocs();
+    showToast('🔄 Країну змінено');
+  }
+}
+
+function updateDocExpiry(docId, val){
+  const doc=docs.find(d=>d.id===docId);
+  if(doc){ doc.validUntil=val||null; megaSaveData(); renderDocs(); }
+}
+
+function updateDocAssignee(docId, val){
+  const doc=docs.find(d=>d.id===docId);
+  if(doc){ doc.assignees=[parseInt(val)]; megaSaveData(); renderDocs(); }
+}
+
+// ============================================================
+// MODULE: COPY TO CLIPBOARD
+// ============================================================
+function copyDocFields(docId){
+  const doc=docs.find(d=>d.id===docId);
+  if(!doc||!doc.fields) return;
+  const cat=DOC_CATEGORIES[doc.type]||{icon:'📄',label:''};
+  const country=doc.country?getCountry(doc.country):null;
+  const member=team[doc.assignees?.[0]];
+  const lines=[];
+  lines.push(`${cat.icon} ${doc.title}`);
+  if(country) lines.push(`${country.flag} ${country.label}${member?' · '+member.name:''}`);
+  if(doc.validUntil){
+    const days=daysFromNow(doc.validUntil);
+    lines.push(days<0?`⚠️ Прострочено ${Math.abs(days)} дн.`:days<=30?`⏳ Закінчується через ${days} дн.`:`✓ Дійсний до ${fmtDate(doc.validUntil)}`);
+  }
+  lines.push('─'.repeat(36));
+  doc.fields.forEach(f=>{ const pad=Math.max(0,24-f.label.length); lines.push(`${f.label}:${' '.repeat(pad)}${f.value||'—'}`); });
+  lines.push('─'.repeat(36));
+  lines.push(`Скопійовано: ${new Date().toLocaleDateString('uk-UA')}`);
+  const text=lines.join('\n');
+  const preview=document.getElementById(`copy-preview-${docId}`);
+  if(preview){ preview.style.display='block'; preview.textContent=text; }
+  function doCopy(){
+    const btn=document.getElementById(`copy-btn-${docId}`);
+    if(btn){ btn.textContent='✅ Скопійовано!'; btn.classList.add('copied'); setTimeout(()=>{btn.textContent='📋 Скопіювати'; btn.classList.remove('copied');},2000); }
+    showToast('📋 Скопійовано в буфер обміну');
+  }
+  if(navigator.clipboard&&window.isSecureContext){
+    navigator.clipboard.writeText(text).then(doCopy).catch(fallbackCopy);
+  } else { fallbackCopy(); }
+  function fallbackCopy(){
+    const ta=document.createElement('textarea'); ta.value=text;
+    ta.style.cssText='position:fixed;top:-9999px;left:-9999px;opacity:0';
+    document.body.appendChild(ta); ta.focus(); ta.select();
+    try{ document.execCommand('copy'); doCopy(); }
+    catch(e){ showToast('❌ Скопіюйте текст нижче вручну'); }
+    document.body.removeChild(ta);
+  }
+}
+
+// ============================================================
 // INIT
 // ============================================================
 applySidebarI18n();
@@ -2592,10 +3338,16 @@ async function handleFileUpload(event, docId){
 <!-- MOBILE BOTTOM NAV -->
 <nav class="mobile-nav">
   <div class="mobile-nav-inner">
+    <button class="mob-nav-btn" id="mob-nav-dashboard" onclick="goPage('dashboard')">
+      <span class="mob-icon">🏠</span>
+      <span class="mob-label">Дашборд</span>
+    </button>
     <button class="mob-nav-btn active" id="mob-nav-docs" onclick="goPage('docs')">
       <span class="mob-icon">📄</span>
       <span class="mob-label" id="mob-lbl-docs">Документи</span>
       <span class="mob-badge accent" id="mob-bdg-docs">4</span>
+      <span class="mob-icon">🏠</span>
+      <span class="mob-label">Дашборд</span>
     </button>
     <button class="mob-nav-btn" id="mob-nav-tasks" onclick="goPage('tasks')">
       <span class="mob-icon">✅</span>
