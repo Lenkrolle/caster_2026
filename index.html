@@ -295,7 +295,7 @@ body { background: var(--bg); color: var(--text); font-family: 'IBM Plex Mono', 
 .copy-preview { background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:14px; font-size:11px; line-height:1.9; white-space:pre-wrap; font-family:'IBM Plex Mono',monospace; color:var(--text); margin-top:12px; }
 .btn-copy { font-family:'IBM Plex Mono',monospace; font-size:11px; padding:5px 12px; border:1px solid var(--border); border-radius:6px; background:transparent; color:var(--muted); cursor:pointer; transition:all .15s; }
 .btn-copy:hover,.btn-copy.copied { background:var(--accent); color:white; border-color:var(--accent); }
-.filter-label { font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--muted); }
+.filter-label { font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--accent); font-weight:500; }
 .cost-item { display:flex; align-items:center; gap:8px; padding:8px 0; border-bottom:1px solid var(--border); }
 .cost-item:last-child { border-bottom:none; }
 
@@ -554,6 +554,7 @@ body { background: var(--bg); color: var(--text); font-family: 'IBM Plex Mono', 
     </div>
   </div>
   <div class="sidebar-footer">
+    <button onclick="openHelp()" style="width:100%;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);background:none;border:none;cursor:pointer;padding:8px 0;text-align:left;margin-bottom:10px">❓ Довідка</button>
     <div class="user-chip">
       <div class="s-avatar" style="background:#2a5c45">ОМ</div>
       <div><div class="user-name">Олена М.</div><div class="user-role" id="sl-role">Адміністратор</div></div>
@@ -3302,10 +3303,156 @@ function updateDocAssignee(docId, val){
 }
 
 // ============================================================
+// HELP MODULE
+// ============================================================
+var HELP_CONTENT = {
+  dashboard: {
+    title: '🏠 Дашборд',
+    sections: [
+      { heading: 'Що це таке', text: 'Дашборд — головний екран програми. Він показує стан всіх документів одразу, без потреби переглядати кожен окремо. Відкривайте його щоб швидко зрозуміти що потребує уваги.' },
+      { heading: 'Лічильники', text: 'Шість лічильників вгорі показують скільки документів в кожному стані. Натискання на лічильник прокручує до відповідного списку нижче.' },
+      { heading: 'Групи документів і їх кольори', text: '🔴 Прострочені — термін дії минув, потребують негайної уваги.\n🟠 До 30 днів — закінчуються скоро, треба діяти.\n🟡 До 90 днів — варто запланувати поновлення заздалегідь.\n🟢 Все гаразд — дійсні більше 90 днів.\n📋 Безстрокові — документи без терміну дії.\n📄 Всього — загальна кількість.' },
+      { heading: 'Безстрокові документи', text: 'Якщо документ не має терміну дії — при створенні поставте позначку "Безстроковий". Такі документи потрапляють в окрему групу.' },
+    ],
+  },
+  docs: {
+    title: '📄 Документи',
+    sections: [
+      { heading: 'Що це таке', text: 'Документи — основний блок програми. Тут зберігається інформація про кожен документ: дані, кроки проходження, вкладення і витрати.' },
+      { heading: 'Обов\'язкові поля при створенні', text: 'Назва, категорія, країна, дата видачі, відповідальний і термін дії — всі ці поля обов\'язкові. Якщо документ безстроковий — поставте позначку "Безстроковий".' },
+      { heading: 'Категорії', text: 'Кожен документ належить до категорії: паспорт, авто, нерухомість, медицина, банки, освіта, юридичні або інше. Категорія визначає які поля картки підставляються автоматично.' },
+      { heading: 'Країна документа', text: 'Вкажіть країну якій належить документ. Для України та Німеччини є готові шаблони полів. Для інших країн — базовий набір полів який можна змінити.' },
+      { heading: 'Картка документа', text: 'Всередині документа є поля з даними. Кожне поле можна редагувати, перейменувати або видалити. Можна додати власне поле з будь-якою назвою.' },
+      { heading: 'Кнопка "Скопіювати"', text: 'Копіює всі дані документа і витрати в буфер обміну у вигляді тексту. Зручно щоб вставити в лист, повідомлення або документ.' },
+      { heading: 'Фільтри', text: 'Документи можна фільтрувати по країні, відповідальному і категорії. Фільтри можна комбінувати.' },
+    ],
+  },
+  costs: {
+    title: '💰 Витрати',
+    sections: [
+      { heading: 'Що це таке', text: 'До кожного документа можна додавати витрати — держмито, послуги, транспорт, штрафи та інше.' },
+      { heading: 'Базова валюта', text: 'Для кожного документа вказується базова валюта — в ній рахується загальна сума. Наприклад UAH для українських документів, EUR для німецьких.' },
+      { heading: 'Різні валюти і курс', text: 'Кожна витрата може бути в будь-якій валюті. Якщо валюта відрізняється від базової — вкажіть курс.' },
+      { heading: 'Категорії витрат', text: 'Держмито — офіційні збори.\nПослуги — нотаріус, юрист, перекладач.\nТранспорт — дорога до установи.\nШтраф — пені за прострочення.\nІнше — все що не підходить під інші категорії.' },
+    ],
+  },
+  tasks: {
+    title: '✅ Завдання',
+    sections: [
+      { heading: 'Що це таке', text: 'Завдання — конкретні дії які треба зробити по документах або загальні справи.' },
+      { heading: 'Пріоритети', text: '🔴 Високий — треба зробити якнайшвидше.\n🟡 Середній — важливо але не термінове.\n🟢 Низький — можна зробити пізніше.' },
+      { heading: 'Статуси', text: 'До роботи → В процесі → Перевірка → Завершено.' },
+      { heading: 'Зв\'язок з документом', text: 'Завдання можна прив\'язати до конкретного документа.' },
+      { heading: 'Перегляд', text: 'Завдання можна переглядати списком або канбан-дошкою.' },
+    ],
+  },
+  reminders: {
+    title: '🔔 Нагадування',
+    sections: [
+      { heading: 'Що це таке', text: 'Нагадування — повідомлення про важливі дати.' },
+      { heading: 'Групи нагадувань', text: '⚡ Прострочені — дата вже минула.\n🟡 Сьогодні — нагадування на сьогодні.\n📅 Найближчі 7 днів — на цьому тижні.\n🗓 Майбутні — далі ніж через 7 днів.\n✅ Виконані — закриті нагадування.' },
+      { heading: 'Канали сповіщення', text: 'В системі — нагадування відображається в програмі.\nEmail — лист на пошту відповідального.' },
+      { heading: 'Перегляд', text: 'Нагадування можна переглядати списком або в календарі.' },
+    ],
+  },
+};
+
+var currentHelpTab = 'dashboard';
+
+function openHelp(tab){
+  currentHelpTab = tab || currentPage || 'dashboard';
+  var overlay = document.getElementById('help-overlay');
+  if(!overlay){
+    overlay = document.createElement('div');
+    overlay.id = 'help-overlay';
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.3);backdrop-filter:blur(4px);z-index:150;display:flex;align-items:flex-end;justify-content:stretch;';
+    overlay.onclick = function(e){ if(e.target===overlay) closeHelp(); };
+    document.body.appendChild(overlay);
+  }
+  overlay.style.display = 'flex';
+  overlay.innerHTML = buildHelpModal();
+  switchHelpTab(currentHelpTab);
+}
+
+function closeHelp(){
+  var overlay = document.getElementById('help-overlay');
+  if(overlay) overlay.style.display = 'none';
+}
+
+function buildHelpModal(){
+  var tabs = Object.keys(HELP_CONTENT);
+  var tabBtns = tabs.map(function(key){
+    var item = HELP_CONTENT[key];
+    return '<button class="help-tab-btn" id="htab-'+key+'" onclick="switchHelpTab(\''+key+'\')" style="font-family:\'IBM Plex Mono\',monospace;font-size:11px;padding:6px 12px;border:none;background:transparent;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:all .15s">'+item.title+'</button>';
+  }).join('');
+  return '<div onclick="event.stopPropagation()" style="background:var(--surface);width:100%;max-height:85vh;border-radius:18px 18px 0 0;display:flex;flex-direction:column;overflow:hidden;">'+
+    '<div style="width:36px;height:4px;background:var(--border);border-radius:2px;margin:12px auto 0;flex-shrink:0"></div>'+
+    '<div style="display:flex;align-items:center;justify-content:space-between;padding:14px 20px 0;flex-shrink:0">'+
+    '<div style="font-family:\'Literata\',serif;font-size:16px;font-weight:600">Довідка</div>'+
+    '<button onclick="closeHelp()" style="background:none;border:none;font-size:18px;color:var(--muted);cursor:pointer;padding:3px 7px;border-radius:4px">✕</button>'+
+    '</div>'+
+    '<div style="display:flex;overflow-x:auto;border-bottom:1px solid var(--border);padding:0 12px;flex-shrink:0;scrollbar-width:none">'+tabBtns+'</div>'+
+    '<div id="help-content" style="flex:1;overflow-y:auto;padding:18px 20px 28px"></div>'+
+    '</div>';
+}
+
+function switchHelpTab(key){
+  currentHelpTab = key;
+  var item = HELP_CONTENT[key];
+  if(!item) return;
+  Object.keys(HELP_CONTENT).forEach(function(k){
+    var btn = document.getElementById('htab-'+k);
+    if(!btn) return;
+    btn.style.color = k===key ? 'var(--accent)' : 'var(--muted)';
+    btn.style.borderBottom = k===key ? '2px solid var(--accent)' : '2px solid transparent';
+    btn.style.fontWeight = k===key ? '500' : 'normal';
+  });
+  var html = item.sections.map(function(s){
+    return '<div style="margin-bottom:18px">'+
+      '<div style="font-size:12px;font-weight:500;margin-bottom:6px;color:var(--text)">'+s.heading+'</div>'+
+      '<div style="font-size:12px;color:var(--muted);line-height:1.7">'+s.text.replace(/\n/g,'<br>')+'</div>'+
+      '</div>';
+  }).join('<div style="height:1px;background:var(--border);margin-bottom:18px"></div>');
+  var el = document.getElementById('help-content');
+  if(el) el.innerHTML = html;
+}
+
+function checkFirstRun(){
+  try { if(localStorage.getItem('kolyshatko_help_seen')) return; } catch(e) {}
+  showWelcome();
+}
+
+function showWelcome(){
+  var overlay = document.createElement('div');
+  overlay.id = 'welcome-overlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.4);backdrop-filter:blur(6px);z-index:160;display:flex;align-items:center;justify-content:center;padding:20px;';
+  overlay.innerHTML =
+    '<div style="background:var(--surface);border-radius:14px;padding:28px 24px;width:100%;max-width:420px;box-shadow:0 8px 32px rgba(0,0,0,.18)">'+
+    '<div style="font-family:\'Literata\',serif;font-size:22px;font-weight:600;margin-bottom:6px">'+t('appName')+'</div>'+
+    '<div style="font-size:11px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:20px">Менеджер документів</div>'+
+    '<div style="font-size:13px;line-height:1.7;color:var(--text);margin-bottom:20px">'+
+    'Програма допомагає відстежувати документи, контролювати терміни дії і не пропускати важливі дати.<br><br>'+
+    'На дашборді ви завжди бачите що потребує уваги. Документи з терміном що минає — виділені кольором.'+
+    '</div>'+
+    '<div style="display:flex;gap:10px;flex-wrap:wrap">'+
+    '<button onclick="dismissWelcome()" style="flex:1;font-family:\'IBM Plex Mono\',monospace;font-size:12px;padding:10px 16px;background:var(--text);color:var(--bg);border:none;border-radius:7px;cursor:pointer">Почати роботу</button>'+
+    '<button onclick="dismissWelcome();openHelp()" style="flex:1;font-family:\'IBM Plex Mono\',monospace;font-size:12px;padding:10px 16px;background:transparent;color:var(--accent);border:1px solid var(--accent);border-radius:7px;cursor:pointer">Відкрити довідку</button>'+
+    '</div></div>';
+  document.body.appendChild(overlay);
+}
+
+function dismissWelcome(){
+  try { localStorage.setItem('kolyshatko_help_seen','1'); } catch(e) {}
+  var el = document.getElementById('welcome-overlay');
+  if(el) el.remove();
+}
+
+// ============================================================
 // INIT
 // ============================================================
 applySidebarI18n();
 renderInstNav();
+checkFirstRun();
 </script>
 
 <!-- SYNC SCREEN -->
@@ -3409,6 +3556,7 @@ async function fsReadData(){
     if(data.nextInstId)     nextInstId     = data.nextInstId;
     if(data.instTypes)      instTypes      = data.instTypes;
     if(data.nextInstTypeId) nextInstTypeId = data.nextInstTypeId;
+    if(data.docCategories) Object.assign(DOC_CATEGORIES, data.docCategories);
     lsSave();
   } catch(err){
     if(err.name==='NotFoundError'){ await fsWriteData(); }
@@ -3421,7 +3569,7 @@ async function fsWriteData(){
   try {
     const bar = document.getElementById('mega-sync-bar');
     if(bar) bar.style.display='block';
-    const data = JSON.stringify({ docs, tasks, reminders, team, instances, instTypes, nextTaskId, nextRemId, nextDocId, nextMemberId, nextInstId, nextInstTypeId }, null, 2);
+    const data = JSON.stringify({ docs, tasks, reminders, team, instances, instTypes, docCategories: DOC_CATEGORIES, nextTaskId, nextRemId, nextDocId, nextMemberId, nextInstId, nextInstTypeId }, null, 2);
     const fh   = await fsFolder.getFileHandle(DATA_FILE, { create:true });
     const wr   = await fh.createWritable();
     await wr.write(data);
@@ -3487,6 +3635,7 @@ async function fsImportJSON(){
     if(data.nextInstId)     nextInstId     = data.nextInstId;
     if(data.instTypes)      instTypes      = data.instTypes;
     if(data.nextInstTypeId) nextInstTypeId = data.nextInstTypeId;
+    if(data.docCategories) Object.assign(DOC_CATEGORIES, data.docCategories);
     lsSave();
     const screen=document.getElementById('mega-screen');
     if(screen) screen.style.display='none';
@@ -3496,7 +3645,7 @@ async function fsImportJSON(){
 }
 
 function fsExportJSON(){
-  const data = JSON.stringify({ docs, tasks, reminders, team, instances, instTypes, nextTaskId, nextRemId, nextDocId, nextMemberId, nextInstId, nextInstTypeId }, null, 2);
+  const data = JSON.stringify({ docs, tasks, reminders, team, instances, instTypes, docCategories: DOC_CATEGORIES, nextTaskId, nextRemId, nextDocId, nextMemberId, nextInstId, nextInstTypeId }, null, 2);
   const blob = new Blob([data], { type:'application/json' });
   const url  = URL.createObjectURL(blob);
   const a    = document.createElement('a');
@@ -3513,7 +3662,7 @@ function fsDisconnect(){
 }
 
 function lsSave(){
-  try { localStorage.setItem('kolyshatko_data', JSON.stringify({ docs, tasks, reminders, team, instances, instTypes, nextTaskId, nextRemId, nextDocId, nextMemberId, nextInstId, nextInstTypeId })); } catch(e){}
+  try { localStorage.setItem('kolyshatko_data', JSON.stringify({ docs, tasks, reminders, team, instances, instTypes, docCategories: DOC_CATEGORIES, nextTaskId, nextRemId, nextDocId, nextMemberId, nextInstId, nextInstTypeId })); } catch(e){}
 }
 
 function lsLoad(){
@@ -3649,6 +3798,7 @@ async function handleFileUpload(event, docId){
     <div class="mob-sheet-divider"></div>
     <div class="mob-sheet-links">
       <button class="mob-sheet-link" onclick="goPage('settings');closeMobSettings()">⚙️ Налаштування</button>
+      <button class="mob-sheet-link" onclick="openHelp();closeMobSettings()">❓ Довідка</button>
     </div>
 
     <div class="mob-sheet-divider"></div>
