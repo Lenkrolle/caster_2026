@@ -542,10 +542,11 @@ body { background: var(--bg); color: var(--text); font-family: 'IBM Plex Mono', 
       <li><a onclick="goPage('tasks')" id="nav-tasks"><span class="icon">✅</span> <span id="sl-tasks">Завдання</span> <span class="badge" id="bdg-tasks">5</span></a></li>
       <li><a onclick="goPage('reminders')" id="nav-reminders"><span class="icon">🔔</span> <span id="sl-reminders">Нагадування</span> <span class="badge warn" id="bdg-rem">3</span></a></li>
       <li><a onclick="goPage('team')" id="nav-team"><span class="icon">👥</span> <span id="sl-team">Команда</span> <span class="badge" id="bdg-team">4</span></a></li>
+      <li><a onclick="goPage('settings')" id="nav-settings"><span class="icon">⚙️</span> <span id="sl-settings">Налаштування</span></a></li>
     </ul>
   </div>
   <div class="sidebar-section">
-    <div class="sidebar-label" id="sl-inst">Інстанції</div>
+    <div class="sidebar-label" id="sl-inst">Організації</div>
     <ul class="sidebar-nav" id="inst-nav">
     </ul>
     <div style="padding:4px 10px">
@@ -588,6 +589,7 @@ body { background: var(--bg); color: var(--text); font-family: 'IBM Plex Mono', 
   <div class="page-content" id="page-reminders-cal" style="display:none;padding:0;overflow-y:auto;"></div>
   <div class="page-content" id="page-team"></div>
   <div class="page-content" id="page-instances"></div>
+  <div class="page-content" id="page-settings"></div>
   <div class="page-content" id="page-dashboard">
     <div class="dash-grid" id="dash-stats"></div>
     <div id="dash-content"></div>
@@ -854,8 +856,8 @@ let calMonth = new Date().getMonth();
 // ============================================================
 const L = {
   uk:{ appName:'Коліщатко', docs:'Документи', tasks:'Завдання', reminders:'Нагадування', add_doc:'Документ', add_task:'Завдання', add_rem:'Нагадування', search:'Пошук...', all:'Усі', active:'Активні', urgent:'Термінові', waiting:'Очікування', done:'Завершені', todo:'До роботи', progress:'В процесі', review:'Перевірка', overdue:'⚡ Прострочені', today_f:'Сьогодні', week:'7 днів', future:'Майбутні', done_f:'Виконані', nodoc:'Без документа', admin:'Адміністратор', nav:'Навігація', inst:'Організації', gov:'Держоргани', court:'Суди', org:'Організації', person:'Персони', subtitle:'Система документів' },
-  en:{ appName:'Caster', docs:'Documents', tasks:'Tasks', reminders:'Reminders', add_doc:'Document', add_task:'Task', add_rem:'Reminder', search:'Search...', all:'All', active:'Active', urgent:'Urgent', waiting:'Waiting', done:'Done', todo:'To Do', progress:'In Progress', review:'Review', overdue:'⚡ Overdue', today_f:'Today', week:'7 days', future:'Future', done_f:'Done', nodoc:'No document', admin:'Administrator', nav:'Navigation', inst:'Instances', gov:'Government', court:'Courts', org:'Organizations', person:'Persons', subtitle:'Document System' },
-  de:{ appName:'Rolle', docs:'Dokumente', tasks:'Aufgaben', reminders:'Erinnerungen', add_doc:'Dokument', add_task:'Aufgabe', add_rem:'Erinnerung', search:'Suche...', all:'Alle', active:'Aktiv', urgent:'Dringend', waiting:'Warten', done:'Erledigt', todo:'Zu tun', progress:'In Bearbeitung', review:'Überprüfung', overdue:'⚡ Überfällig', today_f:'Heute', week:'7 Tage', future:'Zukünftig', done_f:'Erledigt', nodoc:'Kein Dokument', admin:'Administrator', nav:'Navigation', inst:'Instanzen', gov:'Behörden', court:'Gerichte', org:'Organisationen', person:'Personen', subtitle:'Dokumentensystem' },
+  en:{ appName:'Caster', docs:'Documents', tasks:'Tasks', reminders:'Reminders', add_doc:'Document', add_task:'Task', add_rem:'Reminder', search:'Search...', all:'All', active:'Active', urgent:'Urgent', waiting:'Waiting', done:'Done', todo:'To Do', progress:'In Progress', review:'Review', overdue:'⚡ Overdue', today_f:'Today', week:'7 days', future:'Future', done_f:'Done', nodoc:'No document', admin:'Administrator', nav:'Navigation', inst:'Organizations', gov:'Government', court:'Courts', org:'Organizations', person:'Persons', subtitle:'Document System' },
+  de:{ appName:'Rolle', docs:'Dokumente', tasks:'Aufgaben', reminders:'Erinnerungen', add_doc:'Dokument', add_task:'Aufgabe', add_rem:'Erinnerung', search:'Suche...', all:'Alle', active:'Aktiv', urgent:'Dringend', waiting:'Warten', done:'Erledigt', todo:'Zu tun', progress:'In Bearbeitung', review:'Überprüfung', overdue:'⚡ Überfällig', today_f:'Heute', week:'7 Tage', future:'Zukünftig', done_f:'Erledigt', nodoc:'Kein Dokument', admin:'Administrator', nav:'Navigation', inst:'Organisationen', gov:'Behörden', court:'Gerichte', org:'Organisationen', person:'Personen', subtitle:'Dokumentensystem' },
 };
 function t(k){ return (L[lang]||L.uk)[k]||k; }
 
@@ -979,6 +981,10 @@ function renderCurrent(){
     const el=document.getElementById('page-instances');
     el.style.display='block'; el.classList.add('active');
     renderInstances();
+  } else if(currentPage==='settings'){
+    const el=document.getElementById('page-settings');
+    el.style.display='block'; el.classList.add('active');
+    renderSettings();
   } else if(currentPage==='dashboard'){
     const el=document.getElementById('page-dashboard');
     el.style.display='block'; el.classList.add('active');
@@ -1347,7 +1353,11 @@ function renderDocDetail(id){
         <span style="font-size:20px">${DOC_CATEGORIES[doc.type]?.icon||'📄'}</span>
         <span class="chip chip-${doc.status}">${statusLabel[doc.status]}</span>
         ${doc.validUntil?`<span style="font-size:11px;color:var(--danger)">⏱ Дійсний до: ${fmtDate(doc.validUntil)}</span>`:''}
+        ${doc.permanent?`<span class="expiry-badge ok">✓ Безстроковий</span>`:''}
         ${doc.deadline?`<span style="font-size:11px;color:var(--warn)">📅 Дедлайн: ${fmtDate(doc.deadline)}</span>`:''}
+        <label style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted);cursor:pointer;margin-left:4px">
+          <input type="checkbox" ${doc.permanent?'checked':''} style="accent-color:var(--accent)" onchange="toggleDocPermanent('${id}',this.checked)"> Безстроковий
+        </label>
         <button class="btn btn-ghost btn-sm" onclick="deleteDoc('${id}')" style="margin-left:auto;color:var(--danger)">🗑</button>
       </div>
       ${doc.docNumber||doc.issuedBy||doc.issuedDate?`
@@ -1479,12 +1489,20 @@ function openDocForm(id){
         <div class="form-group"><label class="form-label">Ким видано</label><input class="form-input" id="fd-issuedby" placeholder="Необов'язково..."></div>
       </div>
       <div class="form-row">
-        <div class="form-group"><label class="form-label">Дата видачі</label><input type="date" class="form-input" id="fd-issueddate"></div>
-        <div class="form-group"><label class="form-label">Дійсний до</label><input type="date" class="form-input" id="fd-validuntil"></div>
+        <div class="form-group"><label class="form-label">Дата видачі <span style="color:var(--danger)">*</span></label><input type="date" class="form-input" id="fd-issueddate"></div>
+        <div class="form-group">
+          <label class="form-label">Термін дії <span style="color:var(--danger)" id="fd-validuntil-req">*</span></label>
+          <div style="display:flex;gap:8px;align-items:center">
+            <input type="date" class="form-input" id="fd-validuntil" style="flex:1">
+            <label style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted);white-space:nowrap;cursor:pointer">
+              <input type="checkbox" id="fd-permanent" style="accent-color:var(--accent)" onchange="togglePermanent(this)"> Безстроковий
+            </label>
+          </div>
+        </div>
       </div>
       <div class="form-row">
         <div class="form-group"><label class="form-label">Дедлайн (необов'язково)</label><input type="date" class="form-input" id="fd-deadline"></div>
-        <div class="form-group"><label class="form-label">Відповідальний</label><select class="form-select" id="fd-assignee">${team.map((m,i)=>`<option value="${i}">${m.name}</option>`).join('')}</select></div>
+        <div class="form-group"><label class="form-label">Відповідальний <span style="color:var(--danger)">*</span></label><select class="form-select" id="fd-assignee">${team.map((m,i)=>`<option value="${i}">${m.name}</option>`).join('')}</select></div>
       </div>
       <div class="form-group"><label class="form-label">Організація</label>
         <datalist id="inst-list-doc">${instances.map(i=>`<option value="${i.name}">`).join('')}</datalist>
@@ -1856,21 +1874,48 @@ function saveStageResult(docId){
   renderDocDetail(docId);
 }
 
+function toggleDocPermanent(docId, isPermanent){
+  const doc=docs.find(d=>d.id===docId);
+  if(!doc)return;
+  doc.permanent=isPermanent;
+  if(isPermanent) doc.validUntil=null;
+  renderDocs(); megaSaveData(); renderDocDetail(docId);
+  showToast(isPermanent?'✓ Позначено як безстроковий':'📅 Термін дії активовано');
+}
+
+function saveDoc(){
+  const validUntil=document.getElementById('fd-validuntil');
+  const req=document.getElementById('fd-validuntil-req');
+  if(cb.checked){
+    if(validUntil){ validUntil.value=''; validUntil.disabled=true; validUntil.style.opacity='0.4'; }
+    if(req) req.style.display='none';
+  } else {
+    if(validUntil){ validUntil.disabled=false; validUntil.style.opacity='1'; }
+    if(req) req.style.display='';
+  }
+}
+
 function saveDoc(){
   const title=document.getElementById('fd-title').value.trim();
-  if(!title){alert('Введіть назву');return;}
+  if(!title){alert('Введіть назву документа');return;}
   const id=String(nextDocId++);
   const inst=document.getElementById('fd-inst')?.value.trim()||'';
   const deadline=document.getElementById('fd-deadline').value||null;
-  const validUntil=document.getElementById('fd-validuntil')?.value||null;
+  const permanent=document.getElementById('fd-permanent')?.checked||false;
+  const validUntil=permanent?null:(document.getElementById('fd-validuntil')?.value||null);
   const issuedDate=document.getElementById('fd-issueddate')?.value||null;
   const issuedBy=document.getElementById('fd-issuedby')?.value.trim()||'';
   const docNumber=document.getElementById('fd-docnum')?.value.trim()||'';
   const assigneeIdx=parseInt(document.getElementById('fd-assignee').value);
   const type=document.getElementById('fd-type').value;
-
   const country=document.getElementById('fd-country')?.value||'🇺🇦 Україна';
-  const countryKey=countries.find(ct=>ct.flag+' '+ct.label===country)?.key||'ua'; const fields=getFieldTemplate(countryKey, type).map(f=>({...f, value:''}));
+
+  // Validation
+  if(!issuedDate){alert('Введіть дату видачі');return;}
+  if(!permanent&&!validUntil){alert('Введіть термін дії або позначте "Безстроковий"');return;}
+
+  const countryKey=countries.find(ct=>ct.flag+' '+ct.label===country)?.key||'ua';
+  const fields=getFieldTemplate(countryKey, type).map(f=>({...f, value:''}));
 
   // Build stages from form
   const stepRows=document.querySelectorAll('.fd-step-row');
@@ -1888,7 +1933,7 @@ function saveDoc(){
   }
 
   docs.unshift({id,title,
-    docNumber, issuedBy, issuedDate, validUntil,
+    docNumber, issuedBy, issuedDate, validUntil, permanent,
     country, fields,
     ref:`${new Date().getFullYear()}-${String(new Date().getMonth()+1).padStart(2,'0')}-${title}`,
     type, status:'active', deadline, assignees:[assigneeIdx], attachments:0, files:[], currentStage:0,
@@ -2262,10 +2307,11 @@ function renderDashboard(){
   document.getElementById('filterbar').innerHTML='';
   document.getElementById('view-toggle').style.display='none';
 
-  const expired = docs.filter(d=>d.validUntil&&daysFromNow(d.validUntil)<0);
-  const soon30  = docs.filter(d=>d.validUntil&&daysFromNow(d.validUntil)>=0&&daysFromNow(d.validUntil)<=30);
-  const soon90  = docs.filter(d=>d.validUntil&&daysFromNow(d.validUntil)>30&&daysFromNow(d.validUntil)<=90);
-  const ok      = docs.filter(d=>!d.validUntil||(daysFromNow(d.validUntil)!==null&&daysFromNow(d.validUntil)>90));
+  const expired   = docs.filter(d=>!d.permanent&&d.validUntil&&daysFromNow(d.validUntil)<0);
+  const soon30    = docs.filter(d=>!d.permanent&&d.validUntil&&daysFromNow(d.validUntil)>=0&&daysFromNow(d.validUntil)<=30);
+  const soon90    = docs.filter(d=>!d.permanent&&d.validUntil&&daysFromNow(d.validUntil)>30&&daysFromNow(d.validUntil)<=90);
+  const ok        = docs.filter(d=>!d.permanent&&d.validUntil&&daysFromNow(d.validUntil)>90);
+  const permanent = docs.filter(d=>d.permanent);
 
   document.getElementById('dash-stats').innerHTML=`
     <div class="dash-stat-card" id="sc-expired" style="border-left:3px solid var(--danger);${expired.length?'cursor:pointer':''}">
@@ -2283,14 +2329,19 @@ function renderDashboard(){
       <div class="dash-stat-num warn">${soon90.length}</div>
       <div class="dash-stat-sub">${soon90.length?'↓ Натисніть щоб побачити':'Все гаразд'}</div>
     </div>
-    <div class="dash-stat-card" id="sc-ok" style="border-left:3px solid var(--accent);cursor:pointer">
+    <div class="dash-stat-card" id="sc-ok" style="border-left:3px solid var(--accent);${ok.length?'cursor:pointer':''}">
       <div class="dash-stat-label">✅ Все гаразд</div>
       <div class="dash-stat-num accent">${ok.length}</div>
       <div class="dash-stat-sub">${ok.length?'↓ Натисніть щоб побачити':'Немає'}</div>
     </div>
-    <div class="dash-stat-card" style="border-left:3px solid var(--muted)">
+    <div class="dash-stat-card" id="sc-permanent" style="border-left:3px solid var(--muted);${permanent.length?'cursor:pointer':''}">
+      <div class="dash-stat-label">♾️ Безстрокові</div>
+      <div class="dash-stat-num" style="color:var(--muted)">${permanent.length}</div>
+      <div class="dash-stat-sub">${permanent.length?'↓ Натисніть щоб побачити':'Немає'}</div>
+    </div>
+    <div class="dash-stat-card" style="border-left:3px solid var(--border)">
       <div class="dash-stat-label">📄 Всього</div>
-      <div class="dash-stat-num" style="color:var(--muted)">${docs.length}</div>
+      <div class="dash-stat-num" style="color:var(--text)">${docs.length}</div>
     </div>`;
 
   function dashSection(id, color, title, count){
@@ -2312,18 +2363,20 @@ function renderDashboard(){
   }
 
   let html='';
-  if(expired.length) html += dashSection('list-expired','var(--danger)','⚠️ Прострочені',expired.length) + expired.map(d=>dashCard(d,'var(--danger)')).join('');
-  if(soon30.length)  html += dashSection('list-soon30','var(--accent2)','⏳ До 30 днів',soon30.length)   + soon30.map(d=>dashCard(d,'var(--accent2)')).join('');
-  if(soon90.length)  html += dashSection('list-soon90','var(--warn)','📅 До 90 днів',soon90.length)      + soon90.map(d=>dashCard(d,'var(--warn)')).join('');
-  if(ok.length)      html += dashSection('list-ok','var(--accent)','✅ Все гаразд',ok.length)            + ok.map(d=>dashCard(d,'var(--accent)')).join('');
-  if(!docs.length)   html  = `<div style="text-align:center;padding:30px;color:var(--muted)"><div style="font-size:32px;margin-bottom:8px">🗂️</div><p>Документів немає</p></div>`;
+  if(expired.length)   html += dashSection('list-expired','var(--danger)','⚠️ Прострочені',expired.length)   + expired.map(d=>dashCard(d,'var(--danger)')).join('');
+  if(soon30.length)    html += dashSection('list-soon30','var(--accent2)','⏳ До 30 днів',soon30.length)     + soon30.map(d=>dashCard(d,'var(--accent2)')).join('');
+  if(soon90.length)    html += dashSection('list-soon90','var(--warn)','📅 До 90 днів',soon90.length)        + soon90.map(d=>dashCard(d,'var(--warn)')).join('');
+  if(ok.length)        html += dashSection('list-ok','var(--accent)','✅ Все гаразд',ok.length)              + ok.map(d=>dashCard(d,'var(--accent)')).join('');
+  if(permanent.length) html += dashSection('list-permanent','var(--muted)','♾️ Безстрокові',permanent.length)+ permanent.map(d=>dashCard(d,'var(--muted)')).join('');
+  if(!docs.length)     html  = `<div style="text-align:center;padding:30px;color:var(--muted)"><div style="font-size:32px;margin-bottom:8px">🗂️</div><p>Документів немає</p></div>`;
   document.getElementById('dash-content').innerHTML=html;
 
   const g=id=>document.getElementById(id);
-  if(expired.length) g('sc-expired').onclick=()=>g('list-expired')?.scrollIntoView({behavior:'smooth'});
-  if(soon30.length)  g('sc-soon30').onclick =()=>g('list-soon30')?.scrollIntoView({behavior:'smooth'});
-  if(soon90.length)  g('sc-soon90').onclick =()=>g('list-soon90')?.scrollIntoView({behavior:'smooth'});
-  if(ok.length)      g('sc-ok').onclick     =()=>g('list-ok')?.scrollIntoView({behavior:'smooth'});
+  if(expired.length)   g('sc-expired').onclick  =()=>g('list-expired')?.scrollIntoView({behavior:'smooth'});
+  if(soon30.length)    g('sc-soon30').onclick    =()=>g('list-soon30')?.scrollIntoView({behavior:'smooth'});
+  if(soon90.length)    g('sc-soon90').onclick    =()=>g('list-soon90')?.scrollIntoView({behavior:'smooth'});
+  if(ok.length)        g('sc-ok').onclick        =()=>g('list-ok')?.scrollIntoView({behavior:'smooth'});
+  if(permanent.length) g('sc-permanent').onclick =()=>g('list-permanent')?.scrollIntoView({behavior:'smooth'});
 }
 
 // ============================================================
@@ -2416,10 +2469,13 @@ function copyDocFields(docId){
   const lines=[];
   lines.push(`${cat.icon} ${doc.title}`);
   lines.push(`${country.flag} ${country.label}${member?' · '+member.name:''}`);
-  if(doc.validUntil){
+  if(doc.issuedDate) lines.push(`Дата видачі:            ${fmtDate(doc.issuedDate)}`);
+  if(doc.permanent){
+    lines.push(`Термін дії:             ♾️ Безстроковий`);
+  } else if(doc.validUntil){
     const days=daysFromNow(doc.validUntil);
     const status=days<0?`⚠️ Прострочено ${Math.abs(days)} дн. тому`:days<=30?`⏳ Закінчується через ${days} дн.`:`✓ Дійсний до ${fmtDate(doc.validUntil)}`;
-    lines.push(status);
+    lines.push(`Дійсний до:             ${fmtDate(doc.validUntil)} (${status})`);
   }
   lines.push('─'.repeat(36));
   (doc.fields||[]).forEach(f=>{
@@ -2564,6 +2620,119 @@ function costsCopyLines(doc){
   const total=costs.reduce((s,c)=>s+(parseFloat(c.amount)*(parseFloat(c.rate)||1)||0),0);
   lines.push('Разом:'+ ' '.repeat(20)+fmtMoney(total)+' '+base);
   return lines;
+}
+
+// ============================================================
+// SETTINGS PAGE
+// ============================================================
+const BUILTIN_CATS = ['passport','property','auto','medical','finance','edu','legal','other'];
+const CAT_ICONS_LIST = ['🛂','🏠','🚗','🏥','🏦','📋','⚖️','📦','🎓','👶','🐾','💊','🔑','📱','💼','🏋️','✈️','🎨','🏦','📜','🔒','🌐','🏗️','📮'];
+
+function renderSettings(){
+  document.getElementById('filterbar').innerHTML='';
+  document.getElementById('view-toggle').style.display='none';
+  const el=document.getElementById('page-settings');
+
+  const catRows=Object.entries(DOC_CATEGORIES).map(([k,v])=>{
+    const usedIn=docs.filter(d=>d.type===k);
+    const isBuiltin=BUILTIN_CATS.includes(k);
+    return `<div class="card" style="display:flex;align-items:center;gap:12px;cursor:default">
+      <span style="font-size:22px">${v.icon}</span>
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:500">${v.label}</div>
+        <div style="font-size:10px;color:var(--muted)">${isBuiltin?'Вбудована · ':''}${usedIn.length} документів</div>
+      </div>
+      <div style="display:flex;gap:6px">
+        <button class="btn btn-ghost btn-sm" onclick="openEditCat('${k}')">✏️</button>
+        ${!isBuiltin?`<button class="btn btn-ghost btn-sm" style="color:var(--danger)" onclick="deleteCat('${k}')">✕</button>`:'<span style="width:28px"></span>'}
+      </div>
+    </div>`;
+  }).join('');
+
+  el.innerHTML=`
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px">
+      <div>
+        <div style="font-family:'Literata',serif;font-size:22px;font-weight:600">Налаштування</div>
+      </div>
+    </div>
+
+    <div class="sec-head"><div class="sec-title">Категорії документів</div><div class="sec-count">${Object.keys(DOC_CATEGORIES).length}</div><div class="sec-line"></div></div>
+    <div style="margin-bottom:12px">${catRows}</div>
+    <button class="btn btn-primary" onclick="openAddCat()">+ Нова категорія</button>
+
+    <div class="sec-head" style="margin-top:28px"><div class="sec-title">Країни</div><div class="sec-count">${countries.length}</div><div class="sec-line"></div></div>
+    ${countries.map(c=>`
+      <div class="card" style="display:flex;align-items:center;gap:12px;cursor:default">
+        <span style="font-size:22px">${c.flag}</span>
+        <div style="flex:1"><div style="font-size:13px;font-weight:500">${c.label}</div></div>
+      </div>`).join('')}`;
+}
+
+function openAddCat(){
+  document.getElementById('modal-title').textContent='Нова категорія';
+  document.getElementById('modal-body').innerHTML=catForm();
+  document.getElementById('overlay').style.display='flex';
+  window._selCatIcon=CAT_ICONS_LIST[0];
+}
+
+function openEditCat(key){
+  const cat=DOC_CATEGORIES[key];
+  if(!cat)return;
+  document.getElementById('modal-title').textContent='Редагувати категорію';
+  document.getElementById('modal-body').innerHTML=catForm(key, cat);
+  document.getElementById('overlay').style.display='flex';
+  window._selCatIcon=cat.icon;
+}
+
+function catForm(key=null, cat=null){
+  return `
+    <div class="form-group"><label class="form-label">Назва категорії</label>
+      <input class="form-input" id="cat-name" value="${cat?cat.label:''}" placeholder="Назва..."></div>
+    <div class="form-group"><label class="form-label">Іконка</label>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px" id="cat-icon-opts">
+        ${CAT_ICONS_LIST.map(ic=>`<button onclick="selectCatIcon('${ic}',this)" style="font-size:20px;padding:6px 8px;border:2px solid ${cat&&cat.icon===ic?'var(--accent)':ic===CAT_ICONS_LIST[0]&&!cat?'var(--accent)':'var(--border)'};border-radius:7px;background:${cat&&cat.icon===ic||ic===CAT_ICONS_LIST[0]&&!cat?'var(--accent-light)':'transparent'};cursor:pointer">${ic}</button>`).join('')}
+      </div>
+      <input class="form-input" id="cat-icon-custom" placeholder="або введіть свою іконку/емодзі..." style="font-size:16px" oninput="window._selCatIcon=this.value||window._selCatIcon">
+    </div>
+    <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="saveCat('${key||''}')">
+      ${key?'Зберегти':'Додати категорію'}
+    </button>`;
+}
+
+function selectCatIcon(ic, el){
+  window._selCatIcon=ic;
+  document.querySelectorAll('#cat-icon-opts button').forEach(b=>{ b.style.borderColor='var(--border)'; b.style.background='transparent'; });
+  el.style.borderColor='var(--accent)'; el.style.background='var(--accent-light)';
+  document.getElementById('cat-icon-custom').value='';
+}
+
+function saveCat(editKey){
+  const name=document.getElementById('cat-name').value.trim();
+  if(!name){alert('Введіть назву');return;}
+  const icon=document.getElementById('cat-icon-custom').value.trim()||window._selCatIcon||'📦';
+  if(editKey){
+    DOC_CATEGORIES[editKey].label=name;
+    DOC_CATEGORIES[editKey].icon=icon;
+    showToast('💾 Збережено');
+  } else {
+    const key='cat_'+Date.now();
+    DOC_CATEGORIES[key]={label:name, icon};
+    showToast('✅ Категорію додано');
+  }
+  closeModal(); renderSettings(); megaSaveData();
+}
+
+function deleteCat(key){
+  const used=docs.filter(d=>d.type===key);
+  if(used.length){
+    const names=used.map(d=>d.title).join('\n• ');
+    alert(`Категорія використовується в ${used.length} документах:\n• ${names}\n\nСпочатку змініть категорію в цих документах.`);
+    return;
+  }
+  if(!confirm(`Видалити категорію "${DOC_CATEGORIES[key]?.label}"?`))return;
+  delete DOC_CATEGORIES[key];
+  renderSettings(); megaSaveData();
+  showToast('🗑 Категорію видалено');
 }
 
 // ============================================================
@@ -2857,7 +3026,7 @@ function deleteInstType(id){
   const t=instTypes.find(x=>x.id===id);
   if(!t)return;
   const used=instances.some(i=>i.type===t.key);
-  if(used&&!confirm(`Група "${t.label}" використовується. Видалити? Інстанції залишаться без групи.`))return;
+  if(used&&!confirm(`Група "${t.label}" використовується. Видалити? Організації залишаться без групи.`))return;
   instTypes=instTypes.filter(x=>x.id!==id);
   megaSaveData();
   openManageInstTypes();
@@ -3130,47 +3299,6 @@ function updateDocExpiry(docId, val){
 function updateDocAssignee(docId, val){
   const doc=docs.find(d=>d.id===docId);
   if(doc){ doc.assignees=[parseInt(val)]; megaSaveData(); renderDocs(); }
-}
-
-// ============================================================
-// MODULE: COPY TO CLIPBOARD
-// ============================================================
-function copyDocFields(docId){
-  const doc=docs.find(d=>d.id===docId);
-  if(!doc||!doc.fields) return;
-  const cat=DOC_CATEGORIES[doc.type]||{icon:'📄',label:''};
-  const country=doc.country?getCountry(doc.country):null;
-  const member=team[doc.assignees?.[0]];
-  const lines=[];
-  lines.push(`${cat.icon} ${doc.title}`);
-  if(country) lines.push(`${country.flag} ${country.label}${member?' · '+member.name:''}`);
-  if(doc.validUntil){
-    const days=daysFromNow(doc.validUntil);
-    lines.push(days<0?`⚠️ Прострочено ${Math.abs(days)} дн.`:days<=30?`⏳ Закінчується через ${days} дн.`:`✓ Дійсний до ${fmtDate(doc.validUntil)}`);
-  }
-  lines.push('─'.repeat(36));
-  doc.fields.forEach(f=>{ const pad=Math.max(0,24-f.label.length); lines.push(`${f.label}:${' '.repeat(pad)}${f.value||'—'}`); });
-  lines.push('─'.repeat(36));
-  lines.push(`Скопійовано: ${new Date().toLocaleDateString('uk-UA')}`);
-  const text=lines.join('\n');
-  const preview=document.getElementById(`copy-preview-${docId}`);
-  if(preview){ preview.style.display='block'; preview.textContent=text; }
-  function doCopy(){
-    const btn=document.getElementById(`copy-btn-${docId}`);
-    if(btn){ btn.textContent='✅ Скопійовано!'; btn.classList.add('copied'); setTimeout(()=>{btn.textContent='📋 Скопіювати'; btn.classList.remove('copied');},2000); }
-    showToast('📋 Скопійовано в буфер обміну');
-  }
-  if(navigator.clipboard&&window.isSecureContext){
-    navigator.clipboard.writeText(text).then(doCopy).catch(fallbackCopy);
-  } else { fallbackCopy(); }
-  function fallbackCopy(){
-    const ta=document.createElement('textarea'); ta.value=text;
-    ta.style.cssText='position:fixed;top:-9999px;left:-9999px;opacity:0';
-    document.body.appendChild(ta); ta.focus(); ta.select();
-    try{ document.execCommand('copy'); doCopy(); }
-    catch(e){ showToast('❌ Скопіюйте текст нижче вручну'); }
-    document.body.removeChild(ta);
-  }
 }
 
 // ============================================================
@@ -3519,9 +3647,14 @@ async function handleFileUpload(event, docId){
     </div>
 
     <div class="mob-sheet-divider"></div>
+    <div class="mob-sheet-links">
+      <button class="mob-sheet-link" onclick="goPage('settings');closeMobSettings()">⚙️ Налаштування</button>
+    </div>
+
+    <div class="mob-sheet-divider"></div>
 
     <!-- Nav links -->
-    <div class="mob-sheet-section-title" id="mob-lbl-inst">Інстанції</div>
+    <div class="mob-sheet-section-title" id="mob-lbl-inst">Організації</div>
     <div class="mob-sheet-links">
       <button class="mob-sheet-link" onclick="closeMobSettings()">🏛️ <span id="mob-sl-gov">Держоргани</span></button>
       <button class="mob-sheet-link" onclick="closeMobSettings()">⚖️ <span id="mob-sl-court">Суди</span></button>
@@ -3633,8 +3766,8 @@ function updateMobI18n(){
   const el=id=>document.getElementById(id);
   const lbl={
     uk:{role:'Адміністратор',lang:'Мова інтерфейсу',inst:'Організації',gov:'Держоргани',court:'Суди',org:'Організації',person:'Персони'},
-    en:{role:'Administrator',lang:'Interface language',inst:'Instances',gov:'Government',court:'Courts',org:'Organizations',person:'Persons'},
-    de:{role:'Administrator',lang:'Sprache',inst:'Instanzen',gov:'Behörden',court:'Gerichte',org:'Organisationen',person:'Personen'},
+    en:{role:'Administrator',lang:'Interface language',inst:'Organizations',gov:'Government',court:'Courts',org:'Organizations',person:'Persons'},
+    de:{role:'Administrator',lang:'Sprache',inst:'Organisationen',gov:'Behörden',court:'Gerichte',org:'Organisationen',person:'Personen'},
   };
   const l=lbl[lang]||lbl.uk;
   if(el('mob-role-lbl'))el('mob-role-lbl').textContent=l.role;
