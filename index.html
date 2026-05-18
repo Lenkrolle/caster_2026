@@ -481,7 +481,7 @@ body { background: var(--bg); color: var(--text); font-family: 'IBM Plex Mono', 
 .copy-preview { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 14px; font-size: 11px; line-height: 1.9; white-space: pre-wrap; font-family: 'IBM Plex Mono', monospace; color: var(--text); margin-top: 12px; }
 .btn-copy { background: var(--accent-light); color: var(--accent); border: 1px solid var(--accent); font-size: 11px; padding: 5px 12px; border-radius: 6px; cursor: pointer; font-family: 'IBM Plex Mono', monospace; transition: all .15s; }
 .btn-copy:hover, .btn-copy.copied { background: var(--accent); color: white; }
-.filter-label { font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); white-space: nowrap; }
+.filter-label { font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--accent); font-weight:500; white-space: nowrap; }
 /* DASHBOARD */
 .dash-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 24px; }
 .dash-stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px 18px; box-shadow: var(--shadow); }
@@ -537,7 +537,7 @@ body { background: var(--bg); color: var(--text); font-family: 'IBM Plex Mono', 
   <div class="sidebar-section">
     <div class="sidebar-label" id="sl-nav">Навігація</div>
     <ul class="sidebar-nav">
-      <li><a onclick="goPage('dashboard')" id="nav-dashboard"><span class="icon">🏠</span> <span id="sl-dashboard">Дашборд</span></a></li>
+      <li><a onclick="goPage('dashboard')" id="nav-dashboard"><span class="icon">🏠</span> <span id="sl-dashboard">Огляд</span></a></li>
       <li><a onclick="goPage('docs')" id="nav-docs"><span class="icon">📄</span> <span id="sl-docs">Документи</span> <span class="badge" id="bdg-docs">4</span></a></li>
       <li><a onclick="goPage('tasks')" id="nav-tasks"><span class="icon">✅</span> <span id="sl-tasks">Завдання</span> <span class="badge" id="bdg-tasks">5</span></a></li>
       <li><a onclick="goPage('reminders')" id="nav-reminders"><span class="icon">🔔</span> <span id="sl-reminders">Нагадування</span> <span class="badge warn" id="bdg-rem">3</span></a></li>
@@ -3453,6 +3453,7 @@ function dismissWelcome(){
 applySidebarI18n();
 renderInstNav();
 checkFirstRun();
+goPage('dashboard');
 </script>
 
 <!-- SYNC SCREEN -->
@@ -3526,7 +3527,7 @@ async function fsPickFolder(){
     if(screen) screen.style.display='none';
     // Small delay to ensure DOM is ready
     await new Promise(r=>setTimeout(r,50));
-    goPage('docs');
+    goPage('dashboard');
     addSyncButtons();
     showToast('📁 Папка підключена: ' + fsFolder.name);
   } catch(err){
@@ -3614,7 +3615,7 @@ async function fsSync(){
 function fsSkip(){
   const screen=document.getElementById('mega-screen');
   if(screen) screen.style.display='none';
-  setTimeout(()=>goPage('docs'), 50);
+  setTimeout(()=>goPage('dashboard'), 50);
 }
 
 async function fsImportJSON(){
@@ -3639,7 +3640,7 @@ async function fsImportJSON(){
     lsSave();
     const screen=document.getElementById('mega-screen');
     if(screen) screen.style.display='none';
-    setTimeout(()=>goPage('docs'), 50);
+    setTimeout(()=>goPage('dashboard'), 50);
     showToast('📥 Дані імпортовано');
   } catch(err){ if(err.name!=='AbortError') showToast('❌ Помилка імпорту'); }
 }
@@ -3740,7 +3741,7 @@ async function handleFileUpload(event, docId){
   <div class="mobile-nav-inner">
     <button class="mob-nav-btn" id="mob-nav-dashboard" onclick="goPage('dashboard')">
       <span class="mob-icon">🏠</span>
-      <span class="mob-label">Дашборд</span>
+      <span class="mob-label">Огляд</span>
     </button>
     <button class="mob-nav-btn active" id="mob-nav-docs" onclick="goPage('docs')">
       <span class="mob-icon">📄</span>
