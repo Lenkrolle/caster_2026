@@ -2898,6 +2898,33 @@ function reactivateMember(id){
 // ============================================================
 function getInstType(key){ return instTypes.find(t=>t.key===key)||{label:key,icon:'📌'}; }
 
+function openInstDocs(instName){
+  const relatedDocs=docs.filter(d=>d.stages.some(s=>s.inst===instName));
+  document.getElementById('modal-title').textContent=instName;
+  const statusLabel={active:t('active'),urgent:t('urgent'),waiting:t('waiting'),done:t('done')};
+
+  const rows=relatedDocs.length ? relatedDocs.map(d=>{
+    const cat=DOC_CATEGORIES[d.type]||{icon:'📄',label:'Інше'};
+    const country=getCountry(d.country||'🇺🇦 Україна');
+    const curStage=d.stages[d.currentStage];
+    const instStages=d.stages.filter(s=>s.inst===instName).map(s=>s.name).join(', ');
+    return `<div class="card" onclick="closeModal();openDocDetail('${d.id}')" style="cursor:pointer">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="font-size:20px">${cat.icon}</span>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:500;margin-bottom:2px">${d.title}</div>
+          <div style="font-size:10px;color:var(--muted)">${country.flag} ${cat.label}</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:2px">Кроки: ${instStages}</div>
+        </div>
+        <span class="chip chip-${d.status}">${statusLabel[d.status]||d.status}</span>
+      </div>
+    </div>`;
+  }).join('') : `<div style="text-align:center;padding:30px;color:var(--muted)"><div style="font-size:28px;margin-bottom:8px">🗂️</div><p>Документів не знайдено</p></div>`;
+
+  document.getElementById('modal-body').innerHTML=rows;
+  document.getElementById('overlay').style.display='flex';
+}
+
 function renderInstances(){
   document.getElementById('filterbar').innerHTML='';
   document.getElementById('view-toggle').style.display='none';
@@ -2932,13 +2959,13 @@ function renderInstances(){
     } else {
       html += items.map(inst=>{
         const usedIn=docs.filter(d=>d.stages.some(s=>s.inst===inst.name)).length;
-        return `<div class="card" style="display:flex;align-items:center;gap:12px;cursor:default">
+        return `<div class="card" style="display:flex;align-items:center;gap:12px;cursor:${usedIn?'pointer':'default'}" onclick="${usedIn?`openInstDocs('${inst.name.replace(/'/g,"\\'")}')`:''}" >
           <div style="font-size:22px;width:36px;text-align:center">${inst.icon}</div>
           <div style="flex:1">
             <div style="font-size:13px;font-weight:500">${inst.name}</div>
-            <div style="font-size:10px;color:var(--muted);margin-top:2px">📄 Використовується в ${usedIn} документах</div>
+            <div style="font-size:10px;color:var(--muted);margin-top:2px">📄 ${usedIn} документів</div>
           </div>
-          <div style="display:flex;gap:6px">
+          <div style="display:flex;gap:6px" onclick="event.stopPropagation()">
             <button class="btn btn-ghost btn-sm" onclick="openEditInst(${inst.id})">✏️</button>
             ${admin?`<button class="btn btn-ghost btn-sm" style="color:var(--danger)" onclick="deleteInst(${inst.id})">✕</button>`:''}
           </div>
