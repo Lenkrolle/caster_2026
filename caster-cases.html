@@ -1,0 +1,1868 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Caster — Модуль: Справи</title>
+<link href="https://fonts.googleapis.com/css2?family=Literata:ital,wght@0,300;0,400;0,600;1,300&family=IBM+Plex+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+
+<!--
+  ╔══════════════════════════════════════════════════════════════════╗
+  ║  CASTER — МОДУЛЬ «СПРАВИ»                                       ║
+  ║  Версія: 1.0                                                     ║
+  ║                                                                  ║
+  ║  ЯК ІНТЕГРУВАТИ В ОСНОВНИЙ ФАЙЛ:                                 ║
+  ║                                                                  ║
+  ║  1. CSS: скопіювати блок між === CSS: CASES MODULE === в <style> ║
+  ║  2. HTML-навігація: додати пункт з коментаря "NAV ITEM"          ║
+  ║  3. HTML-сторінка: додати div з коментаря "PAGE DIV"             ║
+  ║  4. HTML-мобільна навігація: додати кнопку "MOB NAV BTN"         ║
+  ║  5. JS: скопіювати весь блок між === JS: CASES MODULE ===        ║
+  ║  6. У функції goPage() додати гілку для 'cases'                  ║
+  ║  7. У функції renderCurrent() додати гілку для 'cases'           ║
+  ║  8. У функції setupTopbar() додати виключення для 'cases'        ║
+  ║  9. У функції updateBadges() додати badge для cases              ║
+  ║  10. У функції openHelp() додати вкладку 'cases'                 ║
+  ║                                                                  ║
+  ║  Детальні інструкції — в коментарях перед кожним блоком.         ║
+  ╚══════════════════════════════════════════════════════════════════╝
+-->
+
+<style>
+/* ============================================================
+   БАЗОВІ СТИЛІ (копія з основного файлу для демо)
+   В основному файлі ці стилі вже є — не копіювати повторно
+   ============================================================ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #f5f3ef; --surface: #ffffff; --surface2: #f0ede8;
+  --border: #ddd9d2; --text: #1a1814; --muted: #8a8278;
+  --accent: #2a5c45; --accent-light: #d4ede3;
+  --accent2: #c4601a; --accent2-light: #faeada;
+  --warn: #b8860b; --warn-light: #fdf6dc;
+  --danger: #8b2020; --danger-light: #fde8e8;
+  --shadow: 0 1px 4px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04);
+}
+body { background: var(--bg); color: var(--text); font-family: 'IBM Plex Mono', monospace; font-size: 13px; min-height: 100vh; }
+.btn { font-family: 'IBM Plex Mono', monospace; font-size: 12px; padding: 6px 13px; border-radius: 6px; border: none; cursor: pointer; transition: all .15s; display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
+.btn-primary { background: var(--text); color: var(--bg); }
+.btn-primary:hover { background: #333; }
+.btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+.btn-ghost:hover { background: var(--surface2); color: var(--text); }
+.btn-sm { font-size: 11px; padding: 4px 10px; }
+.btn-danger { background: var(--danger-light); color: var(--danger); border: 1px solid var(--danger); }
+.btn-danger:hover { background: var(--danger); color: white; }
+.form-group { margin-bottom: 11px; }
+.form-label { font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; display: block; }
+.form-input, .form-select, .form-ta { width: 100%; font-family: 'IBM Plex Mono', monospace; font-size: 12px; padding: 7px 11px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); color: var(--text); outline: none; transition: border-color .15s; }
+.form-input:focus, .form-select:focus, .form-ta:focus { border-color: var(--accent); }
+.form-ta { resize: vertical; min-height: 65px; }
+.form-input.error { border-color: var(--danger); }
+.overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.28); backdrop-filter: blur(4px); z-index: 100; display: flex; align-items: flex-start; justify-content: flex-end; animation: fadeIn .2s ease; }
+@keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+.modal { width: 480px; max-width: 100vw; height: 100vh; background: var(--surface); overflow-y: auto; animation: slideR .22s ease; box-shadow: -4px 0 28px rgba(0,0,0,0.1); }
+@keyframes slideR { from { transform:translateX(30px); opacity:0; } to { transform:translateX(0); opacity:1; } }
+.modal-head { padding: 20px 24px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; position: sticky; top: 0; background: var(--surface); z-index: 1; }
+.modal-head-title { font-family: 'Literata', serif; font-size: 15px; font-weight: 600; flex: 1; }
+.modal-close { background: none; border: none; font-size: 17px; color: var(--muted); cursor: pointer; padding: 3px 7px; border-radius: 4px; }
+.modal-close:hover { background: var(--surface2); color: var(--text); }
+.modal-body { padding: 20px 24px; }
+.modal-sec { margin-bottom: 20px; }
+.modal-sec-title { font-size: 9px; letter-spacing: 2.5px; text-transform: uppercase; color: var(--muted); margin-bottom: 9px; }
+.toast { position:fixed; bottom:22px; left:50%; transform:translateX(-50%); background:var(--text); color:var(--bg); padding:9px 18px; border-radius:7px; font-size:12px; z-index:999; animation:toastIn .25s ease; box-shadow:0 4px 18px rgba(0,0,0,.18); pointer-events:none; }
+.toast.success { background: var(--accent); }
+.toast.error-toast { background: var(--danger); }
+@keyframes toastIn { from{opacity:0;transform:translateX(-50%) translateY(8px);} to{opacity:1;transform:translateX(-50%) translateY(0);} }
+.chip { font-size: 10px; padding: 2px 8px; border-radius: 10px; font-weight: 500; display: inline-block; }
+.chip-active { background: var(--accent-light); color: var(--accent); }
+.chip-done { background: var(--surface2); color: var(--muted); }
+.empty { text-align:center; padding:50px 20px; color:var(--muted); }
+.empty .ei { font-size:34px; margin-bottom:10px; opacity:.35; }
+::-webkit-scrollbar { width:4px; height:4px; }
+::-webkit-scrollbar-track { background:transparent; }
+::-webkit-scrollbar-thumb { background:var(--border); border-radius:4px; }
+@keyframes fadeUp { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
+
+/* ============================================================
+   === CSS: CASES MODULE ===
+   Скопіювати цей блок в <style> основного файлу
+   ============================================================ */
+
+/* --- Список справ --- */
+.cases-list { display: flex; flex-direction: column; gap: 0; }
+
+.case-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  padding: 15px 20px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: all .2s;
+  box-shadow: var(--shadow);
+  animation: fadeUp .25s ease both;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.case-card:hover { border-color: #c5c0b8; box-shadow: 0 2px 10px rgba(0,0,0,0.08); transform: translateY(-1px); }
+
+.case-card-ico {
+  width: 40px; height: 40px;
+  border-radius: 9px;
+  background: var(--accent-light);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.case-card-body { flex: 1; min-width: 0; }
+.case-card-title { font-size: 13px; font-weight: 500; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.case-card-meta { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 10px; color: var(--muted); }
+.case-card-id { font-size: 10px; color: var(--muted); font-family: 'IBM Plex Mono', monospace; background: var(--surface2); padding: 1px 6px; border-radius: 4px; border: 1px solid var(--border); }
+
+.case-card-right { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; flex-shrink: 0; }
+.case-doc-count { font-size: 11px; color: var(--muted); display: flex; align-items: center; gap: 4px; }
+.case-doc-count strong { color: var(--text); font-size: 13px; }
+
+/* --- Заголовок розділу справи --- */
+.cases-view-header {
+  display: flex; align-items: center; gap: 12px;
+  padding: 0 0 18px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 20px;
+}
+.cases-back-btn {
+  background: none; border: 1px solid var(--border);
+  border-radius: 6px; padding: 5px 10px;
+  cursor: pointer; font-size: 13px; color: var(--muted);
+  transition: all .15s; font-family: 'IBM Plex Mono', monospace;
+}
+.cases-back-btn:hover { background: var(--surface2); color: var(--text); }
+.case-view-title { font-family: 'Literata', serif; font-size: 18px; font-weight: 600; flex: 1; }
+.case-view-id { font-size: 10px; color: var(--muted); font-family: 'IBM Plex Mono', monospace; background: var(--surface2); padding: 2px 8px; border-radius: 5px; border: 1px solid var(--border); }
+
+/* --- Документи всередині справи --- */
+.case-doc-item {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 7px;
+  display: flex; align-items: center; gap: 12px;
+  cursor: pointer; transition: all .18s;
+  box-shadow: var(--shadow);
+}
+.case-doc-item:hover { border-color: #c5c0b8; box-shadow: 0 2px 8px rgba(0,0,0,0.07); }
+.case-doc-item-ico { font-size: 20px; width: 32px; text-align: center; flex-shrink: 0; }
+.case-doc-item-body { flex: 1; min-width: 0; }
+.case-doc-item-title { font-size: 12px; font-weight: 500; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.case-doc-item-meta { font-size: 10px; color: var(--muted); display: flex; gap: 8px; align-items: center; }
+.case-doc-item-remove { background: none; border: none; cursor: pointer; font-size: 14px; color: var(--muted); padding: 4px; border-radius: 4px; opacity: 0; transition: all .15s; }
+.case-doc-item:hover .case-doc-item-remove { opacity: 1; }
+.case-doc-item-remove:hover { background: var(--danger-light); color: var(--danger); }
+
+/* --- Блок файлу в документі --- */
+.file-row {
+  display: flex; align-items: center; gap: 9px;
+  padding: 8px 11px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  margin-bottom: 6px;
+  font-size: 11px;
+}
+.file-row-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.file-row-ico { font-size: 15px; flex-shrink: 0; }
+.file-missing { border-color: var(--warn); background: var(--warn-light); }
+.file-missing .file-row-name { color: var(--warn); }
+
+/* --- Підказка ID --- */
+.id-hint {
+  font-size: 10px; color: var(--muted);
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 10px;
+  margin-top: 5px;
+  line-height: 1.6;
+}
+.id-hint strong { color: var(--text); }
+
+/* --- Статус папки --- */
+.folder-status {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 11px; padding: 8px 11px;
+  border-radius: 7px; margin-top: 8px;
+}
+.folder-status.ok { background: var(--accent-light); color: var(--accent); }
+.folder-status.warn { background: var(--warn-light); color: var(--warn); }
+.folder-status.err { background: var(--danger-light); color: var(--danger); }
+.folder-status.none { background: var(--surface2); color: var(--muted); }
+
+/* --- Вкладка довідки справи --- */
+.help-cases-content h4 {
+  font-family: 'Literata', serif; font-size: 14px; font-weight: 600;
+  margin: 16px 0 6px; color: var(--text);
+}
+.help-cases-content p { font-size: 12px; color: var(--muted); line-height: 1.7; margin-bottom: 8px; }
+.help-cases-content ul { font-size: 12px; color: var(--muted); line-height: 1.7; padding-left: 18px; margin-bottom: 8px; }
+.help-cases-content code {
+  font-family: 'IBM Plex Mono', monospace; font-size: 11px;
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 4px; padding: 1px 5px; color: var(--accent);
+}
+.help-cases-content .path-example {
+  font-family: 'IBM Plex Mono', monospace; font-size: 11px;
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 7px; padding: 10px 13px;
+  color: var(--text); margin: 8px 0;
+  line-height: 1.8;
+}
+.warn-box {
+  background: var(--warn-light); border: 1px solid var(--warn);
+  border-radius: 7px; padding: 10px 13px;
+  font-size: 11px; color: var(--warn); line-height: 1.6;
+  margin: 8px 0;
+}
+
+/* --- Вибір документів (додати до справи) --- */
+.doc-pick-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 12px; border: 1px solid var(--border);
+  border-radius: 7px; cursor: pointer; transition: all .15s;
+  margin-bottom: 6px;
+}
+.doc-pick-item:hover { background: var(--surface2); border-color: var(--accent); }
+.doc-pick-item.selected { background: var(--accent-light); border-color: var(--accent); }
+.doc-pick-check { width: 18px; height: 18px; border-radius: 4px; border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 11px; flex-shrink: 0; }
+.doc-pick-item.selected .doc-pick-check { background: var(--accent); border-color: var(--accent); color: white; }
+
+/* --- Справи у картці документа --- */
+.doc-cases-row {
+  display: flex; flex-wrap: wrap; gap: 5px; margin-top: 4px;
+}
+.doc-case-chip {
+  font-size: 10px; padding: 2px 8px;
+  background: var(--accent-light); color: var(--accent);
+  border-radius: 8px; cursor: pointer;
+  border: 1px solid transparent;
+  transition: all .15s;
+}
+.doc-case-chip:hover { border-color: var(--accent); }
+
+/* --- Секція справ у модальному вікні документа --- */
+.cases-in-doc-section {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+
+/* --- Кнопка вибору папки --- */
+.folder-pick-row {
+  display: flex; align-items: center; gap: 8px;
+}
+.folder-pick-row .form-input { flex: 1; }
+.folder-pick-btn {
+  font-family: 'IBM Plex Mono', monospace; font-size: 11px;
+  padding: 6px 12px; border: 1px solid var(--border);
+  border-radius: 6px; background: transparent; color: var(--muted);
+  cursor: pointer; transition: all .15s; white-space: nowrap;
+  flex-shrink: 0;
+}
+.folder-pick-btn:hover { background: var(--surface2); color: var(--text); }
+
+/* --- Діалог видалення --- */
+.delete-folder-list {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 10px 13px;
+  margin: 10px 0;
+  font-size: 11px;
+  line-height: 2;
+  font-family: 'IBM Plex Mono', monospace;
+  color: var(--text);
+}
+
+/* --- Прогрес створення папки --- */
+.folder-progress {
+  display: flex; flex-direction: column; gap: 6px;
+  margin-top: 12px;
+}
+.folder-progress-step {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 11px;
+}
+.folder-progress-step .step-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--border); flex-shrink: 0; transition: background .3s;
+}
+.folder-progress-step.done .step-dot { background: var(--accent); }
+.folder-progress-step.active .step-dot { background: var(--warn); animation: pulse .8s infinite; }
+.folder-progress-step.err .step-dot { background: var(--danger); }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+/* --- Мобільний адаптив --- */
+@media (max-width: 640px) {
+  .case-card { padding: 12px 14px; }
+  .cases-view-header { flex-wrap: wrap; gap: 8px; }
+  .case-view-title { font-size: 15px; }
+  .folder-pick-row { flex-direction: column; align-items: stretch; }
+  .folder-pick-btn { text-align: center; }
+  .case-card-right { display: none; }
+}
+
+/* === END CSS: CASES MODULE === */
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+   ДЕМОНСТРАЦІЙНА ОБГОРТКА (тільки для перегляду, не копіювати)
+   ============================================================ -->
+<div style="max-width:900px;margin:30px auto;padding:20px;">
+  <div style="background:var(--warn-light);border:1px solid var(--warn);border-radius:8px;padding:12px 16px;font-size:11px;color:var(--warn);margin-bottom:20px;line-height:1.6;">
+    <strong>📦 Модуль для інтеграції.</strong> Цей файл — заготовка для додавання до <code>caster.html</code>.
+    Кожен блок позначений коментарями де і що копіювати. Нижче — живе демо модуля.
+  </div>
+
+  <!-- Кнопки демо -->
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;">
+    <button class="btn btn-primary" onclick="showDemo('list')">📁 Список справ</button>
+    <button class="btn btn-ghost" onclick="showDemo('case')">📂 Відкрита справа</button>
+    <button class="btn btn-ghost" onclick="showDemo('create')">➕ Форма створення</button>
+    <button class="btn btn-ghost" onclick="showDemo('help')">❓ Довідка</button>
+  </div>
+
+  <div id="demo-area"></div>
+</div>
+
+<!-- ============================================================
+   === NAV ITEM ===
+   Додати в sidebar-nav перед "settings":
+
+   <li>
+     <a id="nav-cases" onclick="goPage('cases')" class="">
+       <span class="icon">📁</span>
+       <span id="nav-lbl-cases" data-i18n="cases">Справи</span>
+       <span class="badge accent" id="bdg-cases" style="display:none">0</span>
+     </a>
+   </li>
+   ============================================================ -->
+
+<!-- ============================================================
+   === PAGE DIV ===
+   Додати після інших page-content div:
+
+   <div class="page-content" id="page-cases"></div>
+   ============================================================ -->
+
+<!-- ============================================================
+   === MOB NAV BTN ===
+   Додати в мобільну навігацію:
+
+   <button class="mob-nav-btn" id="mob-nav-cases" onclick="goPage('cases')">
+     <span class="mob-icon">📁</span>
+     <span class="mob-label" data-i18n="cases">Справи</span>
+   </button>
+   ============================================================ -->
+
+<!-- ============================================================
+   МОДАЛЬНЕ ВІКНО (вже є в основному файлі)
+   Модуль використовує існуючий #overlay / #modal-body
+   ============================================================ -->
+
+<script>
+/* ============================================================
+   === JS: CASES MODULE ===
+   Скопіювати весь цей блок в основний файл
+   ============================================================ */
+
+// ------------------------------------------------------------
+// ДАНІ
+// Зберігаються в localStorage під ключами:
+//   'caster_cases'      — масив справ
+//   'caster_root_path'  — ім'я кореневої папки (рядок, не Handle)
+// ------------------------------------------------------------
+
+/* Структура справи:
+{
+  id: 'case_1234567890123',   // унікальний ID (генерується або вводиться)
+  title: 'Назва справи',
+  description: '',
+  country: '🇺🇦 Україна',
+  responsible: 'Олена М.',    // ім'я відповідального
+  responsibleId: 0,           // id з масиву team
+  docIds: ['1','2'],          // id документів що належать до справи
+  status: 'active',           // 'active' | 'closed'
+  createdAt: '2025-01-15T10:30:00.000Z',
+  folderCreated: true,        // чи успішно створена папка
+  folderPath: 'Caster/Україна/Олена М./case_1234567890123'
+}
+*/
+
+// Ключ localStorage
+var CASES_LS_KEY = 'caster_cases';
+
+// Завантажити справи з localStorage
+function casesLoad() {
+  try {
+    return JSON.parse(localStorage.getItem(CASES_LS_KEY) || '[]');
+  } catch(e) { return []; }
+}
+
+// Зберегти справи в localStorage
+function casesSave(arr) {
+  localStorage.setItem(CASES_LS_KEY, JSON.stringify(arr));
+}
+
+// Завантажити збережену кореневу директорію (не серіалізується — тільки прапорець)
+function casesGetRootPath() {
+  return localStorage.getItem('caster_root_path') || '';
+}
+function casesSetRootPath(path) {
+  localStorage.setItem('caster_root_path', path);
+}
+
+// Глобальний FileSystemDirectoryHandle (не зберігається між сесіями — треба вибирати знову)
+window._casesRootHandle = null;
+
+// Перевірка недозволених символів в ID
+function casesIsValidId(id) {
+  return !/[\/\\:*?"<>|]/.test(id) && id.trim().length > 0;
+}
+
+// Перевірка унікальності ID
+function casesIsUniqueId(id, excludeId) {
+  var cases = casesLoad();
+  return !cases.find(c => c.id === id && id !== excludeId);
+}
+
+// Генерація ID з часовою міткою до мілісекунди
+function casesGenerateId() {
+  return 'case_' + Date.now();
+}
+
+// ------------------------------------------------------------
+// РЕНДЕР СТОРІНКИ СПРАВ
+// Додати в goPage(): case 'cases': renderCasesPage(); break;
+// Додати в renderCurrent(): else if(currentPage==='cases'){ ... }
+// ------------------------------------------------------------
+
+var _casesCurrentCaseId = null; // яка справа відкрита
+
+function renderCasesPage() {
+  if (_casesCurrentCaseId) {
+    renderCaseView(_casesCurrentCaseId);
+  } else {
+    renderCasesList();
+  }
+}
+
+// Список усіх справ
+function renderCasesList() {
+  var el = document.getElementById('page-cases');
+  if (!el) return;
+  var cases = casesLoad();
+
+  // Filterbar
+  var fb = document.getElementById('filterbar');
+  if (fb) {
+    var activeCount = cases.filter(c => (c.status || 'active') === 'active').length;
+    fb.innerHTML = `
+      <span class="filter-label" style="margin-right:4px">Статус:</span>
+      <button class="filter-chip ${!_casesFilter||_casesFilter==='all'?'active':''}" onclick="setCasesFilter('all',this)">Всі (${cases.length})</button>
+      <button class="filter-chip ${_casesFilter==='active'?'active':''}" onclick="setCasesFilter('active',this)">Активні (${activeCount})</button>
+    `;
+  }
+
+  // Пошук
+  var q = (document.getElementById('search-inp')?.value || '').toLowerCase();
+
+  var filtered = cases.filter(c => {
+    if (_casesFilter === 'active' && (c.status || 'active') !== 'active') return false;
+    if (q && !c.title.toLowerCase().includes(q) && !c.id.toLowerCase().includes(q)) return false;
+    return true;
+  });
+
+  if (filtered.length === 0) {
+    el.innerHTML = `
+      <div class="empty">
+        <div class="ei">📁</div>
+        <div>${q ? 'Нічого не знайдено' : 'Справ ще немає'}</div>
+        ${!q && !casesIsMobile() ? `<div style="margin-top:10px"><button class="btn btn-primary" onclick="openCreateCase()">+ Створити першу справу</button></div>` : ''}
+      </div>`;
+    return;
+  }
+
+  el.innerHTML = `<div class="cases-list">${filtered.map(c => renderCaseCard(c)).join('')}</div>`;
+}
+
+var _casesFilter = 'all';
+function setCasesFilter(f, el) {
+  _casesFilter = f;
+  document.querySelectorAll('.filterbar .filter-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  renderCasesList();
+}
+
+function renderCaseCard(c) {
+  var docCount = (c.docIds || []).length;
+  var date = c.createdAt ? new Date(c.createdAt).toLocaleDateString('uk-UA') : '—';
+  var countryFlag = (c.country || '').split(' ')[0] || '🌍';
+  var isActive = (c.status || 'active') === 'active';
+
+  return `
+    <div class="case-card" onclick="openCaseView(this.dataset.id)" data-id="${escHtml(c.id)}">
+      <div class="case-card-ico">📁</div>
+      <div class="case-card-body">
+        <div class="case-card-title">${escHtml(c.title)}</div>
+        <div class="case-card-meta">
+          <span>${countryFlag} ${escHtml((c.country || '').split(' ').slice(1).join(' '))}</span>
+          <span>·</span>
+          <span>👤 ${escHtml(c.responsible || '—')}</span>
+          <span>·</span>
+          <span>📅 ${date}</span>
+          <span title="${c.folderCreated ? 'Папка створена' : 'Папка не створена'}"
+                style="color:${c.folderCreated ? 'var(--accent)' : 'var(--muted)'}">${c.folderCreated ? '✓' : '…'}</span>
+        </div>
+      </div>
+      <div class="case-card-right">
+        <span class="chip ${isActive ? 'chip-active' : 'chip-done'}">${isActive ? 'Активна' : 'Закрита'}</span>
+        <span class="case-doc-count"><strong>${docCount}</strong> ${docNoun(docCount)}</span>
+        <span class="case-card-id">${escHtml(c.id)}</span>
+      </div>
+    </div>`;
+}
+
+function docNoun(n) {
+  if (n % 10 === 1 && n % 100 !== 11) return 'документ';
+  if ([2,3,4].includes(n % 10) && ![12,13,14].includes(n % 100)) return 'документи';
+  return 'документів';
+}
+
+// ------------------------------------------------------------
+// ПЕРЕГЛЯД СПРАВИ
+// ------------------------------------------------------------
+
+function openCaseView(id) {
+  _casesCurrentCaseId = id;
+  renderCaseView(id);
+}
+
+function closeCaseView() {
+  _casesCurrentCaseId = null;
+  renderCasesList();
+}
+
+// Перемикач статусу справи — активна / закрита
+function casesToggleStatus(caseId, btn) {
+  var cases = casesLoad();
+  var idx = cases.findIndex(c => c.id === caseId);
+  if (idx < 0) return;
+  var current = cases[idx].status || 'active';
+  cases[idx].status = current === 'active' ? 'closed' : 'active';
+  casesSave(cases);
+  var isActive = cases[idx].status === 'active';
+  if (btn) {
+    btn.textContent = isActive ? '● Активна' : '○ Закрита';
+    btn.style.color = isActive ? 'var(--accent)' : 'var(--muted)';
+  }
+  showToast(isActive ? 'Справа позначена як активна' : 'Справа закрита', 'success');
+}
+
+function renderCaseView(id) {
+  var el = document.getElementById('page-cases');
+  if (!el) return;
+  var cases = casesLoad();
+  var c = cases.find(x => x.id === id);
+  if (!c) { closeCaseView(); return; }
+
+  var docsArr = typeof docs !== 'undefined' ? docs : [];
+  var caseDocs = (c.docIds || []).map(did => docsArr.find(d => d.id === did)).filter(Boolean);
+  var docCount = caseDocs.length;
+  var date = c.createdAt ? new Date(c.createdAt).toLocaleDateString('uk-UA') : '—';
+
+  el.innerHTML = `
+    <div>
+      <!-- Заголовок -->
+      <div class="cases-view-header">
+        <button class="cases-back-btn" onclick="closeCaseView()">← Назад</button>
+        <div class="case-view-title">${escHtml(c.title)}</div>
+        <span class="case-view-id">${escHtml(c.id)}</span>
+        ${casesIsMobile() ? '' : `
+        <div style="display:flex;gap:6px"
+             data-case-id="${escHtml(c.id)}">
+          <button class="btn btn-ghost btn-sm"
+                  onclick="openRenameCase(this.closest('[data-case-id]').dataset.caseId)">✏️ Перейменувати</button>
+          <button class="btn btn-ghost btn-sm"
+                  onclick="openDeleteCase(this.closest('[data-case-id]').dataset.caseId)"
+                  style="color:var(--danger)">🗑 Видалити</button>
+        </div>`}
+      </div>
+
+      <!-- Мета-інфо -->
+      <div style="display:flex;gap:18px;flex-wrap:wrap;margin-bottom:20px;font-size:11px;color:var(--muted);align-items:center">
+        <span>🌍 ${escHtml(c.country || '—')}</span>
+        <span>👤 ${escHtml(c.responsible || '—')}</span>
+        <span>📅 Створено: ${date}</span>
+        ${c.description ? `<span>📝 ${escHtml(c.description)}</span>` : ''}
+        <span style="margin-left:auto">
+          <button class="btn btn-ghost btn-sm"
+                  data-case-id="${escHtml(c.id)}"
+                  onclick="casesToggleStatus(this.dataset.caseId, this)"
+                  style="color:${(c.status||'active')==='active'?'var(--accent)':'var(--muted)'}">
+            ${(c.status || 'active') === 'active' ? '● Активна' : '○ Закрита'}
+          </button>
+        </span>
+      </div>
+
+      <!-- Папка -->
+      <div style="margin-bottom:20px">
+        <div class="modal-sec-title">Папка на диску</div>
+        ${renderFolderStatus(c)}
+      </div>
+
+      <!-- Документи -->
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+        <div class="modal-sec-title" style="margin:0">Документи (${docCount})</div>
+        ${casesIsMobile() ? '' : `<button class="btn btn-ghost btn-sm" data-case-id="${escHtml(c.id)}" onclick="openAddDocToCase(this.dataset.caseId)">+ Додати документ</button>`}
+      </div>
+
+      ${caseDocs.length === 0
+        ? `<div class="empty" style="padding:30px 20px"><div class="ei" style="font-size:24px">📄</div><div>Документів ще немає</div></div>`
+        : `<div>${caseDocs.map(d => renderCaseDocItem(d, c.id)).join('')}</div>`
+      }
+    </div>`;
+}
+
+function renderFolderStatus(c) {
+  var mobile = casesIsMobile();
+  var supported = casesFolderSupported();
+
+  if (!c.folderPath) {
+    if (mobile) {
+      return `<div class="folder-status none">📱 На мобільному пристрої папки недоступні — тільки перегляд</div>`;
+    }
+    return `
+      <div class="folder-status none">
+        📂 Папка не вибрана
+        <button class="btn btn-ghost btn-sm" style="margin-left:auto"
+                data-case-id="${escHtml(c.id)}"
+                onclick="openSelectFolder(this.dataset.caseId)">Вибрати папку</button>
+      </div>`;
+  }
+
+  return `
+    <div class="folder-status ${c.folderCreated ? 'ok' : 'warn'}">
+      <span>${c.folderCreated ? '✓' : '⚠️'}</span>
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(c.folderPath)}</span>
+      ${supported ? `<button class="btn btn-ghost btn-sm" style="flex-shrink:0"
+                             data-case-id="${escHtml(c.id)}"
+                             onclick="openSelectFolder(this.dataset.caseId)">Змінити</button>` : ''}
+    </div>
+    ${!c.folderCreated && supported ? `
+      <div class="folder-status warn" style="margin-top:4px">
+        ⚠️ Папку не вдалось перевірити. Вибери кореневу папку знову щоб перевірити.
+      </div>` : ''}
+    ${mobile ? `<div class="folder-status none" style="margin-top:4px">📱 Керування папками доступне тільки на десктопі.</div>` : ''}
+    ${!supported && !mobile ? `<div class="folder-status warn" style="margin-top:4px">⚠️ Цей браузер не підтримує File System Access API. Папки недоступні.</div>` : ''}
+  `;
+}
+
+// Іконки типів документів — константа на рівні модуля
+var CASES_TYPE_ICONS = { passport:'🛂', property:'🏠', auto:'🚗', medical:'🏥', finance:'🏦', edu:'📋', legal:'⚖️', other:'📦' };
+
+function renderCaseDocItem(d, caseId) {
+  var ico = CASES_TYPE_ICONS[d.type] || '📄';
+  return `
+    <div class="case-doc-item"
+         onclick="casesOpenDocCard(this.dataset.docId, event)"
+         data-doc-id="${escHtml(d.id)}"
+         data-case-id="${escHtml(caseId)}">
+      <div class="case-doc-item-ico">${ico}</div>
+      <div class="case-doc-item-body">
+        <div class="case-doc-item-title">${escHtml(d.title || d.ref || '—')}</div>
+        <div class="case-doc-item-meta">
+          <span>${d.country || ''}</span>
+          ${d.docNumber ? `<span>· ${escHtml(d.docNumber)}</span>` : ''}
+        </div>
+      </div>
+      <button class="case-doc-item-remove"
+              title="Видалити зі справи"
+              onclick="removeDocFromCase(this.closest('[data-doc-id]').dataset.docId, this.closest('[data-doc-id]').dataset.caseId, event)">✕</button>
+    </div>`;
+}
+
+// Відкрити картку документа з контексту справи.
+// Викликає openDocModal(id) якщо така функція є в основному файлі.
+function casesOpenDocCard(docId, evt) {
+  if (evt) evt.stopPropagation();
+  // openDocDetail — назва функції в основному файлі caster.html
+  if (typeof openDocDetail === 'function') {
+    openDocDetail(docId);
+  } else if (typeof openDocModal === 'function') {
+    openDocModal(docId);
+  } else if (typeof openDoc === 'function') {
+    openDoc(docId);
+  } else {
+    // Fallback: показати базову інформацію в модалці
+    var docsArr = typeof docs !== 'undefined' ? docs : [];
+    var d = docsArr.find(x => x.id === docId);
+    if (!d) { showToast('Документ не знайдено', 'error'); return; }
+    openModalWith(d.title || '—', `
+      <div style="display:flex;align-items:flex-start;gap:14px;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid var(--border)">
+        <div style="font-size:32px;width:50px;text-align:center;flex-shrink:0">${CASES_TYPE_ICONS[d.type]||'📄'}</div>
+        <div>
+          <div style="font-family:'Literata',serif;font-size:17px;font-weight:600;margin-bottom:4px">${escHtml(d.title||'—')}</div>
+          <div style="font-size:11px;color:var(--muted);display:flex;gap:8px;flex-wrap:wrap">
+            ${d.country ? `<span>${escHtml(d.country)}</span>` : ''}
+            ${d.docNumber ? `<span>№ ${escHtml(d.docNumber)}</span>` : ''}
+            ${d.validUntil ? `<span>до ${escHtml(d.validUntil)}</span>` : ''}
+          </div>
+        </div>
+      </div>
+      ${renderDocCasesSection(docId)}
+      <div style="display:flex;justify-content:flex-end;padding-top:12px">
+        <button class="btn btn-ghost" onclick="closeModal()">Закрити</button>
+      </div>`);
+  }
+}
+
+// ------------------------------------------------------------
+// ВИБІР ПАПКИ (File System Access API)
+// Папки створюються тільки на десктопі.
+// На мобільному — тільки перегляд.
+// ------------------------------------------------------------
+
+// Визначити чи пристрій мобільний.
+// Обчислюється один раз і кешується. Оновлюється при зміні розміру вікна.
+var _casesIsMobileCache = null;
+
+function casesIsMobile() {
+  if (_casesIsMobileCache !== null) return _casesIsMobileCache;
+  _casesIsMobileCache = _casesCalcMobile();
+  return _casesIsMobileCache;
+}
+
+function _casesCalcMobile() {
+  if (window.innerWidth < 768) return true;
+  if (/Android|iPhone|iPod|Opera Mini|IEMobile|WPDesktop/i.test(navigator.userAgent)) return true;
+  if (/iPad/i.test(navigator.userAgent) && window.innerWidth < 1024) return true;
+  return false;
+}
+
+// Скидати кеш при зміні розміру — UI оновиться при наступному рендері
+window.addEventListener('resize', () => {
+  _casesIsMobileCache = _casesCalcMobile();
+});
+
+// Перевірити доступність роботи з папками
+function casesFolderSupported() {
+  if (casesIsMobile()) return false;
+  return 'showDirectoryPicker' in window;
+}
+
+function casesMobileBlock() {
+  showToast('На мобільному пристрої папки недоступні — тільки перегляд', 'error');
+}
+
+async function openSelectFolder(caseId) {
+  if (casesIsMobile()) { casesMobileBlock(); return; }
+  if (!casesFolderSupported()) {
+    showToast('Браузер не підтримує вибір папок', 'error');
+    return;
+  }
+  try {
+    var dirHandle = await window.showDirectoryPicker({ mode: 'readwrite' });
+    window._casesRootHandle = dirHandle;
+    casesSetRootPath(dirHandle.name);
+
+    if (caseId) {
+      await casesCreateFolderStructure(caseId, dirHandle);
+    }
+  } catch(e) {
+    if (e.name !== 'AbortError') {
+      showToast('Помилка вибору папки', 'error');
+    }
+  }
+}
+
+// Вибрати кореневу папку (без прив'язки до справи)
+async function casesPickRootFolder() {
+  if (casesIsMobile()) { casesMobileBlock(); return null; }
+  if (!casesFolderSupported()) {
+    showToast('Браузер не підтримує вибір папок', 'error');
+    return null;
+  }
+  try {
+    var dirHandle = await window.showDirectoryPicker({ mode: 'readwrite' });
+    window._casesRootHandle = dirHandle;
+    casesSetRootPath(dirHandle.name);
+    return dirHandle;
+  } catch(e) {
+    if (e.name !== 'AbortError') showToast('Помилка вибору папки', 'error');
+    return null;
+  }
+}
+
+// Отримати або створити підпапку.
+// Повертає { handle, existed } — existed=true якщо папка вже існувала.
+async function casesGetOrCreateDir(parentHandle, name) {
+  try {
+    // Спробувати отримати без створення — якщо вдалось, папка вже існує
+    try {
+      var existing = await parentHandle.getDirectoryHandle(name, { create: false });
+      return { handle: existing, existed: true };
+    } catch(e) {
+      // Папки немає — створити
+      var created = await parentHandle.getDirectoryHandle(name, { create: true });
+      return { handle: created, existed: false };
+    }
+  } catch(e) {
+    throw new Error(`Не вдалось створити папку "${name}": ${e.message}`);
+  }
+}
+
+// Створити структуру папок: Коренева → Країна → Відповідальний → ID справи
+async function casesCreateFolderStructure(caseId, rootHandle) {
+  var cases = casesLoad();
+  var c = cases.find(x => x.id === caseId);
+  if (!c) return;
+
+  var countryName = (c.country || 'Невідомо').split(' ').slice(1).join(' ') || c.country || 'Невідомо';
+  var respName = c.responsible || 'Невідомо';
+
+  showToast('Створюю папки…');
+
+  // Позначити як "створення в процесі" — для відновлення після збою
+  casesMarkFolderPending(caseId);
+
+  try {
+    const { handle: countryDir } = await casesGetOrCreateDir(rootHandle, countryName);
+    const { handle: respDir } = await casesGetOrCreateDir(countryDir, respName);
+    const { existed } = await casesGetOrCreateDir(respDir, caseId);
+
+    var path = `${rootHandle.name}/${countryName}/${respName}/${caseId}`;
+
+    var allCases = casesLoad();
+    var idx = allCases.findIndex(x => x.id === caseId);
+    if (idx >= 0) {
+      allCases[idx].folderCreated = true;
+      allCases[idx].folderPath = path;
+      casesSave(allCases);
+    }
+
+    casesMarkFolderDone(caseId);
+
+    showToast(existed ? 'Використано існуючу папку: ' + path : 'Папку створено: ' + path, 'success');
+
+    if (_casesCurrentCaseId === caseId) renderCaseView(caseId);
+
+  } catch(e) {
+    // Залишаємо pending — при наступному запуску буде перевірено
+    showToast('Помилка створення папки: ' + e.message, 'error');
+  }
+}
+
+// Перевірка папок при запуску (фонова, не блокує)
+async function casesCheckFoldersOnStartup() {
+  // 1. Перевірити чи є незавершені створення папок (після збою)
+  var pending = casesGetPendingFolders();
+  var pendingIds = Object.keys(pending);
+  if (pendingIds.length > 0) {
+    var casesForPending = casesLoad();
+    var pendingChanged = false;
+    for (const caseId of pendingIds) {
+      var c = casesForPending.find(x => x.id === caseId);
+      if (c) {
+        c.folderCreated = false;
+        pendingChanged = true;
+      }
+      casesMarkFolderDone(caseId);
+    }
+    if (pendingChanged) {
+      casesSave(casesForPending);
+      showToast('⚠️ Деякі папки могли не створитись через збій', 'error');
+    }
+  }
+
+  // 2. Перевірити існуючі папки якщо є rootHandle
+  if (!window._casesRootHandle) return;
+  var allCases = casesLoad();
+  var foldersChanged = false;
+  for (const c of allCases) {
+    if (!c.folderPath || !c.folderCreated) continue;
+    try {
+      var parts = c.folderPath.split('/');
+      var dir = window._casesRootHandle;
+      for (let i = 1; i < parts.length; i++) {
+        dir = await dir.getDirectoryHandle(parts[i]);
+      }
+    } catch(e) {
+      c.folderCreated = false;
+      foldersChanged = true;
+    }
+  }
+  if (foldersChanged) {
+    casesSave(allCases);
+    showToast('⚠️ Деякі папки справ не знайдено', 'error');
+  }
+}
+
+// ------------------------------------------------------------
+// СТВОРЕННЯ СПРАВИ
+// ------------------------------------------------------------
+
+function openCreateCase() {
+  var modal = document.getElementById('overlay');
+  var body = document.getElementById('modal-body');
+  var title = document.getElementById('modal-title');
+  if (!modal || !body) {
+    // fallback для демо
+    showCreateCaseDemo();
+    return;
+  }
+  title.textContent = 'Нова справа';
+  body.innerHTML = buildCreateCaseForm();
+  modal.style.display = 'flex';
+}
+
+// Для демо (без основного overlay)
+function showCreateCaseDemo() {
+  document.getElementById('demo-area').innerHTML = `
+    <div style="max-width:480px;background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;box-shadow:var(--shadow)">
+      <div class="modal-head">
+        <div class="modal-head-title">Нова справа</div>
+        <button class="modal-close" onclick="showDemo('list')">✕</button>
+      </div>
+      <div class="modal-body">${buildCreateCaseForm()}</div>
+    </div>`;
+  syncCaseIdHint();
+}
+
+function buildCreateCaseForm() {
+  return `
+    <div class="modal-sec">
+      <div class="modal-sec-title">Основне</div>
+
+      <div class="form-group">
+        <label class="form-label">Назва справи <span style="color:var(--danger)">*</span></label>
+        <input type="text" class="form-input" id="cf-title" placeholder="Наприклад: Оренда офісу 2025" oninput="syncCaseIdHint()">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Країна <span style="color:var(--danger)">*</span></label>
+        <input type="text" class="form-input" id="cf-country" placeholder="🇺🇦 Україна" list="cf-country-list">
+        <datalist id="cf-country-list">
+          <option value="🇺🇦 Україна">
+          <option value="🇩🇪 Німеччина">
+          <option value="🌍 Інша">
+        </datalist>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Відповідальний <span style="color:var(--danger)">*</span></label>
+        ${buildResponsibleSelect()}
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Опис</label>
+        <textarea class="form-ta" id="cf-desc" placeholder="Необов'язково. Короткий опис справи."></textarea>
+      </div>
+    </div>
+
+    <div class="modal-sec">
+      <div class="modal-sec-title">ID справи</div>
+
+      <div class="form-group">
+        <div style="display:flex;gap:6px;align-items:center">
+          <input type="text" class="form-input" id="cf-id" placeholder="Генерується автоматично" oninput="validateCaseIdField()">
+          <button class="btn btn-ghost btn-sm" onclick="generateCaseIdNow()" title="Генерувати автоматично">↺</button>
+        </div>
+        <div id="cf-id-error" style="font-size:10px;color:var(--danger);margin-top:4px;display:none"></div>
+        <div class="id-hint" id="cf-id-hint">
+          <strong>Назва</strong> — для людей. Можна змінити будь-коли.<br>
+          <strong>ID</strong> — технічний ідентифікатор. Використовується як ім'я папки на диску.
+          Після створення <strong>не змінюється</strong>.<br>
+          Якщо залишити порожнім — буде згенеровано автоматично: <code id="cf-id-preview">case_${Date.now()}</code><br>
+          Заборонені символи: <code>/ \\ : * ? " &lt; &gt; |</code>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-sec" id="cf-folder-sec">
+      <div class="modal-sec-title">Папка на диску</div>
+      ${casesIsMobile()
+        ? `<div class="folder-status none">📱 Створення папок недоступне на мобільному пристрої. Папку можна вибрати після відкриття справи на десктопі.</div>`
+        : !casesFolderSupported()
+          ? `<div class="folder-status warn">⚠️ Браузер не підтримує File System Access API. Папки недоступні.</div>`
+          : `<div class="folder-pick-row">
+              <input type="text" class="form-input" id="cf-folder-display" readonly placeholder="Папка не вибрана" style="color:var(--muted)">
+              <button class="folder-pick-btn" onclick="casesPickRootForForm()">📂 Вибрати папку</button>
+            </div>
+            <div style="font-size:10px;color:var(--muted);margin-top:5px">
+              Папка буде створена: <strong id="cf-path-preview">—</strong>
+            </div>`
+      }
+    </div>
+
+    <div style="display:flex;gap:8px;justify-content:flex-end;padding-top:8px;border-top:1px solid var(--border)">
+      <button class="btn btn-ghost" onclick="closeModal()">Скасувати</button>
+      <button class="btn btn-primary" onclick="submitCreateCase()">Створити справу</button>
+    </div>`;
+}
+
+function buildResponsibleSelect() {
+  // Якщо є масив team — побудувати select
+  if (typeof team !== 'undefined' && team.length) {
+    var options = team.filter(m => m.active).map(m =>
+      `<option value="${m.id}">${escHtml(m.name)}</option>`
+    ).join('');
+    return `<select class="form-select" id="cf-resp-sel"><option value="">— оберіть —</option>${options}</select>`;
+  }
+  return `<input type="text" class="form-input" id="cf-resp-sel" placeholder="Ім'я відповідального">`;
+}
+
+window._caseFormRootHandle = null;
+
+async function casesPickRootForForm() {
+  var h = await casesPickRootFolder();
+  if (!h) return;
+  window._caseFormRootHandle = h;
+  var disp = document.getElementById('cf-folder-display');
+  if (disp) disp.value = h.name;
+  updateCasePathPreview();
+}
+
+function updateCasePathPreview() {
+  var el = document.getElementById('cf-path-preview');
+  if (!el) return;
+  var rootName = window._caseFormRootHandle?.name || casesGetRootPath() || '(папка)';
+  var country = (document.getElementById('cf-country')?.value || 'Країна').split(' ').slice(1).join(' ') || 'Країна';
+  var respRaw = document.getElementById('cf-resp-sel')?.value || '';
+  var resp = getResponsibleName(respRaw) || 'Відповідальний';
+  var idVal = document.getElementById('cf-id')?.value.trim() || document.getElementById('cf-id-preview')?.textContent || 'case_...';
+  el.textContent = `${rootName} / ${country} / ${resp} / ${idVal}`;
+}
+
+function getResponsibleName(val) {
+  if (typeof team !== 'undefined') {
+    var m = team.find(x => String(x.id) === String(val));
+    if (m) return m.name;
+  }
+  return val;
+}
+
+function syncCaseIdHint() {
+  var preview = document.getElementById('cf-id-preview');
+  if (preview) preview.textContent = casesGenerateId();
+  updateCasePathPreview();
+}
+
+function generateCaseIdNow() {
+  var inp = document.getElementById('cf-id');
+  if (inp) {
+    inp.value = casesGenerateId();
+    validateCaseIdField();
+    updateCasePathPreview();
+  }
+}
+
+function validateCaseIdField() {
+  var inp = document.getElementById('cf-id');
+  var err = document.getElementById('cf-id-error');
+  if (!inp || !err) return true;
+  var val = inp.value.trim();
+  if (!val) { inp.classList.remove('error'); err.style.display='none'; updateCasePathPreview(); return true; }
+  if (!casesIsValidId(val)) {
+    inp.classList.add('error');
+    err.textContent = 'Недозволені символи: / \\ : * ? " < > |';
+    err.style.display = 'block';
+    return false;
+  }
+  if (!casesIsUniqueId(val)) {
+    inp.classList.add('error');
+    err.textContent = 'Справа з таким ID вже існує';
+    err.style.display = 'block';
+    return false;
+  }
+  inp.classList.remove('error');
+  err.style.display = 'none';
+  updateCasePathPreview();
+  return true;
+}
+
+async function submitCreateCase() {
+  if (casesIsMobile()) { casesMobileBlock(); return; }
+  // Валідація
+  var titleInp = document.getElementById('cf-title');
+  var countryInp = document.getElementById('cf-country');
+  var respInp = document.getElementById('cf-resp-sel');
+  var idInp = document.getElementById('cf-id');
+  var descInp = document.getElementById('cf-desc');
+
+  var ok = true;
+
+  if (!titleInp?.value.trim()) {
+    titleInp.classList.add('error'); ok = false;
+  } else { titleInp.classList.remove('error'); }
+
+  if (!countryInp?.value.trim()) {
+    countryInp.classList.add('error'); ok = false;
+  } else { countryInp.classList.remove('error'); }
+
+  if (!respInp?.value.trim()) {
+    respInp.classList.add('error'); ok = false;
+  } else { respInp.classList.remove('error'); }
+
+  if (idInp?.value.trim() && !validateCaseIdField()) { ok = false; }
+
+  if (!ok) {
+    showToast('Заповніть обов\'язкові поля', 'error');
+    return;
+  }
+
+  var caseId = idInp?.value.trim() || casesGenerateId();
+
+  // Ще раз перевірити унікальність
+  if (!casesIsUniqueId(caseId)) {
+    showToast('Справа з таким ID вже існує', 'error');
+    return;
+  }
+
+  var respVal = respInp?.value || '';
+  var respName = getResponsibleName(respVal);
+  var respId = typeof team !== 'undefined' ? (parseInt(respVal) || null) : null;
+  var country = countryInp?.value.trim() || '';
+
+  var newCase = {
+    id: caseId,
+    title: titleInp.value.trim(),
+    description: descInp?.value.trim() || '',
+    country: country,
+    responsible: respName,
+    responsibleId: respId,
+    docIds: [],
+    status: 'active',
+    createdAt: new Date().toISOString(),
+    folderCreated: false,
+    folderPath: '',
+  };
+
+  var cases = casesLoad();
+  cases.unshift(newCase);
+  casesSave(cases);
+
+  closeModal();
+  showToast('Справу створено', 'success');
+
+  // Створити папки якщо є rootHandle
+  var rootH = window._caseFormRootHandle || window._casesRootHandle;
+  if (rootH && casesFolderSupported()) {
+    window._casesRootHandle = rootH;
+    await casesCreateFolderStructure(caseId, rootH);
+  }
+
+  // Перейти до справи
+  _casesCurrentCaseId = caseId;
+  if (typeof goPage === 'function') goPage('cases');
+  else renderCaseView(caseId);
+}
+
+// ------------------------------------------------------------
+// ПЕРЕЙМЕНУВАННЯ СПРАВИ
+// ------------------------------------------------------------
+
+function openRenameCase(caseId) {
+  var cases = casesLoad();
+  var c = cases.find(x => x.id === caseId);
+  if (!c) return;
+
+  var html = `
+    <div class="modal-sec">
+      <div class="modal-sec-title">Перейменувати справу</div>
+      <div class="form-group">
+        <label class="form-label">Нова назва <span style="color:var(--danger)">*</span></label>
+        <input type="text" class="form-input" id="rn-title" value="${escHtml(c.title)}">
+      </div>
+      <div class="id-hint">
+        ID справи <strong>${escHtml(c.id)}</strong> і папка на диску <strong>не змінюються</strong> — щоб уникнути ризику втрати файлів.
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;padding-top:12px">
+      <button class="btn btn-ghost" onclick="closeModal()">Скасувати</button>
+      <button class="btn btn-primary"
+              data-case-id="${escHtml(caseId)}"
+              onclick="submitRenameCase(this.dataset.caseId)">Зберегти</button>
+    </div>`;
+
+  openModalWith('Перейменувати справу', html);
+}
+
+function submitRenameCase(caseId) {
+  var inp = document.getElementById('rn-title');
+  if (!inp?.value.trim()) { inp.classList.add('error'); return; }
+  var cases = casesLoad();
+  var idx = cases.findIndex(x => x.id === caseId);
+  if (idx < 0) return;
+  cases[idx].title = inp.value.trim();
+  casesSave(cases);
+  closeModal();
+  showToast('Назву змінено', 'success');
+  if (_casesCurrentCaseId === caseId) renderCaseView(caseId);
+  else renderCasesList();
+}
+
+// ------------------------------------------------------------
+// ВИДАЛЕННЯ СПРАВИ
+// ------------------------------------------------------------
+
+function openDeleteCase(caseId) {
+  var cases = casesLoad();
+  var c = cases.find(x => x.id === caseId);
+  if (!c) return;
+
+  var docCount = (c.docIds || []).length;
+
+  // Побудувати список папок які залишаться
+  var folderList = '';
+  if (c.folderPath) {
+    var parts = c.folderPath.split('/');
+    // Показати всі рівні: root, country, responsible, case
+    var allPaths = [];
+    for (let i = 1; i <= parts.length; i++) {
+      allPaths.push(parts.slice(0, i).join('/'));
+    }
+    folderList = `
+      <div class="delete-folder-list">
+        <strong>Папки що залишаться на диску:</strong><br>
+        ${allPaths.map((p, i) => `${'&nbsp;'.repeat(i * 2)}📂 ${escHtml(p)}`).join('<br>')}
+      </div>
+      <div class="warn-box">📂 Папки на диску <strong>не видаляються автоматично</strong>. Якщо вони більше не потрібні — видали їх вручну через файловий менеджер.<br><br>⚠️ Не видаляй папки країни і відповідального якщо там є інші справи.</div>`;
+  }
+
+  var html = `
+    <div class="modal-sec">
+      <div class="modal-sec-title">Видалити справу</div>
+      <p style="font-size:12px;margin-bottom:12px">Справа <strong>${escHtml(c.title)}</strong> буде видалена.</p>
+      ${docCount > 0
+        ? `<div class="folder-status warn" style="margin-bottom:12px">📄 ${docCount} ${docNoun(docCount)} залишиться в загальному списку документів.</div>`
+        : ''}
+      ${folderList}
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;padding-top:12px">
+      <button class="btn btn-ghost" onclick="closeModal()">Скасувати</button>
+      <button class="btn btn-danger"
+              data-case-id="${escHtml(caseId)}"
+              onclick="submitDeleteCase(this.dataset.caseId)">Видалити справу</button>
+    </div>`;
+
+  openModalWith('Видалити справу', html);
+}
+
+function submitDeleteCase(caseId) {
+  var cases = casesLoad();
+  cases = cases.filter(c => c.id !== caseId);
+  casesSave(cases);
+  closeModal();
+  showToast('Справу видалено');
+  _casesCurrentCaseId = null;
+  renderCasesList();
+}
+
+// ------------------------------------------------------------
+// ДОДАТИ ДОКУМЕНТ ДО СПРАВИ
+// ------------------------------------------------------------
+
+function openAddDocToCase(caseId) {
+  var cases = casesLoad();
+  var c = cases.find(x => x.id === caseId);
+  if (!c) return;
+
+  var docsArr = typeof docs !== 'undefined' ? docs : [];
+  var existingIds = new Set(c.docIds || []);
+
+  var html = `
+    <div class="modal-sec">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+        <div class="modal-sec-title" style="margin:0">Вибрати з існуючих</div>
+        <button class="btn btn-ghost btn-sm"
+                style="margin-left:auto"
+                data-case-id="${escHtml(caseId)}"
+                onclick="casesCreateNewDoc(this.dataset.caseId)">+ Створити новий</button>
+      </div>
+      ${docsArr.length === 0
+        ? '<div class="empty" style="padding:20px"><div class="ei" style="font-size:24px">📄</div><div>Документів ще немає</div></div>'
+        : `<div id="doc-pick-list">${docsArr.map(d => `
+          <div class="doc-pick-item ${existingIds.has(d.id) ? 'selected' : ''}"
+               id="dpick-${d.id}"
+               data-doc-id="${escHtml(d.id)}"
+               data-case-id="${escHtml(caseId)}"
+               onclick="toggleDocPick(this.dataset.docId, this.dataset.caseId)">
+            <div class="doc-pick-check">${existingIds.has(d.id) ? '✓' : ''}</div>
+            <span style="font-size:18px">${CASES_TYPE_ICONS[d.type]||'📄'}</span>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:12px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(d.title)}</div>
+              <div style="font-size:10px;color:var(--muted)">${d.country||''} ${d.docNumber?'· '+d.docNumber:''}</div>
+            </div>
+          </div>`).join('')}
+        </div>`
+      }
+    </div>
+    <div style="display:flex;justify-content:flex-end;padding-top:12px">
+      <button class="btn btn-primary" onclick="closeModal()">Готово</button>
+    </div>`;
+
+  openModalWith('Документи справи', html);
+}
+
+function toggleDocPick(docId, caseId) {
+  var cases = casesLoad();
+  var idx = cases.findIndex(c => c.id === caseId);
+  if (idx < 0) return;
+
+  var docIds = cases[idx].docIds || [];
+  var pos = docIds.indexOf(docId);
+  if (pos >= 0) {
+    docIds.splice(pos, 1);
+  } else {
+    docIds.push(docId);
+  }
+  cases[idx].docIds = docIds;
+  casesSave(cases);
+
+  // Оновити UI
+  var item = document.getElementById(`dpick-${docId}`);
+  if (item) {
+    var isSelected = docIds.includes(docId);
+    item.classList.toggle('selected', isSelected);
+    var check = item.querySelector('.doc-pick-check');
+    if (check) check.textContent = isSelected ? '✓' : '';
+  }
+
+  // Оновити бейдж
+  updateCasesBadge();
+}
+
+function removeDocFromCase(docId, caseId, evt) {
+  if (evt) evt.stopPropagation();
+  var cases = casesLoad();
+  var idx = cases.findIndex(c => c.id === caseId);
+  if (idx < 0) return;
+  cases[idx].docIds = (cases[idx].docIds || []).filter(id => id !== docId);
+  casesSave(cases);
+  showToast('Документ видалено зі справи');
+  renderCaseView(caseId);
+}
+
+// Створити новий документ з контексту справи.
+// Після збереження документ автоматично додається до справи.
+// Використовує openDocForm(null) з основного файлу.
+function casesCreateNewDoc(caseId) {
+  // Зберегти caseId щоб після збереження документа додати його до справи
+  window._casesPendingCaseId = caseId;
+  closeModal();
+  if (typeof openDocForm === 'function') {
+    openDocForm(null);
+  } else {
+    showToast('Функція створення документа недоступна', 'error');
+    window._casesPendingCaseId = null;
+  }
+}
+
+// Викликати цю функцію після збереження нового документа в основному файлі.
+//
+// В основному файлі caster.html знайти функцію saveDoc() (~рядок 1892).
+// Після рядка:
+//   docs.unshift({id, title, ...});
+// Додати:
+//   if (typeof casesOnDocSaved === 'function') casesOnDocSaved(id);
+//
+function casesOnDocSaved(docId) {
+  var caseId = window._casesPendingCaseId;
+  if (!caseId || !docId) return;
+  window._casesPendingCaseId = null;
+
+  var cases = casesLoad();
+  var idx = cases.findIndex(c => c.id === caseId);
+  if (idx < 0) return;
+
+  var docIds = cases[idx].docIds || [];
+  if (!docIds.includes(docId)) {
+    docIds.push(docId);
+    cases[idx].docIds = docIds;
+    casesSave(cases);
+    showToast('Документ додано до справи', 'success');
+  }
+}
+
+// ------------------------------------------------------------
+// СПРАВИ В КАРТЦІ ДОКУМЕНТА
+// Викликати з renderDocModal або аналогічного місця
+// ------------------------------------------------------------
+
+function renderDocCasesSection(docId) {
+  var cases = casesLoad();
+  var docCases = cases.filter(c => (c.docIds || []).includes(docId));
+
+  return `
+    <div class="cases-in-doc-section">
+      <div class="modal-sec-title">Справи (${docCases.length})</div>
+      ${docCases.length === 0
+        ? '<div style="font-size:11px;color:var(--muted)">Документ не належить до жодної справи</div>'
+        : `<div class="doc-cases-row">${docCases.map(c =>
+            `<span class="doc-case-chip" onclick="openCaseViewFromDoc(this.dataset.id)" data-id="${escHtml(c.id)}" title="${escHtml(c.id)}">${escHtml(c.title)}</span>`
+          ).join('')}</div>`
+      }
+    </div>`;
+}
+
+function openCaseViewFromDoc(caseId) {
+  closeModal();
+  _casesCurrentCaseId = caseId;
+  if (typeof goPage === 'function') goPage('cases');
+  else renderCaseView(caseId);
+}
+
+// ------------------------------------------------------------
+// ФАЙЛИ ДОКУМЕНТА
+// Структура file об'єкта:
+// {
+//   name: 'договір.pdf',
+//   path: 'Caster/Україна/Олена М./case_.../договір.pdf',
+//   isPrimary: true,   // true = файл зберігається тут
+//   refPath: null,     // якщо isPrimary=false — шлях до оригіналу
+//   missing: false,
+//   handle: null       // FileSystemFileHandle (не серіалізується)
+// }
+// ------------------------------------------------------------
+
+function renderFileRow(file, docId, fileIdx) {
+  var missing = file.missing || false;
+  var isRef = !file.isPrimary && file.refPath;
+  return `
+    <div class="file-row ${missing ? 'file-missing' : ''}">
+      <span class="file-row-ico">${missing ? '⚠️' : isRef ? '🔗' : '📎'}</span>
+      <span class="file-row-name" title="${escHtml(file.path || file.name || '')}">
+        ${escHtml(file.name || file.path || 'Файл')}
+        ${isRef ? '<span style="font-size:9px;color:var(--muted);margin-left:4px">посилання</span>' : ''}
+      </span>
+      ${missing
+        ? `<button class="btn btn-ghost btn-sm" onclick="findMissingFile('${docId}',${fileIdx})">Знайти файл</button>`
+        : `<button class="btn btn-ghost btn-sm" onclick="openDocFile('${docId}',${fileIdx})">Відкрити</button>`
+      }
+    </div>`;
+}
+
+// Відкрити файл — спочатку перевірити чи існує
+async function openDocFile(docId, fileIdx) {
+  var docsArr = typeof docs !== 'undefined' ? docs : [];
+  var doc = docsArr.find(d => d.id === docId);
+  if (!doc || !doc.files || !doc.files[fileIdx]) {
+    showToast('Файл не знайдено', 'error');
+    return;
+  }
+  var file = doc.files[fileIdx];
+
+  // Якщо є збережений FileHandle — перевірити доступ
+  if (file.handle) {
+    try {
+      var perm = await file.handle.queryPermission({ mode: 'read' });
+      if (perm === 'granted') {
+        var f = await file.handle.getFile();
+        var url = URL.createObjectURL(f);
+        // Використовуємо <a> замість window.open щоб уникнути блокування popup браузером
+        var a = document.createElement('a');
+        a.href = url;
+        a.target = '_blank';
+        a.rel = 'noopener';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 10000);
+        return;
+      }
+    } catch(e) { /* handle недійсний */ }
+  }
+
+  // Handle відсутній або недійсний — позначити як відсутній
+  file.missing = true;
+  if (typeof saveDocs === 'function') saveDocs();
+  // Перерендерити рядок
+  showToast('Файл не знайдено. Вкажи його розташування.', 'error');
+  // Одразу запропонувати знайти
+  await findMissingFile(docId, fileIdx);
+}
+
+// Знайти втрачений файл через діалог
+async function findMissingFile(docId, fileIdx) {
+  if (!('showOpenFilePicker' in window)) {
+    showToast('Браузер не підтримує вибір файлів', 'error');
+    return;
+  }
+  try {
+    const [fileHandle] = await window.showOpenFilePicker();
+    var f = await fileHandle.getFile();
+
+    var docsArr = typeof docs !== 'undefined' ? docs : [];
+    var doc = docsArr.find(d => d.id === docId);
+    if (doc && doc.files && doc.files[fileIdx]) {
+      doc.files[fileIdx].name = f.name;
+      doc.files[fileIdx].missing = false;
+      doc.files[fileIdx].handle = fileHandle;
+      doc.files[fileIdx].path = f.name;
+      if (typeof saveDocs === 'function') saveDocs();
+    }
+    showToast('Шлях до файлу оновлено', 'success');
+  } catch(e) {
+    if (e.name !== 'AbortError') showToast('Помилка вибору файлу', 'error');
+  }
+}
+
+// Зберегти файл в папку справи (викликається при прикріпленні файлу до документа)
+// docId — документ, caseId — справа до якої належить документ
+// isFirstCase визначається автоматично: якщо документ ще не має файлів в жодній справі —
+// файл зберігається фізично (isPrimary:true), інакше — тільки посилання (isPrimary:false)
+//
+// ============================================================
+// ЯК ІНТЕГРУВАТИ В ОСНОВНИЙ ФАЙЛ (caster.html):
+//
+// Знайти місце де користувач вибирає файл для документа.
+// Це зазвичай кнопка типу "Прикріпити файл" або input type=file
+// в функції openDocForm() або в обробнику збереження документа.
+//
+// 1. Знайти де береться fileHandle (showOpenFilePicker або input.files[0])
+//
+// 2. Викликати функцію збереження:
+//    const fileObj = await casesSaveFileToFolder(fileHandle, doc.id, caseId);
+//    if (fileObj) {
+//      doc.files = doc.files || [];
+//      doc.files.push(fileObj);
+//      saveDocs();
+//    }
+//
+// 3. Після збереження нового документа викликати:
+//    if (typeof casesOnDocSaved === 'function') casesOnDocSaved(newDoc.id);
+// ============================================================
+async function casesSaveFileToFolder(fileHandle, docId, caseId) {
+  if (!window._casesRootHandle) return null;
+
+  var cases = casesLoad();
+  var c = cases.find(x => x.id === caseId);
+  if (!c) return null;
+
+  // Визначити чи це перший файл документа (зберігаємо фізично) чи ні (тільки посилання)
+  var docsArr = typeof docs !== 'undefined' ? docs : [];
+  var doc = docsArr.find(d => d.id === docId);
+  var hasExistingPrimaryFile = (doc?.files || []).some(f => f.isPrimary);
+  var isFirstCase = !hasExistingPrimaryFile;
+
+  var countryName = (c.country || 'Невідомо').split(' ').slice(1).join(' ') || c.country || 'Невідомо';
+  var respName = c.responsible || 'Невідомо';
+
+  try {
+    const { handle: countryDir } = await casesGetOrCreateDir(window._casesRootHandle, countryName);
+    const { handle: respDir } = await casesGetOrCreateDir(countryDir, respName);
+    const { handle: caseDir } = await casesGetOrCreateDir(respDir, caseId);
+
+    if (isFirstCase) {
+      // Скопіювати файл в папку справи
+      var srcFile = await fileHandle.getFile();
+      var destHandle = await caseDir.getFileHandle(srcFile.name, { create: true });
+      var writable = await destHandle.createWritable();
+      await writable.write(srcFile);
+      await writable.close();
+
+      var path = `${window._casesRootHandle.name}/${countryName}/${respName}/${caseId}/${srcFile.name}`;
+      return { isPrimary: true, path, name: srcFile.name, handle: destHandle, missing: false, refPath: null };
+    } else {
+      // Зберегти тільки посилання на файл з першої справи
+      var srcFile = await fileHandle.getFile();
+      return { isPrimary: false, name: srcFile.name, path: null, handle: fileHandle, missing: false, refPath: null };
+    }
+  } catch(e) {
+    showToast('Помилка збереження файлу: ' + e.message, 'error');
+    return null;
+  }
+}
+
+// Перевірка стану "створення в процесі" для відновлення після збою
+function casesMarkFolderPending(caseId) {
+  var pending = JSON.parse(localStorage.getItem('caster_cases_pending') || '{}');
+  pending[caseId] = { startedAt: new Date().toISOString() };
+  localStorage.setItem('caster_cases_pending', JSON.stringify(pending));
+}
+function casesMarkFolderDone(caseId) {
+  var pending = JSON.parse(localStorage.getItem('caster_cases_pending') || '{}');
+  delete pending[caseId];
+  localStorage.setItem('caster_cases_pending', JSON.stringify(pending));
+}
+function casesGetPendingFolders() {
+  return JSON.parse(localStorage.getItem('caster_cases_pending') || '{}');
+}
+
+// ------------------------------------------------------------
+// ДОВІДКА — ВКЛАДКА СПРАВИ
+// Додати як окрему вкладку в модуль довідки
+// ------------------------------------------------------------
+
+function renderCasesHelp() {
+  return `
+    <div class="help-cases-content">
+      <h4>📁 Що таке справа</h4>
+      <p>Справа — це контейнер для групування документів за темою, проектом або процесом.
+         Наприклад: «Оренда офісу 2025», «Справа про земельну ділянку», «Документи ФОП».</p>
+
+      <h4>📄 Один документ — кілька справ</h4>
+      <p>Один документ може належати до кількох справ одночасно.
+         Файл зберігається один раз — у папці країни і відповідального документа.
+         В інших справах зберігається лише посилання на цей файл.</p>
+
+      <h4>🗂 Структура папок на диску</h4>
+      <div class="path-example">
+        📂 Caster (коренева папка яку ти вибрав)<br>
+        &nbsp;&nbsp;└── 📂 Україна<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└── 📂 Олена М.<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└── 📂 case_1703123456789<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(тут зберігаються файли цієї справи)
+      </div>
+      <p>Якщо ця папка є синхронізованою папкою MEGA, Dropbox або іншого хмарного сервісу —
+         файли автоматично потраплять в хмару. Програма про це не знає — вона просто працює з папкою.</p>
+
+      <h4>🔑 ID справи</h4>
+      <p><strong>Назва</strong> — для людей. Показується в програмі. Можна змінити будь-коли.</p>
+      <p><strong>ID</strong> — технічний ідентифікатор. Використовується як ім'я папки на диску.
+         Після створення <strong>не можна змінити</strong> — щоб папка на диску і посилання в програмі залишались узгодженими.</p>
+      <p>Якщо залишити порожнім — ID генерується автоматично з часовою міткою до мілісекунди: <code>case_1703123456789</code></p>
+      <div class="warn-box">⛔ Заборонені символи в ID: <code>/ \ : * ? " &lt; &gt; |</code><br>ID має бути унікальним серед усіх справ.</div>
+
+      <h4>💾 Як зберігаються файли документів</h4>
+      <p>Файли зберігаються в папці <strong>першого відповідального</strong> і <strong>країни документа</strong> — незалежно від того до яких справ він належить.
+         В інших справах зберігається тільки шлях до файлу.</p>
+      <p>Якщо файл не знайдено — кнопка <strong>«Знайти файл»</strong> відкриє стандартний діалог де можна вибрати файл знову. Програма оновить збережений шлях.</p>
+
+      <h4>🔄 Якщо відповідальний або країна документа змінились</h4>
+      <p>Якщо відповідальний або країна документа змінились — програма запропонує створити нову справу з новими параметрами.
+         Стара справа залишається як є з усіма файлами.
+         Документ можна перенести до нової справи вручну.</p>
+
+      <h4>⚠️ Обмеження</h4>
+      <div class="warn-box">
+        🚫 <strong>Не переміщуй файли і папки вручну</strong> через файловий менеджер.
+        Програма зберігає шляхи до файлів. Якщо папку перемістити або перейменувати —
+        посилання перестануть працювати і доведеться шукати файли знову.<br><br>
+        ✅ Якщо файл все ж переміщено — скористайся кнопкою <strong>«Знайти файл»</strong> в картці документа.
+      </div>
+    </div>`;
+}
+
+// ------------------------------------------------------------
+// БЕЙДЖ СПРАВ
+// Додати в updateBadges(): casesUpdateBadge();
+// ------------------------------------------------------------
+
+function updateCasesBadge() {
+  var cases = casesLoad();
+  var el = document.getElementById('bdg-cases');
+  if (!el) return;
+  if (cases.length > 0) {
+    el.textContent = cases.length;
+    el.style.display = '';
+  } else {
+    el.style.display = 'none';
+  }
+}
+
+// ------------------------------------------------------------
+// I18N СПРАВ
+// Додати ключі в об'єкт I18N основного файлу:
+// uk: { cases:'Справи', add_case:'Справа', ... }
+// ============================================================
+
+var CASES_I18N = {
+  uk: {
+    cases: 'Справи',
+    add_case: 'Справа',
+    cases_empty: 'Справ ще немає',
+    cases_new: 'Нова справа',
+    case_rename: 'Перейменувати',
+    case_delete: 'Видалити',
+  },
+  en: {
+    cases: 'Cases',
+    add_case: 'Case',
+    cases_empty: 'No cases yet',
+    cases_new: 'New case',
+    case_rename: 'Rename',
+    case_delete: 'Delete',
+  },
+  de: {
+    cases: 'Akten',
+    add_case: 'Akte',
+    cases_empty: 'Noch keine Akten',
+    cases_new: 'Neue Akte',
+    case_rename: 'Umbenennen',
+    case_delete: 'Löschen',
+  },
+};
+
+// ------------------------------------------------------------
+// ДОПОМІЖНІ ФУНКЦІЇ
+// (escHtml і showToast вже є в основному файлі)
+// ------------------------------------------------------------
+
+function escHtml(str) {
+  if (typeof str !== 'string') return '';
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function showToast(msg, type) {
+  var existing = document.querySelector('.toast');
+  if (existing) existing.remove();
+  var t = document.createElement('div');
+  t.className = 'toast' + (type === 'success' ? ' success' : type === 'error' ? ' error-toast' : '');
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 2800);
+}
+
+function openModalWith(title, html) {
+  var modal = document.getElementById('overlay');
+  var body = document.getElementById('modal-body');
+  var titleEl = document.getElementById('modal-title');
+  if (modal && body) {
+    if (titleEl) titleEl.textContent = title;
+    body.innerHTML = html;
+    modal.style.display = 'flex';
+  } else {
+    // Fallback для демо
+    var demo = document.getElementById('demo-area');
+    if (demo) {
+      demo.innerHTML = `
+        <div style="max-width:480px;background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;box-shadow:var(--shadow)">
+          <div class="modal-head">
+            <div class="modal-head-title">${escHtml(title)}</div>
+            <button class="modal-close" onclick="showDemo('case')">✕</button>
+          </div>
+          <div class="modal-body">${html}</div>
+        </div>`;
+    }
+  }
+}
+
+function closeModal() {
+  var modal = document.getElementById('overlay');
+  if (modal) modal.style.display = 'none';
+  // Скинути pending якщо користувач закрив форму без збереження
+  window._casesPendingCaseId = null;
+  var demo = document.getElementById('demo-area');
+  if (demo && !modal) showDemo('list');
+}
+
+// ------------------------------------------------------------
+// ПЕРЕВІРКА ЗМІНИ ВІДПОВІДАЛЬНОГО АБО КРАЇНИ ДОКУМЕНТА
+// Викликати при збереженні змін у картці документа
+// ------------------------------------------------------------
+
+function casesCheckDocChange(docId, newCountry, newResponsibleId) {
+  var cases = casesLoad();
+  var docCases = cases.filter(c => (c.docIds || []).includes(docId));
+  if (!docCases.length) return;
+
+  var changed = docCases.filter(c => {
+    var sameCountry = c.country === newCountry;
+    var sameResp = String(c.responsibleId) === String(newResponsibleId);
+    return !sameCountry || !sameResp;
+  });
+
+  if (changed.length > 0) {
+    var resp = getResponsibleName(newResponsibleId);
+    openModalWith('Зміна параметрів документа', `
+      <div class="modal-sec">
+        <div class="folder-status warn" style="margin-bottom:12px">
+          ⚠️ Країна або відповідальний документа змінились. Це вплине на структуру папок.
+        </div>
+        <p style="font-size:12px;margin-bottom:12px">
+          Для нових параметрів (<strong>${escHtml(newCountry)}</strong>, <strong>${escHtml(resp)}</strong>)
+          можна створити нову справу. Старі справи залишаться як є.
+        </p>
+        <p style="font-size:11px;color:var(--muted)">
+          Документ можна перенести до нової справи вручну після її створення.
+        </p>
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;padding-top:12px">
+        <button class="btn btn-ghost" onclick="closeModal()">Залишити як є</button>
+        <button class="btn btn-primary" onclick="closeModal();openCreateCase()">Створити нову справу</button>
+      </div>`);
+  }
+}
+
+// ------------------------------------------------------------
+// ІНІЦІАЛІЗАЦІЯ
+// Додати виклик у window.onload або DOMContentLoaded:
+//   casesInit();
+// ------------------------------------------------------------
+
+function casesInit() {
+  updateCasesBadge();
+  // Фонова перевірка папок — не блокує інтерфейс
+  setTimeout(() => {
+    casesCheckFoldersOnStartup().catch(() => {});
+  }, 2000);
+}
+
+/* === END JS: CASES MODULE === */
+
+
+// ============================================================
+// ДЕМО (тільки для перегляду модуля, не копіювати)
+// ============================================================
+
+// Демо-дані для тестування
+var _demoCases = [
+  { id: 'case_1703100000001', title: 'Оренда офісу 2025', description: 'Документи по орендному договору', country: '🇺🇦 Україна', responsible: 'Олена М.', responsibleId: 0, docIds: ['1','2'], status: 'active', createdAt: '2025-01-15T10:30:00.000Z', folderCreated: true, folderPath: 'Caster/Україна/Олена М./case_1703100000001' },
+  { id: 'case_1703100000002', title: 'Справа ФОП Богдан Р.', description: '', country: '🇺🇦 Україна', responsible: 'Богдан Р.', responsibleId: 1, docIds: ['3'], status: 'closed', createdAt: '2025-02-20T14:00:00.000Z', folderCreated: false, folderPath: 'Caster/Україна/Богдан Р./case_1703100000002' },
+  { id: 'case_1703100000003', title: 'Нерухомість Берлін', description: '', country: '🇩🇪 Німеччина', responsible: 'Катерина С.', responsibleId: 2, docIds: [], status: 'active', createdAt: '2025-03-01T09:00:00.000Z', folderCreated: true, folderPath: 'Caster/Німеччина/Катерина С./case_1703100000003' },
+];
+
+// Завантажити демо-дані якщо localStorage порожній
+if (!localStorage.getItem('caster_cases')) {
+  localStorage.setItem('caster_cases', JSON.stringify(_demoCases));
+}
+
+function showDemo(view) {
+  var area = document.getElementById('demo-area');
+  if (view === 'list') {
+    _casesCurrentCaseId = null;
+    area.innerHTML = `
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+        <h2 style="font-family:'Literata',serif;font-size:18px;font-weight:600;flex:1">Справи</h2>
+        ${casesIsMobile() ? '' : '<button class="btn btn-primary" onclick="openCreateCase()">+ Нова справа</button>'}
+      </div>
+      <div id="page-cases"></div>`;
+    renderCasesList();
+  } else if (view === 'case') {
+    _casesCurrentCaseId = 'case_1703100000001';
+    area.innerHTML = `<div id="page-cases"></div>`;
+    renderCaseView('case_1703100000001');
+  } else if (view === 'create') {
+    openCreateCase();
+  } else if (view === 'help') {
+    area.innerHTML = `
+      <div style="max-width:520px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px 24px;box-shadow:var(--shadow)">
+        <div style="font-family:'Literata',serif;font-size:16px;font-weight:600;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--border)">📁 Довідка — Справи</div>
+        ${renderCasesHelp()}
+      </div>`;
+  }
+}
+
+// Показати список за замовчуванням
+showDemo('list');
+
+// Ініціалізувати модуль
+casesInit();
+</script>
+</body>
+</html>
