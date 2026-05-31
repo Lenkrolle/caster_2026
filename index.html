@@ -236,6 +236,8 @@ body { background: var(--bg); color: var(--text); font-family: 'IBM Plex Mono', 
 
 /* TOAST */
 .toast { position:fixed; bottom:22px; left:50%; transform:translateX(-50%); background:var(--text); color:var(--bg); padding:9px 18px; border-radius:7px; font-size:12px; z-index:200; animation:toastIn .25s ease; box-shadow:0 4px 18px rgba(0,0,0,.18); pointer-events:none; }
+.toast.success { background: var(--accent); }
+.toast.error-toast { background: var(--danger); }
 @keyframes toastIn { from{opacity:0;transform:translateX(-50%) translateY(8px);} to{opacity:1;transform:translateX(-50%) translateY(0);} }
 
 /* EMPTY */
@@ -539,6 +541,7 @@ body { background: var(--bg); color: var(--text); font-family: 'IBM Plex Mono', 
     <ul class="sidebar-nav">
       <li><a onclick="goPage('dashboard')" id="nav-dashboard"><span class="icon">🏠</span> <span id="sl-dashboard">Огляд</span></a></li>
       <li><a onclick="goPage('docs')" id="nav-docs"><span class="icon">📄</span> <span id="sl-docs">Документи</span> <span class="badge" id="bdg-docs">4</span></a></li>
+      <li><a onclick="goPage('cases')" id="nav-cases"><span class="icon">📁</span> <span id="sl-cases">Справи</span> <span class="badge accent" id="bdg-cases" style="display:none">0</span></a></li>
       <li><a onclick="goPage('tasks')" id="nav-tasks"><span class="icon">✅</span> <span id="sl-tasks">Завдання</span> <span class="badge" id="bdg-tasks">5</span></a></li>
       <li><a onclick="goPage('reminders')" id="nav-reminders"><span class="icon">🔔</span> <span id="sl-reminders">Нагадування</span> <span class="badge warn" id="bdg-rem">3</span></a></li>
       <li><a onclick="goPage('team')" id="nav-team"><span class="icon">👥</span> <span id="sl-team">Команда</span> <span class="badge" id="bdg-team">4</span></a></li>
@@ -584,6 +587,7 @@ body { background: var(--bg); color: var(--text); font-family: 'IBM Plex Mono', 
 
   <!-- PAGES -->
   <div class="page-content active" id="page-docs"></div>
+  <div class="page-content" id="page-cases"></div>
   <div class="page-content" id="page-tasks-list"></div>
   <div class="page-content" id="page-tasks-kanban" style="display:none;padding:0;overflow:hidden;height:100%;"></div>
   <div class="page-content" id="page-reminders"></div>
@@ -665,7 +669,7 @@ function getDocName(id){ const d=docs.find(x=>x.id===id); return d?d.title:''; }
 let countries = [
   { key:'ua', flag:'🇺🇦', label:'Україна',   lang:'uk' },
   { key:'de', flag:'🇩🇪', label:'Німеччина', lang:'de' },
-  { key:'other', flag:'🌍', label:'Інша',    lang:'uk' },
+  { key:'other', flag:'🇺🇦🇩🇪', label:'Укр/Нім', lang:'uk' },
 ];
 function getCountry(val){ if(!val) return { flag:'🇺🇦', label:'Україна' }; const found=countries.find(c=>c.flag+' '+c.label===val||c.key===val); return found||{ flag:val.split(' ')[0]||'🌍', label:val.split(' ').slice(1).join(' ')||val }; }
 
@@ -737,6 +741,12 @@ const FIELD_TEMPLATES = {
   'de:legal':     [{label:'Dokumententyp',key:'doctype',placeholder:'Vertrag / Vollmacht'},{label:'Nummer',key:'number',placeholder:'...'},{label:'Datum',key:'date',placeholder:'TT.MM.JJJJ'},{label:'Gültig bis',key:'expiry',placeholder:'TT.MM.JJJJ'},{label:'Notar',key:'notary',placeholder:'Name, Urkundenrolle'},{label:'Parteien',key:'parties',placeholder:'...'},{label:'Gericht / Behörde',key:'court',placeholder:'Name, Adresse'}],
   'de:other':     [{label:'Dokumentenname',key:'name',placeholder:'...'},{label:'Nummer',key:'number',placeholder:'...'},{label:'Ausstellungsdatum',key:'issue',placeholder:'TT.MM.JJJJ'},{label:'Ablaufdatum',key:'expiry',placeholder:'TT.MM.JJJJ'},{label:'Ausstellende Behörde',key:'issuer',placeholder:'...'},{label:'Kontakt',key:'contact',placeholder:'Tel., Adresse'}],
 };
+// Псевдоніми для відповідності ключів DOC_CATEGORIES і FIELD_TEMPLATES
+['ua','de'].forEach(c=>{
+  FIELD_TEMPLATES[`${c}:auto`]      = FIELD_TEMPLATES[`${c}:car`]       || FIELD_TEMPLATES[`${c}:other`];
+  FIELD_TEMPLATES[`${c}:edu`]       = FIELD_TEMPLATES[`${c}:education`]  || FIELD_TEMPLATES[`${c}:other`];
+  FIELD_TEMPLATES[`${c}:medical`]   = FIELD_TEMPLATES[`${c}:medical`]    || FIELD_TEMPLATES[`${c}:other`];
+});
 function getFieldTemplate(countryKey, catKey){
   const k=`${countryKey}:${catKey}`;
   if(FIELD_TEMPLATES[k]) return JSON.parse(JSON.stringify(FIELD_TEMPLATES[k]));
@@ -865,21 +875,21 @@ function setLang(l){
 
 function applySidebarI18n(){
   const name=t('appName');
-  document.querySelector('.logo-text').textContent=name;
+  const logoText=document.querySelector('.logo-text'); if(logoText)logoText.textContent=name;
   document.title=name;
-  const ml=document.getElementById('mega-logo-text');
-  if(ml)ml.textContent=name;
-  document.getElementById('s-sub').textContent=t('subtitle');
-  document.getElementById('sl-nav').textContent=t('nav');
-  document.getElementById('sl-docs').textContent=t('docs');
-  document.getElementById('sl-tasks').textContent=t('tasks');
-  document.getElementById('sl-reminders').textContent=t('reminders');
-  document.getElementById('sl-inst').textContent=t('inst');
-  document.getElementById('sl-gov').textContent=t('gov');
-  document.getElementById('sl-court').textContent=t('court');
-  document.getElementById('sl-org').textContent=t('org');
-  document.getElementById('sl-person').textContent=t('person');
-  document.getElementById('sl-role').textContent=t('admin');
+  const ml=document.getElementById('mega-logo-text'); if(ml)ml.textContent=name;
+  const sSub=document.getElementById('s-sub'); if(sSub)sSub.textContent=t('subtitle');
+  const slNav=document.getElementById('sl-nav'); if(slNav)slNav.textContent=t('nav');
+  const slDocs=document.getElementById('sl-docs'); if(slDocs)slDocs.textContent=t('docs');
+  const slCases=document.getElementById('sl-cases'); if(slCases)slCases.textContent='Справи';
+  const slTasks=document.getElementById('sl-tasks'); if(slTasks)slTasks.textContent=t('tasks');
+  const slRem=document.getElementById('sl-reminders'); if(slRem)slRem.textContent=t('reminders');
+  const slInst=document.getElementById('sl-inst'); if(slInst)slInst.textContent=t('inst');
+  const slGov=document.getElementById('sl-gov'); if(slGov)slGov.textContent=t('gov');
+  const slCourt=document.getElementById('sl-court'); if(slCourt)slCourt.textContent=t('court');
+  const slOrg=document.getElementById('sl-org'); if(slOrg)slOrg.textContent=t('org');
+  const slPerson=document.getElementById('sl-person'); if(slPerson)slPerson.textContent=t('person');
+  const slRole=document.getElementById('sl-role'); if(slRole)slRole.textContent=t('admin');
   // Mobile labels
   const ml1=document.getElementById('mob-lbl-docs'); if(ml1)ml1.textContent=t('docs');
   const ml2=document.getElementById('mob-lbl-tasks'); if(ml2)ml2.textContent=t('tasks');
@@ -898,7 +908,7 @@ function goPage(page){
   document.querySelectorAll('.mob-nav-btn').forEach(b=>b.classList.remove('active'));
   const mobEl=document.getElementById('mob-nav-'+page);
   if(mobEl)mobEl.classList.add('active');
-  document.getElementById('page-title').textContent=t(page);
+  document.getElementById('page-title').textContent=page==='cases'?'Справи':t(page);
   const addKey=page==='reminders'?'add_rem':page==='docs'?'add_doc':'add_task';
   document.getElementById('add-lbl').textContent=t(addKey);
   document.getElementById('search-inp').value='';
@@ -918,6 +928,7 @@ function setupTopbar(){
   // Hide add button for team page if not admin, hide for observer everywhere
   const addBtn=document.getElementById('add-btn');
   if(currentPage==='team') addBtn.style.display=isAdmin()?'flex':'none';
+  else if(currentPage==='cases') addBtn.style.display='none';
   else addBtn.style.display=team[currentUser]?.role==='observer'?'none':'flex';
   document.querySelectorAll('.view-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('vbtn-list').classList.add('active');
@@ -975,6 +986,10 @@ function renderCurrent(){
     const el=document.getElementById('page-instances');
     el.style.display='block'; el.classList.add('active');
     renderInstances();
+  } else if(currentPage==='cases'){
+    const el=document.getElementById('page-cases');
+    el.style.display='block'; el.classList.add('active');
+    if(typeof renderCasesPage==='function') renderCasesPage();
   } else if(currentPage==='settings'){
     const el=document.getElementById('page-settings');
     el.style.display='block'; el.classList.add('active');
@@ -1004,6 +1019,9 @@ function updateBadges(){
   if(mbDocs){mbDocs.textContent=docsActive;mbDocs.style.display=docsActive?'':'none';}
   if(mbTasks){mbTasks.textContent=tasksActive;mbTasks.style.display=tasksActive?'':'none';}
   if(mbRem){mbRem.textContent=remUrgent;mbRem.style.display=remUrgent?'':'none';}
+  // Cases badge
+  if(typeof updateCasesBadge==='function') updateCasesBadge();
+  if(typeof syncUpdateBadge==='function') syncUpdateBadge();
 }
 
 // ============================================================
@@ -1088,6 +1106,7 @@ function renderDocs(){
       </div>
       <div style="display:flex;align-items:center;gap:10px;padding-top:10px;border-top:1px solid var(--border)">
         ${miniAvs(doc.assignees)}
+        ${(!doc.files||!doc.files.length)?`<span style="font-size:10px;background:var(--warn-light);color:var(--warn);border:1px solid var(--warn);border-radius:6px;padding:1px 7px;margin-left:4px">📂 Без файлу</span>`:''}
         <span style="font-size:10px;color:var(--muted);margin-left:auto">📎 ${doc.attachments}</span>
       </div>
     </div>`;
@@ -1299,6 +1318,7 @@ function openAdd(defaultStatus='todo'){
   if(currentPage==='docs') openDocForm(null);
   else if(currentPage==='tasks') openTaskForm(null, defaultStatus);
   else if(currentPage==='reminders') openRemForm(null);
+  else if(currentPage==='dashboard') openTaskForm(null, defaultStatus);
 }
 
 function openDocDetail(id){ openDocForm(id); }
@@ -1340,8 +1360,23 @@ function renderDocDetail(id){
     </div>`;
   }).join('');
 
-  document.getElementById('modal-title').textContent=doc.title;
+  document.getElementById('modal-title').textContent='✏️ Редагування: ' + doc.title;
   document.getElementById('modal-body').innerHTML=`
+    ${(!doc.files||!doc.files.length)?`
+    <div style="background:var(--warn-light);border:1px solid var(--warn);border-radius:8px;padding:10px 14px;margin-bottom:14px;display:flex;align-items:center;gap:10px;font-size:12px;color:var(--warn)">
+      <span style="font-size:18px">📂</span>
+      <span style="flex:1">Файл не прикріплено. Додай скан або фото документа.</span>
+    </div>`:''}
+    <div class="modal-sec">
+      <div class="modal-sec-title">Вкладення (${(doc.files||[]).length})</div>
+      <div id="attach-list">${renderAttachList(doc)}</div>
+      <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+        <label class="btn btn-ghost btn-sm" style="cursor:pointer">
+          📎 Завантажити файл
+          <input type="file" style="display:none" multiple onchange="handleFileUpload(event,'${id}')">
+        </label>
+      </div>
+    </div>
     <div class="modal-sec">
       <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap">
         <span style="font-size:20px">${DOC_CATEGORIES[doc.type]?.icon||'📄'}</span>
@@ -1362,6 +1397,14 @@ function renderDocDetail(id){
       </div>`:''}
       <div class="modal-sec-title">Кроки</div>
       <div class="timeline">${tl}</div>
+      ${doc.status!=='done'?`
+      <div class="form-group" style="margin-top:12px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+          <label class="form-label" style="margin:0">🔔 Нагадування для поточного кроку${doc.stages&&doc.stages[doc.currentStage]?' — '+doc.stages[doc.currentStage].name:''}</label>
+          <button type="button" onclick="addRemRow('doc-stage-rem-rows')" style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--accent);background:none;border:none;cursor:pointer">+ Додати</button>
+        </div>
+        <div id="doc-stage-rem-rows"></div>
+      </div>`:''}
       <button class="btn btn-ghost btn-sm" style="margin-top:8px" onclick="addStepToDoc('${id}')">+ Додати крок</button>
     </div>
     <div class="modal-sec">
@@ -1379,14 +1422,6 @@ function renderDocDetail(id){
         <label class="form-label">Очікувана дата завершення кроку (необов'язково)</label>
         <input type="date" class="form-input" id="stage-next-deadline">
       </div>
-      <div class="form-group">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-          <label class="form-label" style="margin:0">🔔 Нагадування для наступного кроку</label>
-          <button type="button" onclick="addRemRow('doc-stage-rem-rows')" style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--accent);background:none;border:none;cursor:pointer">+ Додати</button>
-        </div>
-        <div id="doc-stage-rem-rows"></div>
-      </div>
-      <button class="btn btn-primary" onclick="saveStageResult('${id}')">Зберегти</button>
     </div>
     <div class="modal-sec">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
@@ -1425,17 +1460,6 @@ function renderDocDetail(id){
       </div>
       <div class="copy-preview" id="copy-preview-${id}" style="display:none"></div>
     </div>
-    <div class="modal-sec">
-      <div class="modal-sec-title">Вкладення (${(doc.files||[]).length})</div>
-      <div id="attach-list">${renderAttachList(doc)}</div>
-      <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
-        <label class="btn btn-ghost btn-sm" style="cursor:pointer">
-          📎 Завантажити файл
-          <input type="file" style="display:none" multiple onchange="handleFileUpload(event,'${id}')">
-        </label>
-        <button class="btn btn-ghost btn-sm" onclick="openAddLink('${id}')">🔗 Додати посилання</button>
-      </div>
-    </div>
     ${costsHtml(doc)}
     <div class="modal-sec">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
@@ -1451,9 +1475,10 @@ function renderDocDetail(id){
           </div>`).join('')}
       </div>
       <div id="fd-rem-rows"></div>
-      <div id="doc-rem-save" style="display:none">
-        <button class="btn btn-primary btn-sm" onclick="saveDocReminders('${id}')">Зберегти нагадування</button>
-      </div>
+    </div>
+    <div style="padding:16px 0 8px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn btn-ghost" onclick="closeModal()">Закрити</button>
+      <button class="btn btn-primary" onclick="saveStageResult('${id}');saveDocReminders('${id}');showToast('💾 Документ збережено','success')">💾 Зберегти</button>
     </div>`;
 }
 
@@ -1612,7 +1637,6 @@ function saveDocReminders(docId){
 
   if(hasError){ alert('Дата нагадування має бути раніше дедлайну!'); return; }
   megaSaveData();
-  showToast('🔔 Нагадування збережено');
   renderDocDetail(docId);
 }
 
@@ -1657,13 +1681,49 @@ function renderAttachList(doc){
       <span style="font-size:18px">${fileIcon(f.name)}</span>
       <div style="flex:1;min-width:0">
         <div style="font-size:12px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${f.name}</div>
-        <div style="font-size:10px;color:var(--muted)">${f.size?fileSize(f.size):''} ${f.date?'· '+f.date:''} ${f.type==='link'?'· 🔗 Посилання':''}</div>
+        <div style="font-size:10px;color:var(--muted)">${f.size?fileSize(f.size):''} ${f.date?'· '+f.date:''} ${f.type==='link'?'· 🔗 Посилання':f.type==='fs'?'· 💾 На диску':f.type==='mega'?'· ☁️ MEGA':''}</div>
       </div>
       <div style="display:flex;gap:5px;flex-shrink:0">
-        ${f.url?`<a href="${f.url}" target="_blank" class="btn btn-ghost btn-sm" style="text-decoration:none">↗</a>`:''}
+        ${f.type==='fs'
+          ? `<button class="btn btn-ghost btn-sm" onclick="openFsFile('${doc.id}',${i})">↗</button>`
+          : f.url ? `<a href="${f.url}" target="_blank" class="btn btn-ghost btn-sm" style="text-decoration:none">↗</a>` : ''
+        }
         <button class="btn btn-ghost btn-sm" style="color:var(--danger)" onclick="removeAttach('${doc.id}',${i})">✕</button>
       </div>
     </div>`).join('');
+}
+
+async function openFsFile(docId, fileIdx){
+  const doc=docs.find(d=>d.id===docId);
+  if(!doc||!doc.files||!doc.files[fileIdx]) return;
+  const f=doc.files[fileIdx];
+  // Спробувати через збережений handle
+  if(f.handle){
+    try {
+      const file=await f.handle.getFile();
+      const url=URL.createObjectURL(file);
+      const a=document.createElement('a');
+      a.href=url; a.target='_blank'; a.rel='noopener';
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      setTimeout(()=>URL.revokeObjectURL(url),10000);
+      return;
+    } catch(e){ /* handle недійсний */ }
+  }
+  // Handle недійсний — спробувати знайти файл в fsFilesFolder
+  if(fsFilesFolder && f.savedName){
+    try {
+      const fh=await fsFilesFolder.getFileHandle(f.savedName);
+      f.handle=fh;
+      const file=await fh.getFile();
+      const url=URL.createObjectURL(file);
+      const a=document.createElement('a');
+      a.href=url; a.target='_blank'; a.rel='noopener';
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      setTimeout(()=>URL.revokeObjectURL(url),10000);
+      return;
+    } catch(e){ /* файл не знайдено */ }
+  }
+  showToast('Файл не знайдено. Підключи папку знову.', 'error');
 }
 
 async function handleFileUpload(event, docId){
@@ -1675,7 +1735,22 @@ async function handleFileUpload(event, docId){
 
   for(const file of files){
     const today=new Date().toLocaleDateString('uk-UA');
-    if(megaStorage){
+
+    if(fsFilesFolder){
+      // Зберегти файл в папку files/ на диску
+      try {
+        const uniqueName = Date.now() + '_' + file.name;
+        const fh = await fsFilesFolder.getFileHandle(uniqueName, { create:true });
+        const wr = await fh.createWritable();
+        await wr.write(await file.arrayBuffer());
+        await wr.close();
+        doc.files.push({ name:file.name, savedName:uniqueName, size:file.size, date:today, type:'fs', handle:fh });
+        showToast('📎 ' + file.name + ' збережено', 'success');
+      } catch(err){
+        console.warn('FS upload error:', err);
+        showToast('❌ Помилка збереження файлу', 'error');
+      }
+    } else if(megaStorage){
       // Upload to MEGA
       showToast('☁️ Завантаження на MEGA...');
       try {
@@ -1688,23 +1763,21 @@ async function handleFileUpload(event, docId){
         const megaFile=await new Promise((res,rej)=>{upload.on('complete',f=>res(f));upload.on('error',rej);});
         const url=await new Promise((res,rej)=>{megaFile.link((err,l)=>{if(err)rej(err);else res(l);});});
         doc.files.push({name:file.name,size:file.size,date:today,url,type:'mega'});
-        showToast(`✅ ${file.name} завантажено`);
+        showToast('✅ ' + file.name + ' завантажено', 'success');
       } catch(err){
         console.warn('MEGA upload error:',err);
-        // Fallback — store as local blob URL
         const url=URL.createObjectURL(file);
         doc.files.push({name:file.name,size:file.size,date:today,url,type:'local'});
-        showToast(`📎 ${file.name} додано локально`);
+        showToast('📎 ' + file.name + ' додано локально');
       }
     } else {
-      // No MEGA — store as local blob URL (session only)
+      // Немає ні папки ні MEGA — blob URL (тільки поточна сесія)
       const url=URL.createObjectURL(file);
       doc.files.push({name:file.name,size:file.size,date:today,url,type:'local'});
-      showToast(`📎 ${file.name} додано`);
+      showToast('📎 ' + file.name + ' додано. Щоб зберегти постійно — підключи папку на диску.', 'error');
     }
     doc.attachments=(doc.files||[]).length;
   }
-  // Refresh attach list in modal
   const al=document.getElementById('attach-list');
   if(al)al.innerHTML=renderAttachList(doc);
   renderDocs(); megaSaveData();
@@ -1836,14 +1909,14 @@ function saveStageResult(docId){
 
   if(isFinal||nextI===-1){
     doc.status='done';
-  } else {
+  } else if(!isFinal && nextI !== -1){
     doc.stages[nextI].status='current';
     if(nextInst) doc.stages[nextI].inst=nextInst;
     if(nextDeadline) doc.stages[nextI].expectedDate=nextDeadline;
     doc.currentStage=nextI;
     doc.status='active';
 
-    // Create reminders for next stage
+    // Створити нагадування для поточного (щойно завершеного) кроку
     const assigneeIdx=doc.assignees[0]||0;
     document.querySelectorAll('#doc-stage-rem-rows .fd-rem-row').forEach(row=>{
       const type=row.querySelector('select').value;
@@ -1856,15 +1929,14 @@ function saveStageResult(docId){
       }
       if(remDate){
         const days=type==='days'?row.querySelector('.fd-rem-days').value:'';
-        const label=type==='days'?`${doc.title} · ${doc.stages[nextI].name} — за ${days} днів`:`${doc.title} · ${doc.stages[nextI].name} — ${fmtDate(remDate)}`;
+        const stageName=doc.stages[doc.currentStage]?.name||'';
+        const label=type==='days'?`${doc.title} · ${stageName} — за ${days} днів`:`${doc.title} · ${stageName} — ${fmtDate(remDate)}`;
         reminders.unshift({id:nextRemId++,title:label,docId:doc.id,assignee:assigneeIdx,date:remDate,notify:['inapp'],repeat:'none',done:false});
       }
     });
   }
 
   renderDocs(); megaSaveData();
-  showToast('✅ Результат збережено');
-  // Update modal content without closing
   renderDocDetail(docId);
 }
 
@@ -1957,6 +2029,9 @@ function saveDoc(){
   if(remError){alert('Дата нагадування має бути раніше дати завершення!');return;}
 
   renderDocs(); showToast('📄 Документ створено');
+  // Повідомити модулі про новий документ
+  if(typeof casesOnDocSaved==='function') casesOnDocSaved(id);
+  if(typeof syncOnDocSaved==='function') syncOnDocSaved(id);
   renderDocDetail(id);
 }
 
@@ -2168,14 +2243,16 @@ function saveReminder(){
 // ============================================================
 // MODAL CLOSE
 // ============================================================
-function closeModal(){ document.getElementById('overlay').style.display='none'; editId=null; }
+function closeModal(){ document.getElementById('overlay').style.display='none'; editId=null; window._casesPendingCaseId=null; window._syncPendingFileKey=null; }
 function closeOverlay(e){ if(e.target===document.getElementById('overlay'))closeModal(); }
 
 // ============================================================
 // TOAST
 // ============================================================
-function showToast(msg){
-  const t=document.createElement('div'); t.className='toast'; t.textContent=msg;
+function showToast(msg, type){
+  const t=document.createElement('div');
+  t.className='toast'+(type==='success'?' success':type==='error'?' error-toast':'');
+  t.textContent=msg;
   document.body.appendChild(t); setTimeout(()=>t.remove(),2500);
 }
 
@@ -2542,39 +2619,13 @@ function renderSettings(){
   document.getElementById('view-toggle').style.display='none';
   const el=document.getElementById('page-settings');
 
-  const catRows=Object.entries(DOC_CATEGORIES).map(([k,v])=>{
-    const usedIn=docs.filter(d=>d.type===k);
-    const isBuiltin=BUILTIN_CATS.includes(k);
-    return `<div class="card" style="display:flex;align-items:center;gap:12px;cursor:default">
-      <span style="font-size:22px">${v.icon}</span>
-      <div style="flex:1">
-        <div style="font-size:13px;font-weight:500">${v.label}</div>
-        <div style="font-size:10px;color:var(--muted)">${isBuiltin?'Вбудована · ':''}${usedIn.length} документів</div>
-      </div>
-      <div style="display:flex;gap:6px">
-        <button class="btn btn-ghost btn-sm" onclick="openEditCat('${k}')">✏️</button>
-        ${!isBuiltin?`<button class="btn btn-ghost btn-sm" style="color:var(--danger)" onclick="deleteCat('${k}')">✕</button>`:'<span style="width:28px"></span>'}
-      </div>
-    </div>`;
-  }).join('');
-
   el.innerHTML=`
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px">
       <div>
         <div style="font-family:'Literata',serif;font-size:22px;font-weight:600">Налаштування</div>
       </div>
     </div>
-
-    <div class="sec-head"><div class="sec-title">Категорії документів</div><div class="sec-count">${Object.keys(DOC_CATEGORIES).length}</div><div class="sec-line"></div></div>
-    <div style="margin-bottom:12px">${catRows}</div>
-    <button class="btn btn-primary" onclick="openAddCat()">+ Нова категорія</button>
-
-    <div class="sec-head" style="margin-top:28px"><div class="sec-title">Країни</div><div class="sec-count">${countries.length}</div><div class="sec-line"></div></div>
-    ${countries.map(c=>`
-      <div class="card" style="display:flex;align-items:center;gap:12px;cursor:default">
-        <span style="font-size:22px">${c.flag}</span>
-        <div style="flex:1"><div style="font-size:13px;font-weight:500">${c.label}</div></div>
-      </div>`).join('')}`;
+    ${typeof syncSettingsBlock==='function' ? syncSettingsBlock() : ''}`;
 }
 
 function openAddCat(){
@@ -3156,6 +3207,24 @@ var HELP_CONTENT = {
       { heading: 'Перегляд', text: 'Нагадування можна переглядати списком або в календарі.' },
     ],
   },
+  cases: {
+    title: '📁 Справи',
+    sections: [
+      { heading: 'Що таке справа', text: 'Справа — контейнер для групування документів за темою, проектом або процесом. Наприклад: «Оренда офісу 2025», «Справа про земельну ділянку», «Документи ФОП».' },
+      { heading: 'Один документ — кілька справ', text: 'Один документ може належати до кількох справ одночасно. Файл зберігається один раз — у папці країни і відповідального документа. В інших справах зберігається тільки посилання на цей файл.' },
+      { heading: 'Структура папок на диску', text: 'Caster (коренева папка)\n  └── Ua_caster / De_caster / Ua_de_caster\n        └── Відповідальний\n              └── ID справи\nЯкщо ця папка синхронізується з хмарою — файли автоматично потраплять туди.' },
+      { heading: 'ID справи', text: 'Назва — для людей, можна змінити будь-коли.\nID — технічний ідентифікатор, ім\'я папки на диску. Після створення не можна змінити.\nЗаборонені символи: / \\ : * ? " < > |' },
+      { heading: 'Як зберігаються файли', text: 'Файли зберігаються в папці першого відповідального і країни документа. В інших справах — тільки шлях до файлу. Якщо файл не знайдено — кнопка «Знайти файл» дозволяє вибрати його знову.' },
+      { heading: 'Якщо відповідальний або країна змінились', text: 'Програма запропонує створити нову справу з новими параметрами. Стара справа залишається як є. Документ можна перенести до нової справи вручну.' },
+      { heading: 'Обмеження', text: 'Не переміщуй файли і папки вручну через файловий менеджер. Якщо папку переміщено — посилання перестануть працювати. Використовуй кнопку «Знайти файл» якщо файл переміщено.' },
+    ],
+  },
+  settings: {
+    title: '⚙️ Налаштування',
+    sections: typeof SYNC_HELP_SECTIONS !== 'undefined' ? SYNC_HELP_SECTIONS : [
+      { heading: 'Синхронізація файлів', text: 'Модуль синхронізації не підключено.' },
+    ],
+  },
 };
 
 var currentHelpTab = 'dashboard';
@@ -3251,7 +3320,6 @@ function dismissWelcome(){
 // ============================================================
 // INIT
 // ============================================================
-applySidebarI18n();
 renderInstNav();
 checkFirstRun();
 goPage('dashboard');
@@ -3299,13 +3367,17 @@ goPage('dashboard');
 let fsFolder      = null;
 let fsFilesFolder = null;
 let syncTimeout   = null;
-const DATA_FILE   = 'data.json';
+const DATA_FILE   = 'data_caster.json';
 const FILES_DIR   = 'files';
 
 function megaInit(){
   const screen = document.getElementById('mega-screen');
   if(screen) screen.style.display = 'flex';
   lsLoad();
+  applySidebarI18n();
+  // Ініціалізація модулів
+  if(typeof casesInit==='function') casesInit();
+  if(typeof syncInit==='function') syncInit();
 }
 document.addEventListener('DOMContentLoaded', megaInit);
 
@@ -3359,6 +3431,7 @@ async function fsReadData(){
     if(data.instTypes)      instTypes      = data.instTypes;
     if(data.nextInstTypeId) nextInstTypeId = data.nextInstTypeId;
     if(data.docCategories) Object.assign(DOC_CATEGORIES, data.docCategories);
+    if(data.cases && data.cases.length) localStorage.setItem('caster_cases', JSON.stringify(data.cases));
     lsSave();
   } catch(err){
     if(err.name==='NotFoundError'){ await fsWriteData(); }
@@ -3371,7 +3444,8 @@ async function fsWriteData(){
   try {
     const bar = document.getElementById('mega-sync-bar');
     if(bar) bar.style.display='block';
-    const data = JSON.stringify({ docs, tasks, reminders, team, instances, instTypes, docCategories: DOC_CATEGORIES, nextTaskId, nextRemId, nextDocId, nextMemberId, nextInstId, nextInstTypeId }, null, 2);
+    const cases = typeof casesLoad === 'function' ? casesLoad() : [];
+    const data = JSON.stringify({ docs, tasks, reminders, team, instances, instTypes, docCategories: DOC_CATEGORIES, nextTaskId, nextRemId, nextDocId, nextMemberId, nextInstId, nextInstTypeId, cases }, null, 2);
     const fh   = await fsFolder.getFileHandle(DATA_FILE, { create:true });
     const wr   = await fh.createWritable();
     await wr.write(data);
@@ -3451,7 +3525,7 @@ function fsExportJSON(){
   const blob = new Blob([data], { type:'application/json' });
   const url  = URL.createObjectURL(blob);
   const a    = document.createElement('a');
-  a.href=url; a.download='kolyshatko-data.json'; a.click();
+  a.href=url; a.download='data_caster.json'; a.click();
   URL.revokeObjectURL(url);
   showToast('📤 Дані експортовано');
 }
@@ -3464,7 +3538,9 @@ function fsDisconnect(){
 }
 
 function lsSave(){
-  try { localStorage.setItem('kolyshatko_data', JSON.stringify({ docs, tasks, reminders, team, instances, instTypes, docCategories: DOC_CATEGORIES, nextTaskId, nextRemId, nextDocId, nextMemberId, nextInstId, nextInstTypeId })); } catch(e){}
+  try {
+    localStorage.setItem('kolyshatko_data', JSON.stringify({ docs, tasks, reminders, team, instances, instTypes, docCategories: DOC_CATEGORIES, nextTaskId, nextRemId, nextDocId, nextMemberId, nextInstId, nextInstTypeId }));
+  } catch(e){}
 }
 
 function lsLoad(){
@@ -3496,13 +3572,15 @@ function addSyncButtons(){
     btn.innerHTML='☁️ Синхронізувати'; btn.onclick=fsSync;
     footer.appendChild(btn);
   }
-  const sheet=document.querySelector('.mob-sheet-body');
+  const sheet=document.getElementById('mob-sync-section');
   if(sheet && !document.getElementById('fs-sync-mob-btn')){
     const div=document.createElement('div');
     div.innerHTML=`<div class="mob-sheet-divider"></div>
-      <button id="fs-sync-mob-btn" class="mob-sheet-link" onclick="fsSync()" style="color:var(--accent);font-weight:500">☁️ Синхронізувати</button>
-      <button class="mob-sheet-link" onclick="fsExportJSON()">📤 Експорт JSON</button>
-      <button class="mob-sheet-link" onclick="fsDisconnect()" style="color:var(--danger)">🔌 Відключити папку</button>`;
+      <div class="mob-sheet-links">
+        <button id="fs-sync-mob-btn" class="mob-sheet-link" onclick="fsSync()" style="color:var(--accent);font-weight:500">☁️ Синхронізувати</button>
+        <button class="mob-sheet-link" onclick="fsExportJSON()">📤 Експорт JSON</button>
+        <button class="mob-sheet-link" onclick="fsDisconnect()" style="color:var(--danger)">🔌 Відключити папку</button>
+      </div>`;
     sheet.appendChild(div);
   }
 }
@@ -3517,28 +3595,9 @@ function addSyncButtons(){
 <!-- MOBILE BOTTOM NAV -->
 <nav class="mobile-nav">
   <div class="mobile-nav-inner">
-    <button class="mob-nav-btn" id="mob-nav-dashboard" onclick="goPage('dashboard')">
-      <span class="mob-icon">🏠</span>
-      <span class="mob-label">Огляд</span>
-    </button>
-    <button class="mob-nav-btn active" id="mob-nav-docs" onclick="goPage('docs')">
-      <span class="mob-icon">📄</span>
-      <span class="mob-label" id="mob-lbl-docs">Документи</span>
-      <span class="mob-badge accent" id="mob-bdg-docs">4</span>
-    </button>
-    <button class="mob-nav-btn" id="mob-nav-tasks" onclick="goPage('tasks')">
-      <span class="mob-icon">✅</span>
-      <span class="mob-label" id="mob-lbl-tasks">Завдання</span>
-      <span class="mob-badge accent" id="mob-bdg-tasks" style="display:none"></span>
-    </button>
-    <button class="mob-nav-btn" id="mob-nav-reminders" onclick="goPage('reminders')">
-      <span class="mob-icon">🔔</span>
-      <span class="mob-label" id="mob-lbl-rem">Нагадування</span>
-      <span class="mob-badge warn" id="mob-bdg-rem">3</span>
-    </button>
-    <button class="mob-nav-btn" id="mob-nav-team" onclick="goPage('team')">
-      <span class="mob-icon">👥</span>
-      <span class="mob-label">Команда</span>
+    <button class="mob-nav-btn" id="mob-nav-menu" onclick="openMobMenu()">
+      <span class="mob-icon">☰</span>
+      <span class="mob-label">Меню</span>
     </button>
     <button class="mob-nav-btn" id="mob-nav-more" onclick="openMobSettings()">
       <span class="mob-icon">⚙️</span>
@@ -3551,11 +3610,11 @@ function addSyncButtons(){
 <button class="mob-fab" id="mob-fab" onclick="openAdd()">＋</button>
 
 <!-- MOBILE SETTINGS SHEET -->
-<div class="mob-settings-overlay" id="mob-settings-overlay" onclick="closeMobSettings()" style="display:none"></div>
+<div class="mob-settings-overlay" id="mob-settings-overlay" onclick="closeMobSettings();closeMobMenu();closeMobInst();closeMobCats();" style="display:none"></div>
 <div class="mob-settings-sheet" id="mob-settings-sheet" style="display:none">
   <div class="mob-sheet-handle"></div>
   <div class="mob-sheet-body">
-    <!-- User -->
+    <!-- Користувач -->
     <div class="mob-sheet-user">
       <div class="s-avatar" style="background:#2a5c45;width:42px;height:42px;font-size:14px;border-radius:50%;color:white;display:flex;align-items:center;justify-content:center;font-weight:500">ОМ</div>
       <div>
@@ -3566,29 +3625,78 @@ function addSyncButtons(){
 
     <div class="mob-sheet-divider"></div>
 
-    <!-- Language -->
+    <!-- Категорії та Організації -->
+    <div class="mob-sheet-links">
+      <button class="mob-sheet-link" onclick="openMobCats()" style="display:flex;justify-content:space-between;align-items:center">
+        <span>📋 Категорії документів</span>
+        <span style="color:var(--muted);font-size:14px">›</span>
+      </button>
+      <button class="mob-sheet-link" onclick="openMobInst()" style="display:flex;justify-content:space-between;align-items:center">
+        <span>🏛️ Організації</span>
+        <span style="color:var(--muted);font-size:14px">›</span>
+      </button>
+      <button class="mob-sheet-link" onclick="openHelp();closeMobSettings()">❓ Довідка</button>
+    </div>
+
+    <!-- Sync buttons (додаються динамічно) -->
+    <div id="mob-sync-section"></div>
+
+    <div class="mob-sheet-divider"></div>
+
+    <!-- Мова інтерфейсу -->
     <div class="mob-sheet-section-title" id="mob-lbl-lang">Мова інтерфейсу</div>
     <div class="mob-lang-opts">
       <button class="mob-lang-btn active" id="mob-lang-uk" onclick="setLangMob('uk')">🇺🇦 Українська</button>
       <button class="mob-lang-btn" id="mob-lang-en" onclick="setLangMob('en')">🇬🇧 English</button>
       <button class="mob-lang-btn" id="mob-lang-de" onclick="setLangMob('de')">🇩🇪 Deutsch</button>
     </div>
+  </div>
+</div>
 
-    <div class="mob-sheet-divider"></div>
-    <div class="mob-sheet-links">
-      <button class="mob-sheet-link" onclick="goPage('settings');closeMobSettings()">⚙️ Налаштування</button>
-      <button class="mob-sheet-link" onclick="openHelp();closeMobSettings()">❓ Довідка</button>
-    </div>
-
-    <div class="mob-sheet-divider"></div>
-
-    <!-- Nav links -->
+<!-- MOBILE INST SUBMENU -->
+<div class="mob-settings-sheet" id="mob-inst-sheet" style="display:none">
+  <div class="mob-sheet-handle"></div>
+  <div class="mob-sheet-body">
+    <button class="mob-sheet-link" onclick="closeMobInst()" style="color:var(--accent);margin-bottom:6px">← Назад</button>
     <div class="mob-sheet-section-title" id="mob-lbl-inst">Організації</div>
     <div class="mob-sheet-links">
-      <button class="mob-sheet-link" onclick="closeMobSettings()">🏛️ <span id="mob-sl-gov">Держоргани</span></button>
-      <button class="mob-sheet-link" onclick="closeMobSettings()">⚖️ <span id="mob-sl-court">Суди</span></button>
-      <button class="mob-sheet-link" onclick="closeMobSettings()">🏢 <span id="mob-sl-org">Організації</span></button>
-      <button class="mob-sheet-link" onclick="closeMobSettings()">👤 <span id="mob-sl-person">Персони</span></button>
+      <button class="mob-sheet-link" onclick="closeMobSettings();closeMobInst()">🏛️ <span id="mob-sl-gov">Держоргани</span></button>
+      <button class="mob-sheet-link" onclick="closeMobSettings();closeMobInst()">⚖️ <span id="mob-sl-court">Суди</span></button>
+      <button class="mob-sheet-link" onclick="closeMobSettings();closeMobInst()">🏢 <span id="mob-sl-org">Організації</span></button>
+      <button class="mob-sheet-link" onclick="closeMobSettings();closeMobInst()">👤 <span id="mob-sl-person">Персони</span></button>
+    </div>
+  </div>
+</div>
+
+<!-- MOBILE CATEGORIES SUBMENU -->
+<div class="mob-settings-sheet" id="mob-cats-sheet" style="display:none">
+  <div class="mob-sheet-handle"></div>
+  <div class="mob-sheet-body">
+    <button class="mob-sheet-link" onclick="closeMobCats()" style="color:var(--accent);margin-bottom:6px">← Назад</button>
+    <div class="mob-sheet-section-title">Категорії документів</div>
+    <div class="mob-sheet-links" id="mob-cats-list">
+      ${Object.entries(DOC_CATEGORIES||{}).map(([k,v])=>`
+        <button class="mob-sheet-link" onclick="closeMobSettings();closeMobCats()">${v.icon} ${v.label}</button>
+      `).join('')}
+    </div>
+    <div style="padding-top:8px">
+      <button class="mob-sheet-link" onclick="openAddCat();closeMobCats();closeMobSettings()" style="color:var(--accent)">+ Додати категорію</button>
+    </div>
+  </div>
+</div>
+
+<!-- MOBILE MENU SHEET -->
+<div class="mob-settings-sheet" id="mob-menu-sheet" style="display:none">
+  <div class="mob-sheet-handle"></div>
+  <div class="mob-sheet-body">
+    <div class="mob-sheet-section-title">Розділи</div>
+    <div class="mob-sheet-links">
+      <button class="mob-sheet-link" onclick="goPage('dashboard');closeMobMenu()">🏠 Огляд</button>
+      <button class="mob-sheet-link" onclick="goPage('docs');closeMobMenu()">📄 Документи</button>
+      <button class="mob-sheet-link" onclick="goPage('cases');closeMobMenu()">📁 Справи</button>
+      <button class="mob-sheet-link" onclick="goPage('tasks');closeMobMenu()">✅ Завдання</button>
+      <button class="mob-sheet-link" onclick="goPage('reminders');closeMobMenu()">🔔 Нагадування</button>
+      <button class="mob-sheet-link" onclick="goPage('team');closeMobMenu()">👥 Команда</button>
     </div>
   </div>
 </div>
@@ -3632,14 +3740,14 @@ function addSyncButtons(){
   text-transform: uppercase; color: var(--muted);
   margin-bottom: 10px;
 }
-.mob-lang-opts { display: flex; flex-direction: column; gap: 7px; }
+.mob-lang-opts { display: flex; flex-direction: row; gap: 7px; }
 .mob-lang-btn {
   font-family: 'IBM Plex Mono', monospace;
-  font-size: 13px; padding: 10px 14px;
+  font-size: 11px; padding: 6px 10px;
   border: 1px solid var(--border);
   border-radius: 8px; background: transparent;
   color: var(--muted); cursor: pointer;
-  text-align: left; transition: all .15s;
+  text-align: center; transition: all .15s; flex: 1;
 }
 .mob-lang-btn.active {
   background: var(--accent-light);
@@ -3658,6 +3766,404 @@ function addSyncButtons(){
   align-items: center;
 }
 .mob-sheet-link:hover { background: var(--surface2); }
+
+
+/* === CASES MODULE CSS === */
+   === CSS: CASES MODULE ===
+   Скопіювати цей блок в <style> основного файлу
+   ============================================================ */
+
+/* --- Список справ --- */
+.cases-list { display: flex; flex-direction: column; gap: 0; }
+
+.case-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  padding: 15px 20px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: all .2s;
+  box-shadow: var(--shadow);
+  animation: fadeUp .25s ease both;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.case-card:hover { border-color: #c5c0b8; box-shadow: 0 2px 10px rgba(0,0,0,0.08); transform: translateY(-1px); }
+
+.case-card-ico {
+  width: 40px; height: 40px;
+  border-radius: 9px;
+  background: var(--accent-light);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.case-card-body { flex: 1; min-width: 0; }
+.case-card-title { font-size: 13px; font-weight: 500; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.case-card-meta { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 10px; color: var(--muted); }
+.case-card-id { font-size: 10px; color: var(--muted); font-family: 'IBM Plex Mono', monospace; background: var(--surface2); padding: 1px 6px; border-radius: 4px; border: 1px solid var(--border); }
+
+.case-card-right { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; flex-shrink: 0; }
+.case-doc-count { font-size: 11px; color: var(--muted); display: flex; align-items: center; gap: 4px; }
+.case-doc-count strong { color: var(--text); font-size: 13px; }
+
+/* --- Заголовок розділу справи --- */
+.cases-view-header {
+  display: flex; align-items: center; gap: 12px;
+  padding: 0 0 18px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 20px;
+}
+.cases-back-btn {
+  background: none; border: 1px solid var(--border);
+  border-radius: 6px; padding: 5px 10px;
+  cursor: pointer; font-size: 13px; color: var(--muted);
+  transition: all .15s; font-family: 'IBM Plex Mono', monospace;
+}
+.cases-back-btn:hover { background: var(--surface2); color: var(--text); }
+.case-view-title { font-family: 'Literata', serif; font-size: 18px; font-weight: 600; flex: 1; }
+.case-view-id { font-size: 10px; color: var(--muted); font-family: 'IBM Plex Mono', monospace; background: var(--surface2); padding: 2px 8px; border-radius: 5px; border: 1px solid var(--border); }
+
+/* --- Документи всередині справи --- */
+.case-doc-item {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 7px;
+  display: flex; align-items: center; gap: 12px;
+  cursor: pointer; transition: all .18s;
+  box-shadow: var(--shadow);
+}
+.case-doc-item:hover { border-color: #c5c0b8; box-shadow: 0 2px 8px rgba(0,0,0,0.07); }
+.case-doc-item-ico { font-size: 20px; width: 32px; text-align: center; flex-shrink: 0; }
+.case-doc-item-body { flex: 1; min-width: 0; }
+.case-doc-item-title { font-size: 12px; font-weight: 500; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.case-doc-item-meta { font-size: 10px; color: var(--muted); display: flex; gap: 8px; align-items: center; }
+.case-doc-item-remove { background: none; border: none; cursor: pointer; font-size: 14px; color: var(--muted); padding: 4px; border-radius: 4px; opacity: 0; transition: all .15s; }
+.case-doc-item:hover .case-doc-item-remove { opacity: 1; }
+.case-doc-item-remove:hover { background: var(--danger-light); color: var(--danger); }
+
+/* --- Блок файлу в документі --- */
+.file-row {
+  display: flex; align-items: center; gap: 9px;
+  padding: 8px 11px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  margin-bottom: 6px;
+  font-size: 11px;
+}
+.file-row-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.file-row-ico { font-size: 15px; flex-shrink: 0; }
+.file-missing { border-color: var(--warn); background: var(--warn-light); }
+.file-missing .file-row-name { color: var(--warn); }
+
+/* --- Підказка ID --- */
+.id-hint {
+  font-size: 10px; color: var(--muted);
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 10px;
+  margin-top: 5px;
+  line-height: 1.6;
+}
+.id-hint strong { color: var(--text); }
+
+/* --- Статус папки --- */
+.folder-status {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 11px; padding: 8px 11px;
+  border-radius: 7px; margin-top: 8px;
+}
+.folder-status.ok { background: var(--accent-light); color: var(--accent); }
+.folder-status.warn { background: var(--warn-light); color: var(--warn); }
+.folder-status.err { background: var(--danger-light); color: var(--danger); }
+.folder-status.none { background: var(--surface2); color: var(--muted); }
+
+/* --- Вкладка довідки справи --- */
+.help-cases-content h4 {
+  font-family: 'Literata', serif; font-size: 14px; font-weight: 600;
+  margin: 16px 0 6px; color: var(--text);
+}
+.help-cases-content p { font-size: 12px; color: var(--muted); line-height: 1.7; margin-bottom: 8px; }
+.help-cases-content ul { font-size: 12px; color: var(--muted); line-height: 1.7; padding-left: 18px; margin-bottom: 8px; }
+.help-cases-content code {
+  font-family: 'IBM Plex Mono', monospace; font-size: 11px;
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 4px; padding: 1px 5px; color: var(--accent);
+}
+.help-cases-content .path-example {
+  font-family: 'IBM Plex Mono', monospace; font-size: 11px;
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 7px; padding: 10px 13px;
+  color: var(--text); margin: 8px 0;
+  line-height: 1.8;
+}
+.warn-box {
+  background: var(--warn-light); border: 1px solid var(--warn);
+  border-radius: 7px; padding: 10px 13px;
+  font-size: 11px; color: var(--warn); line-height: 1.6;
+  margin: 8px 0;
+}
+
+/* --- Вибір документів (додати до справи) --- */
+.doc-pick-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 12px; border: 1px solid var(--border);
+  border-radius: 7px; cursor: pointer; transition: all .15s;
+  margin-bottom: 6px;
+}
+.doc-pick-item:hover { background: var(--surface2); border-color: var(--accent); }
+.doc-pick-item.selected { background: var(--accent-light); border-color: var(--accent); }
+.doc-pick-check { width: 18px; height: 18px; border-radius: 4px; border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 11px; flex-shrink: 0; }
+.doc-pick-item.selected .doc-pick-check { background: var(--accent); border-color: var(--accent); color: white; }
+
+/* --- Справи у картці документа --- */
+.doc-cases-row {
+  display: flex; flex-wrap: wrap; gap: 5px; margin-top: 4px;
+}
+.doc-case-chip {
+  font-size: 10px; padding: 2px 8px;
+  background: var(--accent-light); color: var(--accent);
+  border-radius: 8px; cursor: pointer;
+  border: 1px solid transparent;
+  transition: all .15s;
+}
+.doc-case-chip:hover { border-color: var(--accent); }
+
+/* --- Секція справ у модальному вікні документа --- */
+.cases-in-doc-section {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+
+/* --- Кнопка вибору папки --- */
+.folder-pick-row {
+  display: flex; align-items: center; gap: 8px;
+}
+.folder-pick-row .form-input { flex: 1; }
+.folder-pick-btn {
+  font-family: 'IBM Plex Mono', monospace; font-size: 11px;
+  padding: 6px 12px; border: 1px solid var(--border);
+  border-radius: 6px; background: transparent; color: var(--muted);
+  cursor: pointer; transition: all .15s; white-space: nowrap;
+  flex-shrink: 0;
+}
+.folder-pick-btn:hover { background: var(--surface2); color: var(--text); }
+
+/* --- Діалог видалення --- */
+.delete-folder-list {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 10px 13px;
+  margin: 10px 0;
+  font-size: 11px;
+  line-height: 2;
+  font-family: 'IBM Plex Mono', monospace;
+  color: var(--text);
+}
+
+/* --- Прогрес створення папки --- */
+.folder-progress {
+  display: flex; flex-direction: column; gap: 6px;
+  margin-top: 12px;
+}
+.folder-progress-step {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 11px;
+}
+.folder-progress-step .step-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--border); flex-shrink: 0; transition: background .3s;
+}
+.folder-progress-step.done .step-dot { background: var(--accent); }
+.folder-progress-step.active .step-dot { background: var(--warn); animation: pulse .8s infinite; }
+.folder-progress-step.err .step-dot { background: var(--danger); }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+/* --- Мобільний адаптив --- */
+@media (max-width: 640px) {
+  .case-card { padding: 12px 14px; }
+  .cases-view-header { flex-wrap: wrap; gap: 8px; }
+  .case-view-title { font-size: 15px; }
+  .folder-pick-row { flex-direction: column; align-items: stretch; }
+  .folder-pick-btn { text-align: center; }
+  .case-card-right { display: none; }
+}
+
+/* === END CSS: CASES MODULE === */
+
+
+/* === SYNC MODULE CSS === */
+   === CSS: SYNC MODULE ===
+   Скопіювати цей блок в <style> основного файлу
+   ============================================================ */
+
+/* --- Блок сканування в налаштуваннях --- */
+.sync-settings-block {
+  margin-top: 28px;
+}
+
+.sync-scan-row {
+  display: flex; align-items: center; gap: 12px;
+  flex-wrap: wrap;
+}
+
+.sync-last-scan {
+  font-size: 11px; color: var(--muted); flex: 1;
+}
+
+.sync-badge-warn {
+  font-size: 10px; padding: 2px 8px;
+  background: var(--warn-light); color: var(--warn);
+  border-radius: 8px; border: 1px solid var(--warn);
+  white-space: nowrap;
+}
+
+/* --- Нагадування про сканування --- */
+.sync-reminder {
+  background: var(--warn-light);
+  border: 1px solid var(--warn);
+  border-radius: 9px;
+  padding: 12px 16px;
+  display: flex; align-items: center; gap: 12px;
+  margin-bottom: 16px;
+  font-size: 12px;
+  animation: fadeUp .3s ease;
+}
+.sync-reminder-ico { font-size: 20px; flex-shrink: 0; }
+.sync-reminder-text { flex: 1; color: var(--warn); line-height: 1.5; }
+.sync-reminder-close { background: none; border: none; cursor: pointer; font-size: 16px; color: var(--warn); opacity: .6; padding: 2px 6px; border-radius: 4px; }
+.sync-reminder-close:hover { opacity: 1; background: rgba(0,0,0,.05); }
+
+/* --- Прогрес сканування --- */
+.sync-progress {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  padding: 16px 20px;
+  margin-top: 12px;
+  box-shadow: var(--shadow);
+}
+.sync-progress-bar-wrap {
+  height: 4px; background: var(--surface2);
+  border-radius: 2px; margin: 10px 0 8px; overflow: hidden;
+}
+.sync-progress-bar {
+  height: 100%; background: var(--accent);
+  border-radius: 2px; transition: width .3s ease;
+  width: 0%;
+}
+.sync-progress-label {
+  font-size: 11px; color: var(--muted);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.sync-progress-counts {
+  font-size: 10px; color: var(--muted); margin-top: 4px;
+  display: flex; gap: 12px;
+}
+
+/* --- Список знайдених файлів --- */
+.sync-results {
+  margin-top: 16px;
+}
+
+.sync-group {
+  margin-bottom: 20px;
+  animation: fadeUp .25s ease both;
+}
+.sync-group-head {
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 12px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 7px 7px 0 0;
+  font-size: 11px; color: var(--muted);
+}
+.sync-group-title { flex: 1; font-weight: 500; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sync-group-count { font-size: 10px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 1px 7px; }
+.sync-group-body { border: 1px solid var(--border); border-top: none; border-radius: 0 0 7px 7px; overflow: hidden; }
+
+.sync-file-row {
+  display: flex; align-items: flex-start; gap: 12px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  transition: background .15s;
+}
+.sync-file-row:last-child { border-bottom: none; }
+.sync-file-row:hover { background: var(--surface2); }
+
+.sync-file-ico { font-size: 20px; width: 28px; text-align: center; flex-shrink: 0; padding-top: 1px; }
+.sync-file-body { flex: 1; min-width: 0; }
+.sync-file-name { font-size: 12px; font-weight: 500; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sync-file-meta { font-size: 10px; color: var(--muted); display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
+.sync-file-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+.sync-file-action-wrap { display: flex; flex-direction: column; gap: 2px; }
+.sync-file-hint { font-size: 9px; color: var(--muted); padding: 0 2px; }
+
+/* --- Фільтри результатів --- */
+.sync-filters {
+  display: flex; gap: 6px; flex-wrap: wrap; align-items: center;
+  margin-bottom: 14px;
+}
+.sync-filter-label { font-size: 10px; color: var(--muted); }
+
+/* --- Заблоковані файли --- */
+.sync-blocked-list {
+  background: var(--danger-light);
+  border: 1px solid var(--danger);
+  border-radius: 8px;
+  padding: 12px 14px;
+  margin-top: 12px;
+  font-size: 11px;
+}
+.sync-blocked-title { color: var(--danger); font-weight: 500; margin-bottom: 8px; }
+.sync-blocked-item { display: flex; gap: 8px; padding: 4px 0; color: var(--danger); }
+.sync-blocked-item-name { font-weight: 500; }
+.sync-blocked-item-path { color: var(--muted); font-size: 10px; }
+
+/* --- Вибір документа --- */
+.sync-doc-pick-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 12px;
+  border: 1px solid var(--border);
+  border-radius: 7px; cursor: pointer;
+  transition: all .15s; margin-bottom: 6px;
+}
+.sync-doc-pick-item:hover { background: var(--surface2); border-color: var(--accent); }
+.sync-doc-pick-item.selected { background: var(--accent-light); border-color: var(--accent); }
+
+/* --- Лічильник в налаштуваннях --- */
+.sync-settings-count {
+  font-size: 11px; color: var(--warn);
+  background: var(--warn-light);
+  border: 1px solid var(--warn);
+  border-radius: 6px;
+  padding: 3px 9px;
+  display: inline-block;
+}
+
+/* --- Довідка --- */
+.sync-help-content h4 { font-family: 'Literata', serif; font-size: 14px; font-weight: 600; margin: 16px 0 6px; }
+.sync-help-content p { font-size: 12px; color: var(--muted); line-height: 1.7; margin-bottom: 8px; }
+.sync-help-content code { font-family: 'IBM Plex Mono', monospace; font-size: 11px; background: var(--surface2); border: 1px solid var(--border); border-radius: 4px; padding: 1px 5px; color: var(--accent); }
+.warn-box-sync { background: var(--warn-light); border: 1px solid var(--warn); border-radius: 7px; padding: 10px 13px; font-size: 11px; color: var(--warn); line-height: 1.6; margin: 8px 0; }
+
+/* --- Мобільний адаптив --- */
+@media (max-width: 768px) {
+  .sync-desktop-only { display: none !important; }
+}
+
+/* === END CSS: SYNC MODULE === */
+
 </style>
 
 <script>
@@ -3671,10 +4177,44 @@ function openMobSettings(){
 function closeMobSettings(){
   document.getElementById('mob-settings-overlay').style.display='none';
   document.getElementById('mob-settings-sheet').style.display='none';
-  // Restore active nav btn
   document.querySelectorAll('.mob-nav-btn').forEach(b=>b.classList.remove('active'));
   const el=document.getElementById('mob-nav-'+currentPage);
   if(el)el.classList.add('active');
+}
+function openMobMenu(){
+  document.querySelectorAll('.mob-nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('mob-nav-menu').classList.add('active');
+  document.getElementById('mob-settings-overlay').style.display='block';
+  document.getElementById('mob-menu-sheet').style.display='block';
+}
+function closeMobMenu(){
+  document.getElementById('mob-settings-overlay').style.display='none';
+  document.getElementById('mob-menu-sheet').style.display='none';
+  document.querySelectorAll('.mob-nav-btn').forEach(b=>b.classList.remove('active'));
+  const el=document.getElementById('mob-nav-'+currentPage);
+  if(el)el.classList.add('active');
+}
+function openMobInst(){
+  document.getElementById('mob-inst-sheet').style.display='block';
+}
+function closeMobInst(){
+  document.getElementById('mob-inst-sheet').style.display='none';
+}
+function openMobCats(){
+  const list = document.getElementById('mob-cats-list');
+  if(list) list.innerHTML = Object.entries(DOC_CATEGORIES||{}).map(([k,v])=>{
+    const isBuiltin = BUILTIN_CATS.includes(k);
+    return `<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border)">
+      <span style="font-size:18px">${v.icon}</span>
+      <span style="flex:1;font-size:13px">${v.label}</span>
+      <button class="btn btn-ghost btn-sm" onclick="openEditCat('${k}');closeMobCats();closeMobSettings()">✏️</button>
+      ${!isBuiltin?`<button class="btn btn-ghost btn-sm" style="color:var(--danger)" onclick="deleteCat('${k}');openMobCats()">✕</button>`:''}
+    </div>`;
+  }).join('');
+  document.getElementById('mob-cats-sheet').style.display='block';
+}
+function closeMobCats(){
+  document.getElementById('mob-cats-sheet').style.display='none';
 }
 function setLangMob(l){
   setLang(l);
@@ -3707,6 +4247,2504 @@ function updateMobI18n(){
   if(el('mob-sl-org'))el('mob-sl-org').textContent=l.org;
   if(el('mob-sl-person'))el('mob-sl-person').textContent=l.person;
 }
+</script>
+
+
+<script>
+/* === CASES MODULE JS === */
+/* ============================================================
+   === JS: CASES MODULE ===
+   Скопіювати весь цей блок в основний файл
+   ============================================================ */
+
+// ------------------------------------------------------------
+// ДАНІ
+// Зберігаються в localStorage під ключами:
+//   'caster_cases'      — масив справ
+//   'caster_root_path'  — ім'я кореневої папки (рядок, не Handle)
+// ------------------------------------------------------------
+
+/* Структура справи:
+{
+  id: 'case_1234567890123',   // унікальний ID (генерується або вводиться)
+  title: 'Назва справи',
+  description: '',
+  country: '🇺🇦 Україна',
+  responsible: 'Олена М.',    // ім'я відповідального
+  responsibleId: 0,           // id з масиву team
+  docIds: ['1','2'],          // id документів що належать до справи
+  status: 'active',           // 'active' | 'closed'
+  createdAt: '2025-01-15T10:30:00.000Z',
+  folderCreated: true,        // чи успішно створена папка
+  folderPath: 'Caster/Україна/Олена М./case_1234567890123'
+}
+*/
+
+// Ключ localStorage
+var CASES_LS_KEY = 'caster_cases';
+
+// Завантажити справи з localStorage
+function casesLoad() {
+  try {
+    return JSON.parse(localStorage.getItem(CASES_LS_KEY) || '[]');
+  } catch(e) { return []; }
+}
+
+// Зберегти справи в localStorage
+function casesSave(arr) {
+  localStorage.setItem(CASES_LS_KEY, JSON.stringify(arr));
+}
+
+// Завантажити збережену кореневу директорію (не серіалізується — тільки прапорець)
+function casesGetRootPath() {
+  return localStorage.getItem('caster_root_path') || '';
+}
+function casesSetRootPath(path) {
+  localStorage.setItem('caster_root_path', path);
+}
+
+// Глобальний FileSystemDirectoryHandle (не зберігається між сесіями — треба вибирати знову)
+window._casesRootHandle = null;
+
+// Перевірка недозволених символів в ID
+function casesIsValidId(id) {
+  return !/[\/\\:*?"<>|]/.test(id) && id.trim().length > 0;
+}
+
+// Перевірка унікальності ID
+function casesIsUniqueId(id, excludeId) {
+  var cases = casesLoad();
+  return !cases.find(c => c.id === id && id !== excludeId);
+}
+
+// Генерація ID з часовою міткою до мілісекунди
+function casesGenerateId() {
+  return 'case_' + Date.now();
+}
+
+// ------------------------------------------------------------
+// РЕНДЕР СТОРІНКИ СПРАВ
+// Додати в goPage(): case 'cases': renderCasesPage(); break;
+// Додати в renderCurrent(): else if(currentPage==='cases'){ ... }
+// ------------------------------------------------------------
+
+var _casesCurrentCaseId = null; // яка справа відкрита
+
+function renderCasesPage() {
+  if (_casesCurrentCaseId) {
+    renderCaseView(_casesCurrentCaseId);
+  } else {
+    renderCasesList();
+  }
+}
+
+// Список усіх справ
+function renderCasesList() {
+  var el = document.getElementById('page-cases');
+  if (!el) return;
+  var cases = casesLoad();
+
+  // Filterbar
+  var fb = document.getElementById('filterbar');
+  if (fb) {
+    var activeCount = cases.filter(c => (c.status || 'active') === 'active').length;
+    fb.innerHTML = `
+      <span class="filter-label" style="margin-right:4px">Статус:</span>
+      <button class="filter-chip ${!_casesFilter||_casesFilter==='all'?'active':''}" onclick="setCasesFilter('all',this)">Всі (${cases.length})</button>
+      <button class="filter-chip ${_casesFilter==='active'?'active':''}" onclick="setCasesFilter('active',this)">Активні (${activeCount})</button>
+    `;
+  }
+
+  // Пошук
+  var q = (document.getElementById('search-inp')?.value || '').toLowerCase();
+
+  var filtered = cases.filter(c => {
+    if (_casesFilter === 'active' && (c.status || 'active') !== 'active') return false;
+    if (q && !c.title.toLowerCase().includes(q) && !c.id.toLowerCase().includes(q)) return false;
+    return true;
+  });
+
+  if (filtered.length === 0) {
+    el.innerHTML = `
+      <div class="empty">
+        <div class="ei">📁</div>
+        <div>${q ? 'Нічого не знайдено' : 'Справ ще немає'}</div>
+        ${!q && !casesIsMobile() ? `<div style="margin-top:10px"><button class="btn btn-primary" onclick="openCreateCase()">+ Створити першу справу</button></div>` : ''}
+      </div>`;
+    return;
+  }
+
+  el.innerHTML = `<div class="cases-list">${filtered.map(c => renderCaseCard(c)).join('')}</div>`;
+}
+
+var _casesFilter = 'all';
+function setCasesFilter(f, el) {
+  _casesFilter = f;
+  document.querySelectorAll('.filterbar .filter-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  renderCasesList();
+}
+
+function renderCaseCard(c) {
+  var docCount = (c.docIds || []).length;
+  var date = c.createdAt ? new Date(c.createdAt).toLocaleDateString('uk-UA') : '—';
+  var countryFlag = (c.country || '').split(' ')[0] || '🌍';
+  var isActive = (c.status || 'active') === 'active';
+
+  return `
+    <div class="case-card" onclick="openCaseView(this.dataset.id)" data-id="${escHtml(c.id)}">
+      <div class="case-card-ico">📁</div>
+      <div class="case-card-body">
+        <div class="case-card-title">${escHtml(c.title)}</div>
+        <div class="case-card-meta">
+          <span>${countryFlag} ${escHtml((c.country || '').split(' ').slice(1).join(' '))}</span>
+          <span>·</span>
+          <span>👤 ${escHtml(c.responsible || '—')}</span>
+          <span>·</span>
+          <span>📅 ${date}</span>
+          <span title="${c.folderCreated ? 'Папка створена' : 'Папка не створена'}"
+                style="color:${c.folderCreated ? 'var(--accent)' : 'var(--muted)'}">${c.folderCreated ? '✓' : '…'}</span>
+        </div>
+      </div>
+      <div class="case-card-right">
+        <span class="chip ${isActive ? 'chip-active' : 'chip-done'}">${isActive ? 'Активна' : 'Закрита'}</span>
+        <span class="case-doc-count"><strong>${docCount}</strong> ${docNoun(docCount)}</span>
+        <span class="case-card-id">${escHtml(c.id)}</span>
+      </div>
+    </div>`;
+}
+
+function docNoun(n) {
+  var t = n % 10, h = n % 100;
+  if (t === 1 && h !== 11) return 'документ';
+  if (t >= 2 && t <= 4 && (h < 10 || h > 20)) return 'документи';
+  return 'документів';
+}
+
+// ------------------------------------------------------------
+// ПЕРЕГЛЯД СПРАВИ
+// ------------------------------------------------------------
+
+function openCaseView(id) {
+  _casesCurrentCaseId = id;
+  renderCaseView(id);
+}
+
+function closeCaseView() {
+  _casesCurrentCaseId = null;
+  renderCasesList();
+}
+
+// Перемикач статусу справи — активна / закрита
+function casesToggleStatus(caseId, btn) {
+  var cases = casesLoad();
+  var idx = cases.findIndex(c => c.id === caseId);
+  if (idx < 0) return;
+  var current = cases[idx].status || 'active';
+  cases[idx].status = current === 'active' ? 'closed' : 'active';
+  casesSave(cases);
+  var isActive = cases[idx].status === 'active';
+  if (btn) {
+    btn.textContent = isActive ? '● Активна' : '○ Закрита';
+    btn.style.color = isActive ? 'var(--accent)' : 'var(--muted)';
+  }
+  showToast(isActive ? 'Справа позначена як активна' : 'Справа закрита', 'success');
+}
+
+function renderCaseView(id) {
+  var el = document.getElementById('page-cases');
+  if (!el) return;
+  var cases = casesLoad();
+  var c = cases.find(x => x.id === id);
+  if (!c) { closeCaseView(); return; }
+
+  var docsArr = typeof docs !== 'undefined' ? docs : [];
+  var caseDocs = (c.docIds || []).map(did => docsArr.find(d => d.id === did)).filter(Boolean);
+  var docCount = caseDocs.length;
+  var date = c.createdAt ? new Date(c.createdAt).toLocaleDateString('uk-UA') : '—';
+
+  el.innerHTML = `
+    <div>
+      <!-- Заголовок -->
+      <div class="cases-view-header">
+        <button class="cases-back-btn" onclick="closeCaseView()">← Назад</button>
+        <div class="case-view-title">${escHtml(c.title)}</div>
+        <span class="case-view-id">${escHtml(c.id)}</span>
+        ${casesIsMobile() ? '' : `
+        <div style="display:flex;gap:6px"
+             data-case-id="${escHtml(c.id)}">
+          <button class="btn btn-ghost btn-sm"
+                  onclick="openRenameCase(this.closest('[data-case-id]').dataset.caseId)">✏️ Перейменувати</button>
+          <button class="btn btn-ghost btn-sm"
+                  onclick="openDeleteCase(this.closest('[data-case-id]').dataset.caseId)"
+                  style="color:var(--danger)">🗑 Видалити</button>
+        </div>`}
+      </div>
+
+      <!-- Мета-інфо -->
+      <div style="display:flex;gap:18px;flex-wrap:wrap;margin-bottom:20px;font-size:11px;color:var(--muted);align-items:center">
+        <span>🌍 ${escHtml(c.country || '—')}</span>
+        <span>👤 ${escHtml(c.responsible || '—')}</span>
+        <span>📅 Створено: ${date}</span>
+        ${c.description ? `<span>📝 ${escHtml(c.description)}</span>` : ''}
+        <span style="margin-left:auto">
+          <button class="btn btn-ghost btn-sm"
+                  data-case-id="${escHtml(c.id)}"
+                  onclick="casesToggleStatus(this.dataset.caseId, this)"
+                  style="color:${(c.status||'active')==='active'?'var(--accent)':'var(--muted)'}">
+            ${(c.status || 'active') === 'active' ? '● Активна' : '○ Закрита'}
+          </button>
+        </span>
+      </div>
+
+      <!-- Папка -->
+      <div style="margin-bottom:20px">
+        <div class="modal-sec-title">Папка на диску</div>
+        ${renderFolderStatus(c)}
+      </div>
+
+      <!-- Документи -->
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+        <div class="modal-sec-title" style="margin:0">Документи (${docCount})</div>
+        ${casesIsMobile() ? '' : `<button class="btn btn-ghost btn-sm" data-case-id="${escHtml(c.id)}" onclick="openAddDocToCase(this.dataset.caseId)">+ Додати документ</button>`}
+      </div>
+
+      ${caseDocs.length === 0
+        ? `<div class="empty" style="padding:30px 20px"><div class="ei" style="font-size:24px">📄</div><div>Документів ще немає</div></div>`
+        : `<div>${caseDocs.map(d => renderCaseDocItem(d, c.id)).join('')}</div>`
+      }
+    </div>`;
+}
+
+function renderFolderStatus(c) {
+  var mobile = casesIsMobile();
+  var supported = casesFolderSupported();
+
+  if (!c.folderPath) {
+    if (mobile) {
+      return `<div class="folder-status none">📱 На мобільному пристрої папки недоступні — тільки перегляд</div>`;
+    }
+    return `
+      <div class="folder-status none">
+        📂 Папка не вибрана
+        <button class="btn btn-ghost btn-sm" style="margin-left:auto"
+                data-case-id="${escHtml(c.id)}"
+                onclick="openSelectFolder(this.dataset.caseId)">Вибрати папку</button>
+      </div>`;
+  }
+
+  return `
+    <div class="folder-status ${c.folderCreated ? 'ok' : 'warn'}">
+      <span>${c.folderCreated ? '✓' : '⚠️'}</span>
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(c.folderPath)}</span>
+      ${supported ? `<button class="btn btn-ghost btn-sm" style="flex-shrink:0"
+                             data-case-id="${escHtml(c.id)}"
+                             onclick="openSelectFolder(this.dataset.caseId)">Змінити</button>` : ''}
+    </div>
+    ${!c.folderCreated && supported ? `
+      <div class="folder-status warn" style="margin-top:4px">
+        ⚠️ Папку не вдалось перевірити. Вибери кореневу папку знову щоб перевірити.
+      </div>` : ''}
+    ${mobile ? `<div class="folder-status none" style="margin-top:4px">📱 Керування папками доступне тільки на десктопі.</div>` : ''}
+    ${!supported && !mobile ? `<div class="folder-status warn" style="margin-top:4px">⚠️ Цей браузер не підтримує File System Access API. Папки недоступні.</div>` : ''}
+  `;
+}
+
+// Іконки типів документів — константа на рівні модуля
+var CASES_TYPE_ICONS = { passport:'🛂', property:'🏠', auto:'🚗', medical:'🏥', finance:'🏦', edu:'📋', legal:'⚖️', other:'📦' };
+
+function renderCaseDocItem(d, caseId) {
+  var ico = CASES_TYPE_ICONS[d.type] || '📄';
+  return `
+    <div class="case-doc-item"
+         onclick="casesOpenDocCard(this.dataset.docId, event)"
+         data-doc-id="${escHtml(d.id)}"
+         data-case-id="${escHtml(caseId)}">
+      <div class="case-doc-item-ico">${ico}</div>
+      <div class="case-doc-item-body">
+        <div class="case-doc-item-title">${escHtml(d.title || d.ref || '—')}</div>
+        <div class="case-doc-item-meta">
+          <span>${d.country || ''}</span>
+          ${d.docNumber ? `<span>· ${escHtml(d.docNumber)}</span>` : ''}
+        </div>
+      </div>
+      <button class="case-doc-item-remove"
+              title="Видалити зі справи"
+              onclick="removeDocFromCase(this.closest('[data-doc-id]').dataset.docId, this.closest('[data-doc-id]').dataset.caseId, event)">✕</button>
+    </div>`;
+}
+
+// Відкрити картку документа з контексту справи.
+// Викликає openDocModal(id) якщо така функція є в основному файлі.
+function casesOpenDocCard(docId, evt) {
+  if (evt) evt.stopPropagation();
+  // Шукати першу доступну функцію відкриття картки документа в основному файлі
+  var fn = [openDocDetail, openDocModal, openDoc].find(f => typeof f === 'function');
+  if (fn) { fn(docId); return; }
+
+  // Fallback: показати базову інформацію в модалці
+  var docsArr = typeof docs !== 'undefined' ? docs : [];
+  var d = docsArr.find(x => x.id === docId);
+  if (!d) { showToast('Документ не знайдено', 'error'); return; }
+  openModalWith(d.title || '—', `
+    <div style="display:flex;align-items:flex-start;gap:14px;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid var(--border)">
+      <div style="font-size:32px;width:50px;text-align:center;flex-shrink:0">${CASES_TYPE_ICONS[d.type]||'📄'}</div>
+      <div>
+        <div style="font-family:'Literata',serif;font-size:17px;font-weight:600;margin-bottom:4px">${escHtml(d.title||'—')}</div>
+        <div style="font-size:11px;color:var(--muted);display:flex;gap:8px;flex-wrap:wrap">
+          ${d.country ? `<span>${escHtml(d.country)}</span>` : ''}
+          ${d.docNumber ? `<span>№ ${escHtml(d.docNumber)}</span>` : ''}
+          ${d.validUntil ? `<span>до ${escHtml(d.validUntil)}</span>` : ''}
+        </div>
+      </div>
+    </div>
+    ${renderDocCasesSection(docId)}
+    <div style="display:flex;justify-content:flex-end;padding-top:12px">
+      <button class="btn btn-ghost" onclick="closeModal()">Закрити</button>
+    </div>`);
+}
+
+// ------------------------------------------------------------
+// ВИБІР ПАПКИ (File System Access API)
+// Папки створюються тільки на десктопі.
+// На мобільному — тільки перегляд.
+// ------------------------------------------------------------
+
+// Визначити чи пристрій мобільний.
+// Обчислюється один раз і кешується. Оновлюється при зміні розміру вікна.
+var _casesIsMobileCache = null;
+
+function casesIsMobile() {
+  if (_casesIsMobileCache !== null) return _casesIsMobileCache;
+  _casesIsMobileCache = _casesCalcMobile();
+  return _casesIsMobileCache;
+}
+
+function _casesCalcMobile() {
+  if (window.innerWidth < 768) return true;
+  if (/Android|iPhone|iPod|Opera Mini|IEMobile|WPDesktop/i.test(navigator.userAgent)) return true;
+  if (/iPad/i.test(navigator.userAgent) && window.innerWidth < 1024) return true;
+  return false;
+}
+
+// Скидати кеш при зміні розміру — UI оновиться при наступному рендері
+window.addEventListener('resize', () => {
+  _casesIsMobileCache = _casesCalcMobile();
+});
+
+// Перевірити доступність роботи з папками
+function casesFolderSupported() {
+  if (casesIsMobile()) return false;
+  return 'showDirectoryPicker' in window;
+}
+
+function casesMobileBlock() {
+  showToast('На мобільному пристрої папки недоступні — тільки перегляд', 'error');
+}
+
+// Спільна логіка вибору директорії через showDirectoryPicker
+async function _casesPickDir() {
+  if (casesIsMobile()) { casesMobileBlock(); return null; }
+  if (!casesFolderSupported()) { showToast('Браузер не підтримує вибір папок', 'error'); return null; }
+  try {
+    var dirHandle = await window.showDirectoryPicker({ mode: 'readwrite' });
+    window._casesRootHandle = dirHandle;
+    casesSetRootPath(dirHandle.name);
+    return dirHandle;
+  } catch(e) {
+    if (e.name !== 'AbortError') showToast('Помилка вибору папки', 'error');
+    return null;
+  }
+}
+
+async function openSelectFolder(caseId) {
+  var h = await _casesPickDir();
+  if (h && caseId) await casesCreateFolderStructure(caseId, h);
+}
+
+async function casesPickRootFolder() {
+  return _casesPickDir();
+}
+
+// Отримати або створити підпапку.
+// Повертає { handle, existed } — existed=true якщо папка вже існувала.
+async function casesGetOrCreateDir(parentHandle, name) {
+  try {
+    // Спробувати отримати без створення — якщо вдалось, папка вже існує
+    try {
+      var existing = await parentHandle.getDirectoryHandle(name, { create: false });
+      return { handle: existing, existed: true };
+    } catch(e) {
+      // Папки немає — створити
+      var created = await parentHandle.getDirectoryHandle(name, { create: true });
+      return { handle: created, existed: false };
+    }
+  } catch(e) {
+    throw new Error(`Не вдалось створити папку "${name}": ${e.message}`);
+  }
+}
+
+// Словник відповідностей: назва країни → код папки на диску
+var CASES_COUNTRY_FOLDERS = Object.freeze({
+  'Україна':   'Ua_caster',
+  'Німеччина': 'De_caster',
+  'Укр/Нім':   'Ua_de_caster',
+});
+
+// Отримати код папки для країни
+// Вхід: повна назва країни з емодзі ('🇺🇦 Україна') або без ('Україна')
+function casesCountryFolder(country) {
+  var str = country || '';
+  // Знайти першу пробіл після якого йде текст (не емодзі)
+  var spaceIdx = str.indexOf(' ');
+  var name = spaceIdx >= 0 ? str.slice(spaceIdx + 1).trim() : str.trim();
+  // Якщо після відрізання емодзі залишився порожній рядок — взяти оригінал
+  if (!name) name = str.trim();
+  return CASES_COUNTRY_FOLDERS[name] || 'Other_caster';
+}
+
+// Створити структуру папок: Коренева → Країна → Відповідальний → ID справи
+async function casesCreateFolderStructure(caseId, rootHandle) {
+  var cases = casesLoad();
+  var c = cases.find(x => x.id === caseId);
+  if (!c) return;
+
+  var countryFolder = casesCountryFolder(c.country);
+  var respName = c.responsible || 'Невідомо';
+
+  showToast('Створюю папки…');
+  casesMarkFolderPending(caseId);
+
+  try {
+    const { handle: countryDir } = await casesGetOrCreateDir(rootHandle, countryFolder);
+    const { handle: respDir } = await casesGetOrCreateDir(countryDir, respName);
+    const { existed } = await casesGetOrCreateDir(respDir, caseId);
+
+    var path = `${rootHandle.name}/${countryFolder}/${respName}/${caseId}`;
+
+    var allCases = casesLoad();
+    var idx = allCases.findIndex(x => x.id === caseId);
+    if (idx >= 0) {
+      allCases[idx].folderCreated = true;
+      allCases[idx].folderPath = path;
+      casesSave(allCases);
+    }
+
+    casesMarkFolderDone(caseId);
+    showToast(existed ? 'Використано існуючу папку: ' + path : 'Папку створено: ' + path, 'success');
+    if (_casesCurrentCaseId === caseId) renderCaseView(caseId);
+
+  } catch(e) {
+    // Залишаємо pending — при наступному запуску буде перевірено
+    showToast('Помилка створення папки: ' + e.message, 'error');
+  }
+}
+
+// Перевірка папок при запуску (фонова, не блокує)
+async function casesCheckFoldersOnStartup() {
+  // 1. Перевірити чи є незавершені створення папок (після збою)
+  var pending = casesGetPendingFolders();
+  var pendingIds = Object.keys(pending);
+  if (pendingIds.length > 0) {
+    var casesForPending = casesLoad();
+    var pendingChanged = false;
+    for (const caseId of pendingIds) {
+      var c = casesForPending.find(x => x.id === caseId);
+      if (c) {
+        c.folderCreated = false;
+        pendingChanged = true;
+      }
+      casesMarkFolderDone(caseId);
+    }
+    if (pendingChanged) {
+      casesSave(casesForPending);
+      showToast('⚠️ Деякі папки могли не створитись через збій', 'error');
+    }
+  }
+
+  // 2. Перевірити існуючі папки якщо є rootHandle
+  if (!window._casesRootHandle) return;
+  var allCases = casesLoad();
+  var foldersChanged = false;
+  for (const c of allCases) {
+    if (!c.folderPath || !c.folderCreated) continue;
+    try {
+      var parts = c.folderPath.split('/');
+      var dir = window._casesRootHandle;
+      for (let i = 1; i < parts.length; i++) {
+        dir = await dir.getDirectoryHandle(parts[i]);
+      }
+    } catch(e) {
+      c.folderCreated = false;
+      foldersChanged = true;
+    }
+  }
+  if (foldersChanged) {
+    casesSave(allCases);
+    showToast('⚠️ Деякі папки справ не знайдено', 'error');
+  }
+}
+
+// ------------------------------------------------------------
+// СТВОРЕННЯ СПРАВИ
+// ------------------------------------------------------------
+
+function openCreateCase() {
+  var modal = document.getElementById('overlay');
+  var body = document.getElementById('modal-body');
+  var title = document.getElementById('modal-title');
+  if (!modal || !body) {
+    // fallback для демо
+    showCreateCaseDemo();
+    return;
+  }
+  title.textContent = 'Нова справа';
+  body.innerHTML = buildCreateCaseForm();
+  modal.style.display = 'flex';
+}
+
+// Для демо (без основного overlay)
+function showCreateCaseDemo() {
+  document.getElementById('demo-area').innerHTML = `
+    <div style="max-width:480px;background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;box-shadow:var(--shadow)">
+      <div class="modal-head">
+        <div class="modal-head-title">Нова справа</div>
+        <button class="modal-close" onclick="showDemo('list')">✕</button>
+      </div>
+      <div class="modal-body">${buildCreateCaseForm()}</div>
+    </div>`;
+  syncCaseIdHint();
+}
+
+function buildCreateCaseForm() {
+  return `
+    <div class="modal-sec">
+      <div class="modal-sec-title">Основне</div>
+
+      <div class="form-group">
+        <label class="form-label">Назва справи <span style="color:var(--danger)">*</span></label>
+        <input type="text" class="form-input" id="cf-title" placeholder="Наприклад: Оренда офісу 2025" oninput="syncCaseIdHint()">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Країна <span style="color:var(--danger)">*</span></label>
+        <input type="text" class="form-input" id="cf-country" placeholder="🇺🇦 Україна" list="cf-country-list">
+        <datalist id="cf-country-list">
+          <option value="🇺🇦 Україна">
+          <option value="🇩🇪 Німеччина">
+          <option value="🇺🇦🇩🇪 Укр/Нім">
+        </datalist>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Відповідальний <span style="color:var(--danger)">*</span></label>
+        ${buildResponsibleSelect()}
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Опис</label>
+        <textarea class="form-ta" id="cf-desc" placeholder="Необов'язково. Короткий опис справи."></textarea>
+      </div>
+    </div>
+
+    <div class="modal-sec">
+      <div class="modal-sec-title">ID справи</div>
+
+      <div class="form-group">
+        <div style="display:flex;gap:6px;align-items:center">
+          <input type="text" class="form-input" id="cf-id" placeholder="Генерується автоматично" oninput="validateCaseIdField()">
+          <button class="btn btn-ghost btn-sm" onclick="generateCaseIdNow()" title="Генерувати автоматично">↺</button>
+        </div>
+        <div id="cf-id-error" style="font-size:10px;color:var(--danger);margin-top:4px;display:none"></div>
+        <div class="id-hint" id="cf-id-hint">
+          <strong>Назва</strong> — для людей. Можна змінити будь-коли.<br>
+          <strong>ID</strong> — технічний ідентифікатор. Використовується як ім'я папки на диску.
+          Після створення <strong>не змінюється</strong>.<br>
+          Якщо залишити порожнім — буде згенеровано автоматично: <code id="cf-id-preview">case_${Date.now()}</code><br>
+          Заборонені символи: <code>/ \\ : * ? " &lt; &gt; |</code>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-sec" id="cf-folder-sec">
+      <div class="modal-sec-title">Папка на диску</div>
+      ${casesIsMobile()
+        ? `<div class="folder-status none">📱 Створення папок недоступне на мобільному пристрої. Папку можна вибрати після відкриття справи на десктопі.</div>`
+        : !casesFolderSupported()
+          ? `<div class="folder-status warn">⚠️ Браузер не підтримує File System Access API. Папки недоступні.</div>`
+          : `<div class="folder-pick-row">
+              <input type="text" class="form-input" id="cf-folder-display" readonly placeholder="Папка не вибрана" style="color:var(--muted)">
+              <button class="folder-pick-btn" onclick="casesPickRootForForm()">📂 Вибрати папку</button>
+            </div>
+            <div style="font-size:10px;color:var(--muted);margin-top:5px">
+              Папка буде створена: <strong id="cf-path-preview">—</strong>
+            </div>`
+      }
+    </div>
+
+    <div style="display:flex;gap:8px;justify-content:flex-end;padding-top:8px;border-top:1px solid var(--border)">
+      <button class="btn btn-ghost" onclick="closeModal()">Скасувати</button>
+      <button class="btn btn-primary" onclick="submitCreateCase()">Створити справу</button>
+    </div>`;
+}
+
+function buildResponsibleSelect() {
+  // Якщо є масив team — побудувати select
+  if (typeof team !== 'undefined' && team.length) {
+    var options = team.filter(m => m.active).map(m =>
+      `<option value="${m.id}">${escHtml(m.name)}</option>`
+    ).join('');
+    return `<select class="form-select" id="cf-resp-sel"><option value="">— оберіть —</option>${options}</select>`;
+  }
+  return `<input type="text" class="form-input" id="cf-resp-sel" placeholder="Ім'я відповідального">`;
+}
+
+window._caseFormRootHandle = null;
+
+async function casesPickRootForForm() {
+  var h = await casesPickRootFolder();
+  if (!h) return;
+  window._caseFormRootHandle = h;
+  var disp = document.getElementById('cf-folder-display');
+  if (disp) disp.value = h.name;
+  updateCasePathPreview();
+}
+
+function updateCasePathPreview() {
+  var el = document.getElementById('cf-path-preview');
+  if (!el) return;
+  var root    = window._caseFormRootHandle?.name || casesGetRootPath() || '(папка)';
+  var country = ((document.getElementById('cf-country')?.value || '').split(' ').slice(1).join(' ')) || 'Країна';
+  var resp    = getResponsibleName(document.getElementById('cf-resp-sel')?.value || '') || 'Відповідальний';
+  var id      = document.getElementById('cf-id')?.value.trim() || document.getElementById('cf-id-preview')?.textContent || 'case_...';
+  el.textContent = `${root} / ${country} / ${resp} / ${id}`;
+}
+
+function getResponsibleName(val) {
+  if (typeof team !== 'undefined') {
+    var m = team.find(x => String(x.id) === String(val));
+    if (m) return m.name;
+  }
+  return val;
+}
+
+function syncCaseIdHint() {
+  var preview = document.getElementById('cf-id-preview');
+  if (preview) preview.textContent = casesGenerateId();
+  updateCasePathPreview();
+}
+
+function generateCaseIdNow() {
+  var inp = document.getElementById('cf-id');
+  if (inp) {
+    inp.value = casesGenerateId();
+    validateCaseIdField();
+    updateCasePathPreview();
+  }
+}
+
+function validateCaseIdField() {
+  var inp = document.getElementById('cf-id');
+  var err = document.getElementById('cf-id-error');
+  if (!inp || !err) return true;
+  var val = inp.value.trim();
+  if (!val) { inp.classList.remove('error'); err.style.display='none'; updateCasePathPreview(); return true; }
+  if (!casesIsValidId(val)) {
+    inp.classList.add('error');
+    err.textContent = 'Недозволені символи: / \\ : * ? " < > |';
+    err.style.display = 'block';
+    return false;
+  }
+  if (!casesIsUniqueId(val)) {
+    inp.classList.add('error');
+    err.textContent = 'Справа з таким ID вже існує';
+    err.style.display = 'block';
+    return false;
+  }
+  inp.classList.remove('error');
+  err.style.display = 'none';
+  updateCasePathPreview();
+  return true;
+}
+
+async function submitCreateCase() {
+  if (casesIsMobile()) { casesMobileBlock(); return; }
+  // Валідація
+  var titleInp = document.getElementById('cf-title');
+  var countryInp = document.getElementById('cf-country');
+  var respInp = document.getElementById('cf-resp-sel');
+  var idInp = document.getElementById('cf-id');
+  var descInp = document.getElementById('cf-desc');
+
+  var ok = true;
+
+  if (!titleInp?.value.trim()) {
+    titleInp.classList.add('error'); ok = false;
+  } else { titleInp.classList.remove('error'); }
+
+  if (!countryInp?.value.trim()) {
+    countryInp.classList.add('error'); ok = false;
+  } else { countryInp.classList.remove('error'); }
+
+  if (!respInp?.value.trim()) {
+    respInp.classList.add('error'); ok = false;
+  } else { respInp.classList.remove('error'); }
+
+  if (idInp?.value.trim() && !validateCaseIdField()) { ok = false; }
+
+  if (!ok) {
+    showToast('Заповніть обов\'язкові поля', 'error');
+    return;
+  }
+
+  var caseId = idInp?.value.trim() || casesGenerateId();
+
+  // Ще раз перевірити унікальність
+  if (!casesIsUniqueId(caseId)) {
+    showToast('Справа з таким ID вже існує', 'error');
+    return;
+  }
+
+  var respVal = respInp?.value || '';
+  var respName = getResponsibleName(respVal);
+  var respId = typeof team !== 'undefined' ? (parseInt(respVal) || null) : null;
+  var country = countryInp?.value.trim() || '';
+
+  // Попередити якщо країна не в словнику
+  if (casesCountryFolder(country) === 'Other_caster') {
+    showToast('⚠️ Країна не розпізнана — файли збережуться в папку Other_caster');
+  }
+
+  var newCase = {
+    id: caseId,
+    title: titleInp.value.trim(),
+    description: descInp?.value.trim() || '',
+    country: country,
+    responsible: respName,
+    responsibleId: respId,
+    docIds: [],
+    status: 'active',
+    createdAt: new Date().toISOString(),
+    folderCreated: false,
+    folderPath: '',
+  };
+
+  var cases = casesLoad();
+  cases.unshift(newCase);
+  casesSave(cases);
+
+  closeModal();
+  showToast('Справу створено', 'success');
+
+  // Створити папки якщо є rootHandle
+  var rootH = window._caseFormRootHandle || window._casesRootHandle;
+  if (rootH && casesFolderSupported()) {
+    window._casesRootHandle = rootH;
+    await casesCreateFolderStructure(caseId, rootH);
+  }
+
+  // Перейти до справи
+  _casesCurrentCaseId = caseId;
+  if (typeof goPage === 'function') goPage('cases');
+  else renderCaseView(caseId);
+}
+
+// ------------------------------------------------------------
+// ПЕРЕЙМЕНУВАННЯ СПРАВИ
+// ------------------------------------------------------------
+
+function openRenameCase(caseId) {
+  var cases = casesLoad();
+  var c = cases.find(x => x.id === caseId);
+  if (!c) return;
+
+  var html = `
+    <div class="modal-sec">
+      <div class="modal-sec-title">Перейменувати справу</div>
+      <div class="form-group">
+        <label class="form-label">Нова назва <span style="color:var(--danger)">*</span></label>
+        <input type="text" class="form-input" id="rn-title" value="${escHtml(c.title)}">
+      </div>
+      <div class="id-hint">
+        ID справи <strong>${escHtml(c.id)}</strong> і папка на диску <strong>не змінюються</strong> — щоб уникнути ризику втрати файлів.
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;padding-top:12px">
+      <button class="btn btn-ghost" onclick="closeModal()">Скасувати</button>
+      <button class="btn btn-primary"
+              data-case-id="${escHtml(caseId)}"
+              onclick="submitRenameCase(this.dataset.caseId)">Зберегти</button>
+    </div>`;
+
+  openModalWith('Перейменувати справу', html);
+}
+
+function submitRenameCase(caseId) {
+  var inp = document.getElementById('rn-title');
+  if (!inp?.value.trim()) { inp.classList.add('error'); return; }
+  var cases = casesLoad();
+  var idx = cases.findIndex(x => x.id === caseId);
+  if (idx < 0) return;
+  cases[idx].title = inp.value.trim();
+  casesSave(cases);
+  closeModal();
+  showToast('Назву змінено', 'success');
+  if (_casesCurrentCaseId === caseId) renderCaseView(caseId);
+  else renderCasesList();
+}
+
+// ------------------------------------------------------------
+// ВИДАЛЕННЯ СПРАВИ
+// ------------------------------------------------------------
+
+function openDeleteCase(caseId) {
+  var cases = casesLoad();
+  var c = cases.find(x => x.id === caseId);
+  if (!c) return;
+
+  var docCount = (c.docIds || []).length;
+
+  // Побудувати список папок які залишаться
+  var folderList = '';
+  if (c.folderPath) {
+    var parts = c.folderPath.split('/');
+    // Показати всі рівні: root, country, responsible, case
+    var allPaths = [];
+    for (let i = 1; i <= parts.length; i++) {
+      allPaths.push(parts.slice(0, i).join('/'));
+    }
+    folderList = `
+      <div class="delete-folder-list">
+        <strong>Папки що залишаться на диску:</strong><br>
+        ${allPaths.map((p, i) => `${'&nbsp;'.repeat(i * 2)}📂 ${escHtml(p)}`).join('<br>')}
+      </div>
+      <div class="warn-box">📂 Папки на диску <strong>не видаляються автоматично</strong>. Якщо вони більше не потрібні — видали їх вручну через файловий менеджер.<br><br>⚠️ Не видаляй папки країни і відповідального якщо там є інші справи.</div>`;
+  }
+
+  var html = `
+    <div class="modal-sec">
+      <div class="modal-sec-title">Видалити справу</div>
+      <p style="font-size:12px;margin-bottom:12px">Справа <strong>${escHtml(c.title)}</strong> буде видалена.</p>
+      ${docCount > 0
+        ? `<div class="folder-status warn" style="margin-bottom:12px">📄 ${docCount} ${docNoun(docCount)} залишиться в загальному списку документів.</div>`
+        : ''}
+      ${folderList}
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;padding-top:12px">
+      <button class="btn btn-ghost" onclick="closeModal()">Скасувати</button>
+      <button class="btn btn-danger"
+              data-case-id="${escHtml(caseId)}"
+              onclick="submitDeleteCase(this.dataset.caseId)">Видалити справу</button>
+    </div>`;
+
+  openModalWith('Видалити справу', html);
+}
+
+function submitDeleteCase(caseId) {
+  var cases = casesLoad();
+  cases = cases.filter(c => c.id !== caseId);
+  casesSave(cases);
+  closeModal();
+  showToast('Справу видалено');
+  _casesCurrentCaseId = null;
+  renderCasesList();
+}
+
+// ------------------------------------------------------------
+// ДОДАТИ ДОКУМЕНТ ДО СПРАВИ
+// ------------------------------------------------------------
+
+function openAddDocToCase(caseId) {
+  var cases = casesLoad();
+  var c = cases.find(x => x.id === caseId);
+  if (!c) return;
+
+  var docsArr = typeof docs !== 'undefined' ? docs : [];
+  var existingIds = new Set(c.docIds || []);
+
+  var html = `
+    <div class="modal-sec">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+        <div class="modal-sec-title" style="margin:0">Вибрати з існуючих</div>
+        <button class="btn btn-ghost btn-sm"
+                style="margin-left:auto"
+                data-case-id="${escHtml(caseId)}"
+                onclick="casesCreateNewDoc(this.dataset.caseId)">+ Створити новий</button>
+      </div>
+      ${docsArr.length === 0
+        ? '<div class="empty" style="padding:20px"><div class="ei" style="font-size:24px">📄</div><div>Документів ще немає</div></div>'
+        : `<div id="doc-pick-list">${docsArr.map(d => `
+          <div class="doc-pick-item ${existingIds.has(d.id) ? 'selected' : ''}"
+               id="dpick-${d.id}"
+               data-doc-id="${escHtml(d.id)}"
+               data-case-id="${escHtml(caseId)}"
+               onclick="toggleDocPick(this.dataset.docId, this.dataset.caseId)">
+            <div class="doc-pick-check">${existingIds.has(d.id) ? '✓' : ''}</div>
+            <span style="font-size:18px">${CASES_TYPE_ICONS[d.type]||'📄'}</span>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:12px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(d.title)}</div>
+              <div style="font-size:10px;color:var(--muted)">${d.country||''} ${d.docNumber?'· '+d.docNumber:''}</div>
+            </div>
+          </div>`).join('')}
+        </div>`
+      }
+    </div>
+    <div style="display:flex;justify-content:flex-end;padding-top:12px">
+      <button class="btn btn-primary" onclick="closeModal()">Готово</button>
+    </div>`;
+
+  openModalWith('Документи справи', html);
+}
+
+function toggleDocPick(docId, caseId) {
+  var cases = casesLoad();
+  var idx = cases.findIndex(c => c.id === caseId);
+  if (idx < 0) return;
+
+  var docIds = cases[idx].docIds || [];
+  var pos = docIds.indexOf(docId);
+  if (pos >= 0) {
+    docIds.splice(pos, 1);
+  } else {
+    docIds.push(docId);
+  }
+  cases[idx].docIds = docIds;
+  casesSave(cases);
+
+  // Оновити UI
+  var item = document.getElementById(`dpick-${docId}`);
+  if (item) {
+    var isSelected = docIds.includes(docId);
+    item.classList.toggle('selected', isSelected);
+    var check = item.querySelector('.doc-pick-check');
+    if (check) check.textContent = isSelected ? '✓' : '';
+  }
+
+  // Оновити бейдж
+  updateCasesBadge();
+}
+
+function removeDocFromCase(docId, caseId, evt) {
+  if (evt) evt.stopPropagation();
+  var cases = casesLoad();
+  var idx = cases.findIndex(c => c.id === caseId);
+  if (idx < 0) return;
+  cases[idx].docIds = (cases[idx].docIds || []).filter(id => id !== docId);
+  casesSave(cases);
+  showToast('Документ видалено зі справи');
+  renderCaseView(caseId);
+}
+
+// Створити новий документ з контексту справи.
+// Після збереження документ автоматично додається до справи.
+// Використовує openDocForm(null) з основного файлу.
+// null є falsy — відкриває форму нового документа (перевірено ~рядок 1460 caster.html)
+function casesCreateNewDoc(caseId) {
+  // Зберегти caseId щоб після збереження документа додати його до справи
+  window._casesPendingCaseId = caseId;
+  closeModal();
+  if (typeof openDocForm === 'function') {
+    openDocForm(null);
+  } else {
+    showToast('Функція створення документа недоступна', 'error');
+    window._casesPendingCaseId = null;
+  }
+}
+
+// Викликати цю функцію після збереження нового документа в основному файлі.
+//
+// В основному файлі caster.html знайти функцію saveDoc() (~рядок 1892).
+// Після рядка:
+//   docs.unshift({id, title, ...});
+// Додати:
+//   if (typeof casesOnDocSaved === 'function') casesOnDocSaved(id);
+//
+function casesOnDocSaved(docId) {
+  var caseId = window._casesPendingCaseId;
+  if (!caseId || !docId) return;
+  window._casesPendingCaseId = null;
+
+  var cases = casesLoad();
+  var idx = cases.findIndex(c => c.id === caseId);
+  if (idx < 0) return;
+
+  var docIds = cases[idx].docIds || [];
+  if (!docIds.includes(docId)) {
+    docIds.push(docId);
+    cases[idx].docIds = docIds;
+    casesSave(cases);
+    showToast('Документ додано до справи', 'success');
+  }
+}
+
+// ------------------------------------------------------------
+// СПРАВИ В КАРТЦІ ДОКУМЕНТА
+// Викликати з renderDocModal або аналогічного місця
+// ------------------------------------------------------------
+
+function renderDocCasesSection(docId) {
+  var cases = casesLoad();
+  var docCases = cases.filter(c => (c.docIds || []).includes(docId));
+
+  return `
+    <div class="cases-in-doc-section">
+      <div class="modal-sec-title">Справи (${docCases.length})</div>
+      ${docCases.length === 0
+        ? '<div style="font-size:11px;color:var(--muted)">Документ не належить до жодної справи</div>'
+        : `<div class="doc-cases-row">${docCases.map(c =>
+            `<span class="doc-case-chip" onclick="openCaseViewFromDoc(this.dataset.id)" data-id="${escHtml(c.id)}" title="${escHtml(c.id)}">${escHtml(c.title)}</span>`
+          ).join('')}</div>`
+      }
+    </div>`;
+}
+
+function openCaseViewFromDoc(caseId) {
+  closeModal();
+  _casesCurrentCaseId = caseId;
+  if (typeof goPage === 'function') goPage('cases');
+  else renderCaseView(caseId);
+}
+
+// ------------------------------------------------------------
+// ФАЙЛИ ДОКУМЕНТА
+// Структура file об'єкта:
+// {
+//   name: 'договір.pdf',
+//   path: 'Caster/Україна/Олена М./case_.../договір.pdf',
+//   isPrimary: true,   // true = файл зберігається тут
+//   refPath: null,     // якщо isPrimary=false — шлях до оригіналу
+//   missing: false,
+//   handle: null       // FileSystemFileHandle (не серіалізується)
+// }
+// ------------------------------------------------------------
+
+function renderFileRow(file, docId, fileIdx) {
+  var missing = file.missing || false;
+  var isRef = !file.isPrimary && file.refPath;
+  return `
+    <div class="file-row ${missing ? 'file-missing' : ''}">
+      <span class="file-row-ico">${missing ? '⚠️' : isRef ? '🔗' : '📎'}</span>
+      <span class="file-row-name" title="${escHtml(file.path || file.name || '')}">
+        ${escHtml(file.name || file.path || 'Файл')}
+        ${isRef ? '<span style="font-size:9px;color:var(--muted);margin-left:4px">посилання</span>' : ''}
+      </span>
+      ${missing
+        ? `<button class="btn btn-ghost btn-sm" onclick="findMissingFile('${docId}',${fileIdx})">Знайти файл</button>`
+        : `<button class="btn btn-ghost btn-sm" onclick="openDocFile('${docId}',${fileIdx})">Відкрити</button>`
+      }
+    </div>`;
+}
+
+// Відкрити файл — спочатку перевірити чи існує
+async function openDocFile(docId, fileIdx) {
+  var docsArr = typeof docs !== 'undefined' ? docs : [];
+  var doc = docsArr.find(d => d.id === docId);
+  if (!doc || !doc.files || !doc.files[fileIdx]) {
+    showToast('Файл не знайдено', 'error');
+    return;
+  }
+  var file = doc.files[fileIdx];
+
+  // Якщо є збережений FileHandle — перевірити доступ
+  if (file.handle) {
+    try {
+      var perm = await file.handle.queryPermission({ mode: 'read' });
+      if (perm === 'granted') {
+        var f = await file.handle.getFile();
+        var url = URL.createObjectURL(f);
+        // Використовуємо <a> замість window.open щоб уникнути блокування popup браузером
+        var a = document.createElement('a');
+        a.href = url;
+        a.target = '_blank';
+        a.rel = 'noopener';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 10000);
+        return;
+      }
+    } catch(e) { /* handle недійсний */ }
+  }
+
+  // Handle відсутній або недійсний — позначити як відсутній
+  file.missing = true;
+  if (typeof saveDoc === 'function') saveDoc();
+  // Перерендерити рядок
+  showToast('Файл не знайдено. Вкажи його розташування.', 'error');
+  // Одразу запропонувати знайти
+  await findMissingFile(docId, fileIdx);
+}
+
+// Знайти втрачений файл через діалог
+async function findMissingFile(docId, fileIdx) {
+  if (!('showOpenFilePicker' in window)) {
+    showToast('Браузер не підтримує вибір файлів', 'error');
+    return;
+  }
+  try {
+    const [fileHandle] = await window.showOpenFilePicker();
+    var f = await fileHandle.getFile();
+
+    var docsArr = typeof docs !== 'undefined' ? docs : [];
+    var doc = docsArr.find(d => d.id === docId);
+    if (doc && doc.files && doc.files[fileIdx]) {
+      doc.files[fileIdx].name = f.name;
+      doc.files[fileIdx].missing = false;
+      doc.files[fileIdx].handle = fileHandle;
+      doc.files[fileIdx].path = f.name;
+      if (typeof saveDoc === 'function') saveDoc();
+    }
+    showToast('Шлях до файлу оновлено', 'success');
+  } catch(e) {
+    if (e.name !== 'AbortError') showToast('Помилка вибору файлу', 'error');
+  }
+}
+
+// Зберегти файл в папку справи (викликається при прикріпленні файлу до документа)
+// docId — документ, caseId — справа до якої належить документ
+// isFirstCase визначається автоматично: якщо документ ще не має файлів в жодній справі —
+// файл зберігається фізично (isPrimary:true), інакше — тільки посилання (isPrimary:false)
+//
+// ============================================================
+// ЯК ІНТЕГРУВАТИ В ОСНОВНИЙ ФАЙЛ (caster.html):
+//
+// Знайти місце де користувач вибирає файл для документа.
+// Це зазвичай кнопка типу "Прикріпити файл" або input type=file
+// в функції openDocForm() або в обробнику збереження документа.
+//
+// 1. Знайти де береться fileHandle (showOpenFilePicker або input.files[0])
+//
+// 2. Викликати функцію збереження:
+//    const fileObj = await casesSaveFileToFolder(fileHandle, doc.id, caseId);
+//    if (fileObj) {
+//      doc.files = doc.files || [];
+//      doc.files.push(fileObj);
+//      saveDocs();
+//    }
+//
+// 3. Після збереження нового документа викликати:
+//    if (typeof casesOnDocSaved === 'function') casesOnDocSaved(newDoc.id);
+// ============================================================
+async function casesSaveFileToFolder(fileHandle, docId, caseId) {
+  if (!window._casesRootHandle) return null;
+
+  var cases = casesLoad();
+  var c = cases.find(x => x.id === caseId);
+  if (!c) return null;
+
+  // Визначити чи це перший файл документа (зберігаємо фізично) чи ні (тільки посилання)
+  var docsArr = typeof docs !== 'undefined' ? docs : [];
+  var doc = docsArr.find(d => d.id === docId);
+  var hasExistingPrimaryFile = (doc?.files || []).some(f => f.isPrimary);
+  var isFirstCase = !hasExistingPrimaryFile;
+
+  var countryFolder = casesCountryFolder(c.country);
+  var respName = c.responsible || 'Невідомо';
+
+  try {
+    const { handle: countryDir } = await casesGetOrCreateDir(window._casesRootHandle, countryFolder);
+    const { handle: respDir } = await casesGetOrCreateDir(countryDir, respName);
+    const { handle: caseDir } = await casesGetOrCreateDir(respDir, caseId);
+
+    if (isFirstCase) {
+      var srcFile = await fileHandle.getFile();
+      var destHandle = await caseDir.getFileHandle(srcFile.name, { create: true });
+      var writable = await destHandle.createWritable();
+      await writable.write(srcFile);
+      await writable.close();
+
+      var path = `${window._casesRootHandle.name}/${countryFolder}/${respName}/${caseId}/${srcFile.name}`;
+      return { isPrimary: true, path, name: srcFile.name, handle: destHandle, missing: false, refPath: null };
+    } else {
+      // Зберегти тільки посилання на файл з першої справи
+      var srcFile = await fileHandle.getFile();
+      return { isPrimary: false, name: srcFile.name, path: null, handle: fileHandle, missing: false, refPath: null };
+    }
+  } catch(e) {
+    showToast('Помилка збереження файлу: ' + e.message, 'error');
+    return null;
+  }
+}
+
+// Перевірка стану "створення в процесі" для відновлення після збою
+function casesMarkFolderPending(caseId) {
+  var pending = JSON.parse(localStorage.getItem('caster_cases_pending') || '{}');
+  pending[caseId] = { startedAt: new Date().toISOString() };
+  localStorage.setItem('caster_cases_pending', JSON.stringify(pending));
+}
+function casesMarkFolderDone(caseId) {
+  var pending = JSON.parse(localStorage.getItem('caster_cases_pending') || '{}');
+  delete pending[caseId];
+  localStorage.setItem('caster_cases_pending', JSON.stringify(pending));
+}
+function casesGetPendingFolders() {
+  return JSON.parse(localStorage.getItem('caster_cases_pending') || '{}');
+}
+
+// ------------------------------------------------------------
+// ДОВІДКА — ВКЛАДКА СПРАВИ
+// Додати як окрему вкладку в модуль довідки
+// ------------------------------------------------------------
+
+function renderCasesHelp() {
+  return `
+    <div class="help-cases-content">
+      <h4>📁 Що таке справа</h4>
+      <p>Справа — це контейнер для групування документів за темою, проектом або процесом.
+         Наприклад: «Оренда офісу 2025», «Справа про земельну ділянку», «Документи ФОП».</p>
+
+      <h4>📄 Один документ — кілька справ</h4>
+      <p>Один документ може належати до кількох справ одночасно.
+         Файл зберігається один раз — у папці країни і відповідального документа.
+         В інших справах зберігається лише посилання на цей файл.</p>
+
+      <h4>🗂 Структура папок на диску</h4>
+      <div class="path-example">
+        📂 Caster (коренева папка яку ти вибрав)<br>
+        &nbsp;&nbsp;└── 📂 Ua_caster<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└── 📂 Олена М.<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└── 📂 case_1703123456789<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(тут зберігаються файли цієї справи)
+      </div>
+      <p>Папки країн мають стандартні назви: <code>Ua_caster</code> для України,
+         <code>De_caster</code> для Німеччини, <code>Ua_de_caster</code> для справ що стосуються обох країн (паспорти, довіреності тощо).</p>
+      <p>Якщо ця папка є синхронізованою папкою MEGA, Dropbox або іншого хмарного сервісу —
+         файли автоматично потраплять в хмару. Програма про це не знає — вона просто працює з папкою.</p>
+
+      <h4>🔑 ID справи</h4>
+      <p><strong>Назва</strong> — для людей. Показується в програмі. Можна змінити будь-коли.</p>
+      <p><strong>ID</strong> — технічний ідентифікатор. Використовується як ім'я папки на диску.
+         Після створення <strong>не можна змінити</strong> — щоб папка на диску і посилання в програмі залишались узгодженими.</p>
+      <p>Якщо залишити порожнім — ID генерується автоматично з часовою міткою до мілісекунди: <code>case_1703123456789</code></p>
+      <div class="warn-box">⛔ Заборонені символи в ID: <code>/ \ : * ? " &lt; &gt; |</code><br>ID має бути унікальним серед усіх справ.</div>
+
+      <h4>💾 Як зберігаються файли документів</h4>
+      <p>Файли зберігаються в папці <strong>першого відповідального</strong> і <strong>країни документа</strong> — незалежно від того до яких справ він належить.
+         В інших справах зберігається тільки шлях до файлу.</p>
+      <p>Якщо файл не знайдено — кнопка <strong>«Знайти файл»</strong> відкриє стандартний діалог де можна вибрати файл знову. Програма оновить збережений шлях.</p>
+
+      <h4>🔄 Якщо відповідальний або країна документа змінились</h4>
+      <p>Якщо відповідальний або країна документа змінились — програма запропонує створити нову справу з новими параметрами.
+         Стара справа залишається як є з усіма файлами.
+         Документ можна перенести до нової справи вручну.</p>
+
+      <h4>⚠️ Обмеження</h4>
+      <div class="warn-box">
+        🚫 <strong>Не переміщуй файли і папки вручну</strong> через файловий менеджер.
+        Програма зберігає шляхи до файлів. Якщо папку перемістити або перейменувати —
+        посилання перестануть працювати і доведеться шукати файли знову.<br><br>
+        ✅ Якщо файл все ж переміщено — скористайся кнопкою <strong>«Знайти файл»</strong> в картці документа.
+      </div>
+    </div>`;
+}
+
+// ------------------------------------------------------------
+// БЕЙДЖ СПРАВ
+// Додати в updateBadges(): casesUpdateBadge();
+// ------------------------------------------------------------
+
+function updateCasesBadge() {
+  var cases = casesLoad();
+  var el = document.getElementById('bdg-cases');
+  if (!el) return;
+  if (cases.length > 0) {
+    el.textContent = cases.length;
+    el.style.display = '';
+  } else {
+    el.style.display = 'none';
+  }
+}
+
+// ------------------------------------------------------------
+// I18N СПРАВ
+// Додати ключі в об'єкт I18N основного файлу:
+// uk: { cases:'Справи', add_case:'Справа', ... }
+// ============================================================
+
+var CASES_I18N = {
+  uk: {
+    cases: 'Справи',
+    add_case: 'Справа',
+    cases_empty: 'Справ ще немає',
+    cases_new: 'Нова справа',
+    case_rename: 'Перейменувати',
+    case_delete: 'Видалити',
+  },
+  en: {
+    cases: 'Cases',
+    add_case: 'Case',
+    cases_empty: 'No cases yet',
+    cases_new: 'New case',
+    case_rename: 'Rename',
+    case_delete: 'Delete',
+  },
+  de: {
+    cases: 'Akten',
+    add_case: 'Akte',
+    cases_empty: 'Noch keine Akten',
+    cases_new: 'Neue Akte',
+    case_rename: 'Umbenennen',
+    case_delete: 'Löschen',
+  },
+};
+
+// ------------------------------------------------------------
+// ДОПОМІЖНІ ФУНКЦІЇ
+// (escHtml і showToast вже є в основному файлі)
+// ------------------------------------------------------------
+
+function escHtml(str) {
+  if (typeof str !== 'string') return '';
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+
+
+// ------------------------------------------------------------
+// ПЕРЕВІРКА ЗМІНИ ВІДПОВІДАЛЬНОГО АБО КРАЇНИ ДОКУМЕНТА
+// Викликати при збереженні змін у картці документа
+// ------------------------------------------------------------
+
+function casesCheckDocChange(docId, newCountry, newResponsibleId) {
+  var cases = casesLoad();
+  var docCases = cases.filter(c => (c.docIds || []).includes(docId));
+  if (!docCases.length) return;
+
+  var changed = docCases.filter(c => {
+    var sameCountry = c.country === newCountry;
+    var sameResp = String(c.responsibleId) === String(newResponsibleId);
+    return !sameCountry || !sameResp;
+  });
+
+  if (changed.length > 0) {
+    var resp = getResponsibleName(newResponsibleId);
+    openModalWith('Зміна параметрів документа', `
+      <div class="modal-sec">
+        <div class="folder-status warn" style="margin-bottom:12px">
+          ⚠️ Країна або відповідальний документа змінились. Це вплине на структуру папок.
+        </div>
+        <p style="font-size:12px;margin-bottom:12px">
+          Для нових параметрів (<strong>${escHtml(newCountry)}</strong>, <strong>${escHtml(resp)}</strong>)
+          можна створити нову справу. Старі справи залишаться як є.
+        </p>
+        <p style="font-size:11px;color:var(--muted)">
+          Документ можна перенести до нової справи вручну після її створення.
+        </p>
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;padding-top:12px">
+        <button class="btn btn-ghost" onclick="closeModal()">Залишити як є</button>
+        <button class="btn btn-primary" onclick="closeModal();openCreateCase()">Створити нову справу</button>
+      </div>`);
+  }
+}
+
+// ------------------------------------------------------------
+// ІНІЦІАЛІЗАЦІЯ
+// Додати виклик у window.onload або DOMContentLoaded:
+//   casesInit();
+// ------------------------------------------------------------
+
+function casesInit() {
+  updateCasesBadge();
+  // Фонова перевірка папок — не блокує інтерфейс
+  setTimeout(() => {
+    casesCheckFoldersOnStartup().catch(() => {});
+  }, 2000);
+}
+
+/* === END JS: CASES MODULE === */
+</script>
+
+<script>
+/* === SYNC MODULE JS === */
+/* ============================================================
+   === JS: SYNC MODULE ===
+   Скопіювати весь цей блок в основний файл.
+   Потребує: casesLoad(), casesIsMobile(), casesFolderSupported(),
+             window._casesRootHandle з модуля справ.
+   ============================================================ */
+
+// ------------------------------------------------------------
+// КОНСТАНТИ
+// ------------------------------------------------------------
+
+// Розширення які показуємо (решту ігноруємо)
+var SYNC_ALLOWED_EXT = new Set([
+  'pdf','doc','docx','xls','xlsx','ppt','pptx',
+  'jpg','jpeg','png','gif','webp','heic','heif',
+  'txt','rtf','odt','ods','odp',
+  'zip','rar','7z',
+  'mp4','mov','avi','mkv',
+  'mp3','wav','m4a',
+]);
+
+// Системні файли які ігноруємо
+var SYNC_IGNORE_NAMES = new Set([
+  '.ds_store','desktop.ini','thumbs.db','.tmp',
+  '.localized','.spotlight-v100','.trashes',
+  '.fseventsd','.documentrevisions-v100',
+]);
+
+// Ключі localStorage
+var SYNC_LS_LAST_SCAN = 'caster_sync_last_scan';
+var SYNC_LS_UNLINKED  = 'caster_sync_unlinked';
+var SYNC_LS_SKIPPED   = 'caster_sync_skipped';
+
+// Скільки днів без сканування — показувати нагадування
+var SYNC_REMIND_DAYS = 3;
+
+// ------------------------------------------------------------
+// СТАН СКАНУВАННЯ
+// ------------------------------------------------------------
+
+var _syncScanning  = false;   // сканування в процесі
+var _syncAborted   = false;   // скасовано вручну
+var _syncPermLost  = false;   // зупинено через втрату дозволу
+var _syncResults   = [];      // [ { caseId, caseTitle, folderPath, files: [...] } ]
+var _syncBlocked   = [];      // [ { name, folder } ] — заблоковані файли
+var _syncFilter    = { ext: 'all', date: 'all' };
+var _syncUnlinkedCount = 0;
+
+// ------------------------------------------------------------
+// МОБІЛЬНИЙ
+// ------------------------------------------------------------
+
+// Використовує casesIsMobile() з модуля справ якщо є,
+// інакше власна перевірка
+function syncIsMobile() {
+  if (typeof casesIsMobile === 'function') return casesIsMobile();
+  return window.innerWidth < 768;
+}
+
+// ------------------------------------------------------------
+// ДАНІ
+// ------------------------------------------------------------
+
+function syncGetLastScan() {
+  return localStorage.getItem(SYNC_LS_LAST_SCAN) || null;
+}
+
+function syncSetLastScan() {
+  localStorage.setItem(SYNC_LS_LAST_SCAN, new Date().toISOString());
+}
+
+function syncGetUnlinked() {
+  try { return JSON.parse(localStorage.getItem(SYNC_LS_UNLINKED) || '[]'); }
+  catch(e) { return []; }
+}
+
+function syncSaveUnlinked(arr) {
+  var list = arr.map(f => ({
+    name: f.name,
+    ext: f.ext,
+    size: f.size,
+    lastModified: f.lastModified,
+    folderPath: f.folderPath,
+    key: f.key,
+    caseId: f.caseId,
+    caseTitle: f.caseTitle,
+  }));
+  localStorage.setItem(SYNC_LS_UNLINKED, JSON.stringify(list));
+}
+
+function syncGetSkipped() {
+  try { return new Set(JSON.parse(localStorage.getItem(SYNC_LS_SKIPPED) || '[]')); }
+  catch(e) { return new Set(); }
+}
+
+function syncAddSkipped(fileKey) {
+  var s = syncGetSkipped();
+  s.add(fileKey);
+  localStorage.setItem(SYNC_LS_SKIPPED, JSON.stringify([...s]));
+}
+
+// Унікальний ключ файлу — шлях відносно кореневої папки
+function syncFileKey(folderPath, fileName) {
+  return `${folderPath}/${fileName}`;
+}
+
+// ------------------------------------------------------------
+// НАГАДУВАННЯ
+// ------------------------------------------------------------
+
+function syncShouldRemind() {
+  if (syncIsMobile()) return false;
+  var last = syncGetLastScan();
+  if (!last) return true;
+  var ts = new Date(last).getTime();
+  if (isNaN(ts)) return true; // пошкоджена дата — показати нагадування
+  var diff = (Date.now() - ts) / (1000 * 60 * 60 * 24);
+  return diff >= SYNC_REMIND_DAYS;
+}
+
+function syncShowReminder(containerId) {
+  if (!syncShouldRemind()) return;
+  var el = document.getElementById(containerId);
+  if (!el) return;
+  var existing = el.querySelector('.sync-reminder');
+  if (existing) return;
+  var rem = document.createElement('div');
+  rem.className = 'sync-reminder sync-desktop-only';
+  rem.innerHTML = `
+    <div class="sync-reminder-ico">🗂</div>
+    <div class="sync-reminder-text">
+      Останнє сканування файлів — ${_syncEscHtml(syncFormatLastScan())}.
+      Рекомендується сканувати папки щоб не пропустити нові файли.
+    </div>
+    <button class="sync-reminder-close" onclick="this.closest('.sync-reminder').remove()" title="Закрити">✕</button>
+    <button class="btn btn-ghost btn-sm" onclick="syncStartScan()">Сканувати</button>`;
+  el.prepend(rem);
+}
+
+// ------------------------------------------------------------
+// ФОРМАТУВАННЯ
+// ------------------------------------------------------------
+
+function syncFormatLastScan() {
+  var last = syncGetLastScan();
+  if (!last) return 'ніколи';
+  var d = new Date(last);
+  var today = new Date();
+  var yesterday = new Date(today);
+  yesterday.setDate(today.getDate() - 1);
+
+  var isToday = d.toDateString() === today.toDateString();
+  var isYesterday = d.toDateString() === yesterday.toDateString();
+
+  if (isToday) return 'сьогодні о ' + d.toLocaleTimeString('uk-UA', { hour:'2-digit', minute:'2-digit' });
+  if (isYesterday) return 'вчора';
+  return d.toLocaleDateString('uk-UA');
+}
+
+function syncFormatSize(bytes) {
+  if (bytes == null) return '';
+  if (bytes < 1024) return bytes + ' Б';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' КБ';
+  return (bytes / 1024 / 1024).toFixed(1) + ' МБ';
+}
+
+function syncFormatDate(ts) {
+  if (ts == null) return '';
+  return new Date(ts).toLocaleDateString('uk-UA');
+}
+
+var SYNC_EXT_ICONS = {
+  pdf:'📄', doc:'📝', docx:'📝', xls:'📊', xlsx:'📊',
+  ppt:'📊', pptx:'📊', jpg:'🖼', jpeg:'🖼', png:'🖼',
+  gif:'🖼', webp:'🖼', heic:'🖼', heif:'🖼',
+  txt:'📃', rtf:'📃', odt:'📃', ods:'📊', odp:'📊',
+  zip:'📦', rar:'📦', '7z':'📦',
+  mp4:'🎬', mov:'🎬', avi:'🎬', mkv:'🎬',
+  mp3:'🎵', wav:'🎵', m4a:'🎵',
+};
+
+function syncExtIcon(ext) {
+  return SYNC_EXT_ICONS[ext] || '📎';
+}
+
+function syncGetExt(name) {
+  var parts = name.split('.');
+  return parts.length > 1 ? parts[parts.length - 1].toLowerCase() : '';
+}
+
+// ------------------------------------------------------------
+// СКАНУВАННЯ
+// ------------------------------------------------------------
+
+async function syncStartScan() {
+  if (syncIsMobile()) return;
+
+  // Блокувати повторний запуск
+  if (_syncScanning) {
+    showSyncToast('Сканування вже виконується', 'error');
+    return;
+  }
+
+  var rootHandle = window._casesRootHandle;
+  if (!rootHandle) {
+    syncShowError('Спочатку вибери кореневу папку в розділі "Справи".');
+    return;
+  }
+
+  var cases = typeof casesLoad === 'function' ? casesLoad() : [];
+  var casesWithFolders = cases.filter(c => c.folderPath && c.folderCreated);
+  if (casesWithFolders.length === 0) {
+    syncShowError('Немає справ з підключеними папками. Створи справу і підключи папку.');
+    return;
+  }
+
+  _syncScanning = true;
+  _syncAborted  = false;
+  _syncPermLost = false;
+  _syncResults  = [];
+  _syncBlocked  = [];
+  _syncFilter   = { ext: 'all', date: 'all' };
+
+  syncRenderProgress(0, casesWithFolders.length, 0, 0, '');
+  syncUpdateScanBtn(true);
+
+  var totalFiles = 0;
+
+  for (var i = 0; i < casesWithFolders.length; i++) {
+    if (_syncAborted) break;
+
+    var c = casesWithFolders[i];
+    var parts = c.folderPath.split('/');
+
+    syncRenderProgress(i, casesWithFolders.length, totalFiles, _syncBlocked.length, c.title);
+
+    try {
+      // Дістатись до папки справи
+      var dir = rootHandle;
+      for (var p = 1; p < parts.length; p++) {
+        dir = await dir.getDirectoryHandle(parts[p]);
+      }
+
+      // Сканувати файли в папці справи
+      var files = await syncScanDir(dir, c.folderPath);
+      totalFiles += files.length;
+
+      if (files.length > 0) {
+        _syncResults.push({
+          caseId: c.id,
+          caseTitle: c.title,
+          folderPath: c.folderPath,
+          files,
+        });
+      }
+
+    } catch(e) {
+      if (e.name === 'NotAllowedError' || e.name === 'SecurityError') {
+        _syncPermLost = true;
+        _syncAborted = true;
+        syncShowPermissionLost(c.title);
+        break;
+      }
+      console.warn(`Sync: не вдалось прочитати папку ${c.folderPath}:`, e);
+    }
+
+    // Звільнити головний потік
+    await new Promise(r => setTimeout(r, 0));
+  }
+
+  _syncScanning = false;
+  syncUpdateScanBtn(false);
+
+  if (_syncPermLost) {
+    // Втрата дозволу — вже показано повідомлення в syncShowPermissionLost
+    // Показати часткові результати але не зберігати як завершене сканування
+    syncHideProgress();
+    return;
+  }
+
+  if (_syncAborted) {
+    // Ручне скасування — прибрати прогрес, нічого не зберігати
+    syncHideProgress();
+    showSyncToast('Сканування скасовано');
+    return;
+  }
+
+  syncSetLastScan();
+
+  // Відфільтрувати вже прив'язані і пропущені
+  syncFilterResults();
+
+  syncSaveUnlinked(syncCurrentUnlinked());
+  syncUpdateBadge();
+
+  // Показати результати
+  syncRenderResults();
+
+  // Показати заблоковані якщо є
+  if (_syncBlocked.length > 0) {
+    syncRenderBlockedWarning();
+  }
+}
+
+// Сканувати директорію — повернути масив файлів
+async function syncScanDir(dirHandle, folderPath) {
+  var files = [];
+  try {
+    for await (const [name, handle] of dirHandle.entries()) {
+      // Перевіряти скасування всередині циклу
+      if (_syncAborted) break;
+
+      if (handle.kind === 'file') {
+        var nameLower = name.toLowerCase();
+
+        if (SYNC_IGNORE_NAMES.has(nameLower)) continue;
+        if (nameLower.startsWith('.')) continue;
+
+        var ext = syncGetExt(name);
+        if (!SYNC_ALLOWED_EXT.has(ext)) continue;
+
+        try {
+          var file = await handle.getFile();
+          files.push({
+            name,
+            ext,
+            size: file.size,
+            lastModified: file.lastModified,
+            folderPath,
+            handle,
+            key: syncFileKey(folderPath, name),
+          });
+        } catch(e) {
+          _syncBlocked.push({ name, folder: folderPath });
+        }
+      }
+    }
+  } catch(e) {
+    if (e.name === 'NotAllowedError' || e.name === 'SecurityError') throw e;
+  }
+  return files;
+}
+
+// Зібрати поточні неприв'язані файли з _syncResults для збереження
+function syncCurrentUnlinked() {
+  return _syncResults.flatMap(g =>
+    g.files.map(f => ({
+      name: f.name,
+      ext: f.ext,
+      size: f.size,
+      lastModified: f.lastModified,
+      folderPath: f.folderPath,
+      key: f.key,
+      caseId: g.caseId,
+      caseTitle: g.caseTitle,
+    }))
+  );
+}
+
+// Відфільтрувати вже прив'язані файли і пропущені
+function syncFilterResults() {
+  var skipped = syncGetSkipped();
+  var linkedKeys = syncGetLinkedFileKeys();
+
+  // Зібрати всі актуальні ключі зі сканування
+  var currentKeys = new Set(_syncResults.flatMap(g => g.files.map(f => f.key)));
+
+  // Очистити пропущені ключі яких більше немає на диску
+  var cleanedSkipped = [...skipped].filter(k => currentKeys.has(k));
+  if (cleanedSkipped.length !== skipped.size) {
+    localStorage.setItem(SYNC_LS_SKIPPED, JSON.stringify(cleanedSkipped));
+  }
+
+  _syncResults = _syncResults.map(g => ({
+    ...g,
+    files: g.files.filter(f => !skipped.has(f.key) && !linkedKeys.has(f.key)),
+  })).filter(g => g.files.length > 0);
+}
+
+// Отримати ключі файлів які вже прив'язані до документів.
+// Перевіряємо обидва поля — path і key — бо формати можуть відрізнятись
+// між модулем справ і модулем синхронізації.
+function syncGetLinkedFileKeys() {
+  var keys = new Set();
+  var docsArr = typeof docs !== 'undefined' ? docs : [];
+  for (var d of docsArr) {
+    for (var f of (d.files || [])) {
+      if (f.key)  keys.add(f.key);
+      if (f.path) keys.add(f.path);
+      // Додати варіант без кореневої папки для сумісності з модулем справ
+      // Мінімум 4 частини щоб уникнути колізій: root/country/resp/case/file
+      if (f.path) {
+        var parts = f.path.split('/');
+        if (parts.length >= 4) keys.add(parts.slice(1).join('/'));
+      }
+    }
+  }
+  return keys;
+}
+
+// ------------------------------------------------------------
+// РЕНДЕР ПРОГРЕСУ
+// ------------------------------------------------------------
+
+function syncRenderProgress(done, total, files, blocked, currentFolder) {
+  var pct = total > 0 ? Math.round((done / total) * 100) : 0;
+  var el = document.getElementById('sync-progress-area');
+  if (!el) return;
+  el.style.display = 'block';
+  el.innerHTML = `
+    <div class="sync-progress sync-desktop-only">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+        <span style="font-size:11px;font-weight:500">Сканування… ${pct}%</span>
+        <button class="btn btn-ghost btn-sm" onclick="syncAbort()">Зупинити</button>
+      </div>
+      <div class="sync-progress-bar-wrap">
+        <div class="sync-progress-bar" style="width:${pct}%"></div>
+      </div>
+      <div class="sync-progress-label">📁 ${_syncEscHtml(currentFolder || '')}</div>
+      <div class="sync-progress-counts">
+        <span>Папок: ${done} / ${total}</span>
+        <span>Файлів знайдено: ${files}</span>
+        ${blocked > 0 ? `<span style="color:var(--warn)">Заблоковано: ${blocked}</span>` : ''}
+      </div>
+    </div>`;
+}
+
+function syncHideProgress() {
+  var el = document.getElementById('sync-progress-area');
+  if (el) el.style.display = 'none';
+}
+
+function syncAbort() {
+  _syncAborted = true;
+  _syncPermLost = false;
+  _syncScanning = false;
+  syncUpdateScanBtn(false);
+  syncHideProgress();
+}
+
+// ------------------------------------------------------------
+// РЕНДЕР РЕЗУЛЬТАТІВ
+// ------------------------------------------------------------
+
+function syncRenderResults() {
+  var el = document.getElementById('sync-results-area');
+  if (!el) return;
+
+  syncHideProgress();
+
+  // Якщо є збережені неприв'язані файли але немає активних результатів сканування
+  // (наприклад після перезавантаження) — показати повідомлення
+  var savedUnlinked = syncGetUnlinked();
+  if (_syncResults.length === 0 && savedUnlinked.length > 0) {
+    el.innerHTML = `
+      <div class="sync-desktop-only" style="background:var(--warn-light);border:1px solid var(--warn);border-radius:9px;padding:14px 18px;font-size:12px;color:var(--warn)">
+        ⚠️ З попереднього сканування залишилось <strong>${savedUnlinked.length}</strong> файлів без прив'язки.
+        Запусти сканування знову щоб їх переглянути і прив'язати.
+        <div style="margin-top:8px">
+          <button class="btn btn-ghost btn-sm" onclick="syncStartScan()">🔍 Сканувати зараз</button>
+        </div>
+      </div>`;
+    return;
+  }
+
+  if (_syncResults.length === 0) {
+    el.innerHTML = `
+      <div class="empty sync-desktop-only">
+        <div class="ei">✅</div>
+        <div>Всі файли прив'язані до документів</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:6px">Останнє сканування: ${syncFormatLastScan()}</div>
+      </div>`;
+    return;
+  }
+
+  var allFiles = _syncResults.flatMap(g => g.files);
+  var exts = [...new Set(allFiles.map(f => f.ext))].sort();
+
+  el.innerHTML = `
+    <div class="sync-desktop-only">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+        <div style="font-size:12px;font-weight:500">
+          Знайдено файлів без прив'язки: <strong>${allFiles.length}</strong>
+        </div>
+        <div style="font-size:11px;color:var(--muted)">Останнє сканування: ${syncFormatLastScan()}</div>
+      </div>
+
+      <div class="sync-filters">
+        <span class="sync-filter-label">Розширення:</span>
+        <button class="btn btn-ghost btn-sm ${_syncFilter.ext==='all'?'active':''}"
+                data-filter-type="ext"
+                onclick="syncSetFilter('ext','all',this)">Всі</button>
+        ${exts.map(e => `
+          <button class="btn btn-ghost btn-sm ${_syncFilter.ext===e?'active':''}"
+                  data-filter-type="ext"
+                  data-filter-val="${_syncEscHtml(e)}"
+                  onclick="syncSetFilter('ext',this.dataset.filterVal,this)">.${_syncEscHtml(e)}</button>`).join('')}
+        <span class="sync-filter-label" style="margin-left:8px">Дата:</span>
+        <button class="btn btn-ghost btn-sm ${_syncFilter.date==='all'?'active':''}"
+                data-filter-type="date"
+                onclick="syncSetFilter('date','all',this)">Всі</button>
+        <button class="btn btn-ghost btn-sm ${_syncFilter.date==='week'?'active':''}"
+                data-filter-type="date"
+                onclick="syncSetFilter('date','week',this)">Тиждень</button>
+        <button class="btn btn-ghost btn-sm ${_syncFilter.date==='month'?'active':''}"
+                data-filter-type="date"
+                onclick="syncSetFilter('date','month',this)">Місяць</button>
+      </div>
+
+      <div id="sync-groups-list">${syncRenderGroups()}</div>
+    </div>`;
+}
+
+function syncRenderGroups() {
+  var now = Date.now();
+  var weekMs  = 7  * 24 * 60 * 60 * 1000;
+  var monthMs = 30 * 24 * 60 * 60 * 1000;
+
+  return _syncResults.map(g => {
+    var files = g.files;
+
+    // Фільтр по розширенню
+    if (_syncFilter.ext !== 'all') {
+      files = files.filter(f => f.ext === _syncFilter.ext);
+    }
+
+    // Фільтр по даті
+    if (_syncFilter.date === 'week') {
+      files = files.filter(f => (now - f.lastModified) <= weekMs);
+    } else if (_syncFilter.date === 'month') {
+      files = files.filter(f => (now - f.lastModified) <= monthMs);
+    }
+
+    if (files.length === 0) return '';
+
+    // Сортування — найновіші зверху
+    files = [...files].sort((a, b) => b.lastModified - a.lastModified);
+
+    return `
+      <div class="sync-group">
+        <div class="sync-group-head">
+          <span>📁</span>
+          <span class="sync-group-title" title="${_syncEscHtml(g.folderPath)}">${_syncEscHtml(g.caseTitle)}</span>
+          <span class="sync-group-count">${files.length}</span>
+        </div>
+        <div class="sync-group-body">
+          ${files.map(f => syncRenderFileRow(f, g.caseId)).join('')}
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function syncRenderFileRow(f, caseId) {
+  return `
+    <div class="sync-file-row" data-key="${_syncEscHtml(f.key)}">
+      <div class="sync-file-ico">${syncExtIcon(f.ext)}</div>
+      <div class="sync-file-body">
+        <div class="sync-file-name" title="${_syncEscHtml(f.name)}">${_syncEscHtml(f.name)}</div>
+        <div class="sync-file-meta">
+          <span>.${f.ext}</span>
+          ${f.size ? `<span>${syncFormatSize(f.size)}</span>` : ''}
+          ${f.lastModified ? `<span>${syncFormatDate(f.lastModified)}</span>` : ''}
+        </div>
+        <div class="sync-file-actions">
+          <div class="sync-file-action-wrap">
+            <button class="btn btn-ghost btn-sm"
+                    data-key="${_syncEscHtml(f.key)}"
+                    onclick="syncOpenLinkDoc(this.dataset.key)">📎 Прив'язати</button>
+            <span class="sync-file-hint">Вибрати існуючий документ</span>
+          </div>
+          <div class="sync-file-action-wrap">
+            <button class="btn btn-ghost btn-sm"
+                    data-key="${_syncEscHtml(f.key)}"
+                    onclick="syncOpenCreateDoc(this.dataset.key)">+ Новий документ</button>
+            <span class="sync-file-hint">Створити документ для цього файлу</span>
+          </div>
+          <div class="sync-file-action-wrap">
+            <button class="btn btn-ghost btn-sm"
+                    data-key="${_syncEscHtml(f.key)}"
+                    onclick="syncSkipFile(this.dataset.key)">Пропустити</button>
+            <span class="sync-file-hint">З'явиться знову при наступному скануванні</span>
+          </div>
+        </div>
+      </div>
+    </div>`;
+}
+
+// ------------------------------------------------------------
+// ДІЇ З ФАЙЛОМ
+// ------------------------------------------------------------
+
+// Іконки типів документів — константа на рівні модуля
+var SYNC_TYPE_ICONS = { passport:'🛂', property:'🏠', auto:'🚗', medical:'🏥', finance:'🏦', edu:'📋', legal:'⚖️', other:'📦' };
+
+// Прив'язати до існуючого документа.
+// fromDocId — якщо передано, означає що файл відв'язується від цього документа
+// і одразу прив'язується до нового (relink).
+function syncOpenLinkDoc(fileKey, fromDocId) {
+  var docsArr = typeof docs !== 'undefined' ? docs : [];
+
+  var isRelink = !!fromDocId;
+  var title = isRelink ? 'Перенести файл до іншого документа' : 'Прив\'язати до документа';
+  var hint = isRelink
+    ? '<div style="font-size:11px;color:var(--warn);background:var(--warn-light);border:1px solid var(--warn);border-radius:6px;padding:8px 10px;margin-bottom:12px">⚠️ Файл буде відв\'язаний від поточного документа і прив\'язаний до нового.</div>'
+    : '';
+
+  // При relink — приховати поточний документ зі списку
+  var availableDocs = isRelink ? docsArr.filter(d => d.id !== fromDocId) : docsArr;
+
+  var html = `
+    ${hint}
+    <div style="margin-bottom:12px">
+      <input type="text" class="form-input" id="sync-doc-search"
+             placeholder="Пошук документа…"
+             oninput="syncFilterDocList(this.value)">
+    </div>
+    <div id="sync-doc-list">
+      ${availableDocs.length === 0
+        ? '<div class="empty" style="padding:20px"><div class="ei">📄</div><div>Немає інших документів</div></div>'
+        : availableDocs.map(d => `
+          <div class="sync-doc-pick-item"
+               data-doc-id="${_syncEscHtml(d.id)}"
+               data-file-key="${_syncEscHtml(fileKey)}"
+               data-from-doc-id="${_syncEscHtml(fromDocId || '')}"
+               onclick="syncRelinkToDoc(this.dataset.docId, this.dataset.fileKey, this.dataset.fromDocId)">
+            <span style="font-size:18px">${SYNC_TYPE_ICONS[d.type]||'📄'}</span>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:12px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${_syncEscHtml(d.title||'—')}</div>
+              <div style="font-size:10px;color:var(--muted)">${d.country||''} ${d.docNumber?'· '+d.docNumber:''}</div>
+            </div>
+          </div>`).join('')
+      }
+    </div>
+    <div style="display:flex;justify-content:flex-end;padding-top:12px">
+      <button class="btn btn-ghost" onclick="syncCloseModal()">Скасувати</button>
+    </div>`;
+
+  syncOpenModal(title, html);
+}
+
+// Додати файл до документа — спільна логіка для syncLinkToDoc і syncRelinkToDoc.
+// Не викликає saveDoc() — це робить caller щоб уникнути зайвих збережень.
+function syncAttachFileToDoc(doc, file, fileKey) {
+  doc.files = doc.files || [];
+  if (doc.files.some(f => f.key === fileKey || f.path === fileKey)) {
+    showSyncToast('Файл вже прив\'язаний до цього документа', 'error');
+    return false;
+  }
+  doc.files.push({
+    name: file.name,
+    ext: file.ext,
+    size: file.size,
+    path: fileKey,
+    key: fileKey,
+    isPrimary: doc.files.length === 0,
+    missing: false,
+    handle: file.handle || null,
+  });
+  return true;
+}
+
+// Прив'язати або перенести файл між документами
+function syncRelinkToDoc(toDocId, fileKey, fromDocId) {
+  var docsArr = typeof docs !== 'undefined' ? docs : [];
+  // data-from-doc-id повертає порожній рядок якщо не передавався — нормалізуємо
+  var from = fromDocId || null;
+
+  var file = syncFindFileByKey(fileKey);
+  if (!file && from) {
+    var fromDoc = docsArr.find(d => d.id === from);
+    var docFile = (fromDoc?.files || []).find(f => f.key === fileKey || f.path === fileKey);
+    if (docFile) file = { name: docFile.name, ext: docFile.ext, size: docFile.size, handle: docFile.handle || null, key: fileKey };
+  }
+  if (!file) { showSyncToast('Файл не знайдено', 'error'); return; }
+
+  if (from) {
+    var fromDoc = docsArr.find(d => d.id === from);
+    if (fromDoc) {
+      fromDoc.files = (fromDoc.files || []).filter(f => f.key !== fileKey && f.path !== fileKey);
+    }
+  }
+
+  var toDoc = docsArr.find(d => d.id === toDocId);
+  if (!toDoc) { showSyncToast('Документ не знайдено', 'error'); return; }
+
+  if (!syncAttachFileToDoc(toDoc, file, fileKey)) return;
+
+  // Одне збереження після обох операцій (відв'язати + прив'язати)
+  if (typeof saveDoc === 'function') saveDoc();
+
+  syncCloseModal();
+  syncRemoveFileFromResults(fileKey);
+  showSyncToast('Файл перенесено', 'success');
+  syncUpdateBadge();
+}
+
+// Відв'язати файл від документа — відкриває діалог вибору нового документа
+function syncUnlinkFromDoc(fileKey, fromDocId) {
+  var docsArr = typeof docs !== 'undefined' ? docs : [];
+  var fromDoc = docsArr.find(d => d.id === fromDocId);
+  if (!fromDoc) { showSyncToast('Документ не знайдено', 'error'); return; }
+
+  // Перевірити чи є інші документи до яких можна перенести
+  var otherDocs = docsArr.filter(d => d.id !== fromDocId);
+  if (otherDocs.length === 0) {
+    showSyncToast('Немає інших документів для перенесення файлу', 'error');
+    return;
+  }
+
+  // Відкрити діалог з вибором нового документа
+  syncOpenLinkDoc(fileKey, fromDocId);
+}
+
+function syncFilterDocList(q) {
+  var ql = q.toLowerCase();
+  document.querySelectorAll('#sync-doc-list .sync-doc-pick-item').forEach(el => {
+    var text = el.textContent.toLowerCase();
+    el.style.display = text.includes(ql) ? '' : 'none';
+  });
+}
+
+function syncLinkToDoc(docId, fileKey) {
+  var file = syncFindFileByKey(fileKey);
+  if (!file) { showSyncToast('Файл не знайдено', 'error'); return; }
+
+  var docsArr = typeof docs !== 'undefined' ? docs : [];
+  var doc = docsArr.find(d => d.id === docId);
+  if (!doc) { showSyncToast('Документ не знайдено', 'error'); return; }
+
+  if (!syncAttachFileToDoc(doc, file, fileKey)) return;
+  if (typeof saveDoc === 'function') saveDoc();
+
+  syncCloseModal();
+  syncRemoveFileFromResults(fileKey);
+  showSyncToast('Файл прив\'язано до документа', 'success');
+  syncUpdateBadge();
+}
+
+// Відкрити форму створення нового документа
+function syncOpenCreateDoc(fileKey) {
+  // Зберегти fileKey щоб після створення прив'язати файл
+  window._syncPendingFileKey = fileKey;
+  syncCloseModal();
+
+  if (typeof openDocForm === 'function') {
+    openDocForm(null);
+  } else {
+    showSyncToast('Функція створення документа недоступна', 'error');
+    window._syncPendingFileKey = null;
+  }
+}
+
+// Викликати після збереження нового документа.
+// Додати в saveDoc() основного файлу:
+//   if (typeof syncOnDocSaved === 'function') syncOnDocSaved(id);
+//
+// Також в функцію закриття основного overlay додати:
+//   if (typeof syncCloseModal === 'function') syncCloseModal();
+// Це скидає _syncPendingFileKey якщо користувач закрив форму без збереження.
+function syncOnDocSaved(docId) {
+  var fileKey = window._syncPendingFileKey;
+  if (!fileKey || !docId) return;
+  window._syncPendingFileKey = null;
+
+  var docsArr = typeof docs !== 'undefined' ? docs : [];
+  var doc = docsArr.find(d => d.id === docId);
+  if (!doc) { showSyncToast('Документ не знайдено', 'error'); return; }
+
+  var file = syncFindFileByKey(fileKey) || {
+    name: fileKey.split('/').pop(),
+    ext: syncGetExt(fileKey.split('/').pop()),
+    size: 0,
+    handle: null,
+  };
+
+  if (!syncAttachFileToDoc(doc, file, fileKey)) return;
+  if (typeof saveDoc === 'function') saveDoc();
+
+  syncRemoveFileFromResults(fileKey);
+  showSyncToast('Файл прив\'язано до нового документа', 'success');
+  syncUpdateBadge();
+}
+
+// Пропустити файл
+function syncSkipFile(fileKey) {
+  syncAddSkipped(fileKey);
+  syncRemoveFileFromResults(fileKey);
+  syncUpdateBadge();
+  showSyncToast('Файл пропущено. З\'явиться при наступному скануванні.');
+}
+
+// Прибрати файл з поточних результатів і перерендерити
+function syncRemoveFileFromResults(fileKey) {
+  _syncResults = _syncResults.map(g => ({
+    ...g,
+    files: g.files.filter(f => f.key !== fileKey),
+  })).filter(g => g.files.length > 0);
+
+  // Оновити збережений список в localStorage
+  syncSaveUnlinked(syncCurrentUnlinked());
+
+  var el = document.getElementById('sync-groups-list');
+  if (el) el.innerHTML = syncRenderGroups();
+
+  if (_syncResults.length === 0) syncRenderResults();
+}
+
+// Знайти файл по ключу
+function syncFindFileByKey(key) {
+  for (var g of _syncResults) {
+    var f = g.files.find(x => x.key === key);
+    if (f) return f;
+  }
+  return null;
+}
+
+// ------------------------------------------------------------
+// ФІЛЬТРИ
+// ------------------------------------------------------------
+
+function syncSetFilter(type, val, btn) {
+  _syncFilter[type] = val;
+  // Скидати активні кнопки по data-filter-type атрибуту
+  document.querySelectorAll(`[data-filter-type="${type}"]`).forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  var el = document.getElementById('sync-groups-list');
+  if (el) el.innerHTML = syncRenderGroups();
+}
+
+// ------------------------------------------------------------
+// ПОМИЛКИ І ПОПЕРЕДЖЕННЯ
+// ------------------------------------------------------------
+
+function syncShowPermissionLost(folderTitle) {
+  var el = document.getElementById('sync-results-area');
+  if (!el) return;
+  el.innerHTML = `
+    <div class="sync-desktop-only">
+      <div style="background:var(--danger-light);border:1px solid var(--danger);border-radius:9px;padding:16px 20px;margin-bottom:12px">
+        <div style="font-size:13px;font-weight:500;color:var(--danger);margin-bottom:6px">⛔ Втрачено доступ до папки</div>
+        <div style="font-size:12px;color:var(--danger);margin-bottom:12px">
+          Не вдалось прочитати папку: <strong>${_syncEscHtml(folderTitle)}</strong>.<br>
+          Показано результати які встигли знайтись до зупинки.
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="syncReconnectFolder()">🔗 Підключити папку знову</button>
+      </div>
+      ${_syncResults.length > 0 ? `<div id="sync-groups-list">${syncRenderGroups()}</div>` : ''}
+    </div>`;
+}
+
+function syncShowError(msg) {
+  showSyncToast(msg, 'error');
+}
+
+function syncRenderBlockedWarning() {
+  var el = document.getElementById('sync-blocked-area');
+  if (!el) return;
+  el.innerHTML = `
+    <div class="sync-blocked-list sync-desktop-only">
+      <div class="sync-blocked-title">
+        ⚠️ Деякі файли не вдалось прочитати — вони відкриті в іншій програмі.
+        Закрийте їх і запустіть сканування знову.
+      </div>
+      ${_syncBlocked.map(f => `
+        <div class="sync-blocked-item">
+          <span class="sync-blocked-item-name">📎 ${_syncEscHtml(f.name)}</span>
+          <span class="sync-blocked-item-path">${_syncEscHtml(f.folder)}</span>
+        </div>`).join('')}
+    </div>`;
+}
+
+// Перепідключити папку — викликає openSelectFolder з модуля справ
+function syncReconnectFolder() {
+  if (typeof openSelectFolder === 'function') {
+    openSelectFolder(null);
+  } else if (typeof casesPickRootFolder === 'function') {
+    casesPickRootFolder();
+  } else {
+    showSyncToast('Функція підключення папки недоступна', 'error');
+  }
+}
+
+// ------------------------------------------------------------
+// ЛІЧИЛЬНИК (бейдж в налаштуваннях)
+// ------------------------------------------------------------
+
+function syncUpdateBadge() {
+  _syncUnlinkedCount = syncGetUnlinked().length;
+  var count = _syncUnlinkedCount;
+
+  // Бейдж в навігації
+  var bdg = document.getElementById('bdg-sync');
+  if (bdg) {
+    bdg.textContent = count;
+    bdg.style.display = count > 0 ? '' : 'none';
+  }
+
+  // Лічильник в налаштуваннях
+  var counter = document.getElementById('sync-settings-counter');
+  if (counter) {
+    if (count > 0 && !syncIsMobile()) {
+      counter.textContent = `${count} файлів без прив'язки`;
+      counter.style.display = '';
+    } else {
+      counter.style.display = 'none';
+    }
+  }
+}
+
+// ------------------------------------------------------------
+// КНОПКА СКАНУВАННЯ
+// ------------------------------------------------------------
+
+function syncUpdateScanBtn(scanning) {
+  var btn = document.getElementById('sync-scan-btn');
+  if (!btn) return;
+  btn.disabled = scanning;
+  btn.textContent = scanning ? '⏳ Сканування…' : '🔍 Сканувати папки';
+}
+
+// ------------------------------------------------------------
+// БЛОК В НАЛАШТУВАННЯХ
+// ------------------------------------------------------------
+
+// Повертає HTML блоку сканування для вставки в renderSettings()
+function syncSettingsBlock() {
+  if (syncIsMobile()) return '';
+  var unlinked = syncGetUnlinked();
+  return `
+    <div class="sync-settings-block sync-desktop-only" id="sync-settings-section">
+      <div class="sec-head">
+        <div class="sec-title">Синхронізація файлів</div>
+        ${unlinked.length > 0
+          ? `<span class="sync-settings-count" id="sync-settings-counter">${unlinked.length} файлів без прив'язки</span>`
+          : `<span id="sync-settings-counter" style="display:none"></span>`}
+        <div class="sec-line"></div>
+      </div>
+
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:16px 20px;box-shadow:var(--shadow)">
+        <div class="sync-scan-row">
+          <div class="sync-last-scan">
+            Останнє сканування: <strong>${syncFormatLastScan()}</strong>
+          </div>
+          <button class="btn btn-ghost" id="sync-scan-btn" onclick="syncStartScan()">
+            🔍 Сканувати папки
+          </button>
+        </div>
+
+        <div style="font-size:11px;color:var(--muted);margin-top:8px;line-height:1.6">
+          Сканує папки справ і знаходить файли які ще не прив'язані до жодного документа.
+          Сканування не блокує роботу програми.
+        </div>
+
+        <!-- Прогрес -->
+        <div id="sync-progress-area" style="display:none"></div>
+
+        <!-- Заблоковані файли -->
+        <div id="sync-blocked-area"></div>
+      </div>
+
+      <!-- Результати -->
+      <div id="sync-results-area" style="margin-top:16px"></div>
+    </div>`;
+}
+
+// ------------------------------------------------------------
+// МОДАЛЬНЕ ВІКНО (використовує існуюче в основному файлі)
+// ------------------------------------------------------------
+
+function syncOpenModal(title, html) {
+  var modal = document.getElementById('overlay');
+  var body  = document.getElementById('modal-body');
+  var titleEl = document.getElementById('modal-title');
+  if (modal && body) {
+    if (titleEl) titleEl.textContent = title;
+    body.innerHTML = html;
+    modal.style.display = 'flex';
+  } else {
+    // Fallback для демо
+    document.getElementById('demo-modal-overlay').style.display = 'flex';
+    document.getElementById('demo-modal-title').textContent = title;
+    document.getElementById('demo-modal-body').innerHTML = html;
+  }
+}
+
+function syncCloseModal() {
+  // Завжди скидати pending — якщо користувач закрив форму без збереження
+  window._syncPendingFileKey = null;
+  var modal = document.getElementById('overlay');
+  if (modal) { modal.style.display = 'none'; return; }
+  var demo = document.getElementById('demo-modal-overlay');
+  if (demo) demo.style.display = 'none';
+}
+
+// ------------------------------------------------------------
+// ТОСТ
+// ------------------------------------------------------------
+
+function showSyncToast(msg, type) {
+  var existing = document.querySelector('.toast');
+  if (existing) existing.remove();
+  var t = document.createElement('div');
+  t.className = 'toast' + (type === 'success' ? ' success' : type === 'error' ? ' error-toast' : '');
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 2800);
+}
+
+// ------------------------------------------------------------
+// ДОВІДКА
+// ------------------------------------------------------------
+
+// ============================================================
+// ЯК ДОДАТИ ВКЛАДКУ В ДОВІДКУ ОСНОВНОГО ФАЙЛУ:
+//
+// Знайти в caster.html об'єкт HELP_CONTENT (~рядок 3109).
+// Перед закриваючою '};' додати:
+//
+//   ,settings: {
+//     title: '⚙️ Налаштування',
+//     sections: SYNC_HELP_SECTIONS
+//   }
+//
+// Або скопіювати секції напряму (див. SYNC_HELP_SECTIONS нижче).
+// ============================================================
+
+// Секції довідки для вкладки "⚙️ Налаштування"
+// Формат відповідає структурі HELP_CONTENT в основному файлі
+var SYNC_HELP_SECTIONS = [
+  {
+    heading: 'Що відбувається якщо файл завантажено вручну в папку',
+    text: 'Якщо ти скопіював файл в папку справи через файловий менеджер — програма про нього не знає.\nФайл є на диску але не прив\'язаний до жодного документа.\nСканування знаходить такі файли і дає змогу їх прив\'язати.',
+  },
+  {
+    heading: 'Як запустити сканування вручну',
+    text: 'Перейди в розділ Налаштування і натисни кнопку «🔍 Сканувати папки».\nСканування відбувається у фоні — можна продовжувати працювати з програмою.\nСкануються тільки папки справ. Якщо справа не має підключеної папки — вона пропускається.',
+  },
+  {
+    heading: 'Як прив\'язати файл до документа або створити новий документ',
+    text: 'Після сканування з\'являється список файлів без прив\'язки. Для кожного файлу є три дії:\n\n«Прив\'язати» — відкриється список документів. Вибери потрібний. Файл буде додано до документа.\n\n«Новий документ» — відкриється форма створення нового документа. Після збереження файл автоматично прив\'яжеться.\n\n«Пропустити» — файл залишається в папці але зникає зі списку. З\'явиться знову при наступному скануванні.',
+  },
+  {
+    heading: 'Що означає «Пропустити» і коли файл з\'явиться знову',
+    text: '«Пропустити» означає що файл тимчасово ігнорується. Він залишається на диску.\nПри наступному скануванні з\'явиться знову — якщо до того часу не буде прив\'язаний.\nВикористовуй «Пропустити» якщо файл є в папці але тобі він зараз не потрібний.',
+  },
+  {
+    heading: 'Що робити якщо файли не вдалось прочитати',
+    text: 'Деякі файли можуть бути заблоковані — наприклад відкриті в Word або Acrobat.\nПрограма пропускає їх і показує список після сканування.\nЗакрий ці файли в інших програмах і запусти сканування знову.\n\nЯкщо під час сканування втрачено доступ до папки — сканування зупиняється.\nПідключи папку знову через розділ «Справи» і запусти сканування знову.',
+  },
+];
+
+// Функція для використання в openHelp() якщо потрібен HTML-рендер
+// (не потрібна якщо використовується стандартний HELP_CONTENT)
+function renderSyncHelp() {
+  return SYNC_HELP_SECTIONS.map(s => `
+    <div style="margin-bottom:18px">
+      <div style="font-size:12px;font-weight:500;margin-bottom:6px;color:var(--text)">${_syncEscHtml(s.heading)}</div>
+      <div style="font-size:12px;color:var(--muted);line-height:1.7">${_syncEscHtml(s.text).replace(/\n/g,'<br>')}</div>
+    </div>
+    <div style="height:1px;background:var(--border);margin-bottom:18px"></div>`).join('');
+}
+
+// ------------------------------------------------------------
+// ІНІЦІАЛІЗАЦІЯ
+// Додати в window.onload: syncInit();
+// ------------------------------------------------------------
+
+function syncInit() {
+  syncUpdateBadge();
+  setTimeout(() => {
+    if (syncShouldRemind()) {
+      syncShowReminder('page-settings');
+    }
+  }, 1500);
+}
+
+// ------------------------------------------------------------
+// ДОПОМІЖНІ (вже є в основному файлі)
+// ------------------------------------------------------------
+
+// Використовує escHtml з основного файлу якщо є, інакше власна реалізація
+function _syncEscHtml(str) {
+  if (typeof escHtml === 'function') return escHtml(str);
+  if (typeof str !== 'string') return '';
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+/* === END JS: SYNC MODULE === */
 </script>
 
 </body>
