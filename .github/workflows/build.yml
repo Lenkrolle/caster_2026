@@ -1,1 +1,77 @@
+name: Build Caster
 
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install PyInstaller
+        run: pip install pyinstaller
+
+      - name: Build Windows executable
+        run: |
+          pyinstaller --onefile --name Caster --add-data "caster.html;." start_caster.py
+
+      - name: Upload Windows build
+        uses: actions/upload-artifact@v4
+        with:
+          name: Caster-Windows
+          path: dist/Caster.exe
+
+  build-macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install PyInstaller
+        run: pip install pyinstaller
+
+      - name: Build macOS executable
+        run: |
+          pyinstaller --onefile --name Caster --add-data "caster.html:." start_caster.py
+
+      - name: Upload macOS build
+        uses: actions/upload-artifact@v4
+        with:
+          name: Caster-macOS
+          path: dist/Caster
+
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install PyInstaller
+        run: pip install pyinstaller
+
+      - name: Build Linux executable
+        run: |
+          pyinstaller --onefile --name Caster --add-data "caster.html:." start_caster.py
+
+      - name: Upload Linux build
+        uses: actions/upload-artifact@v4
+        with:
+          name: Caster-Linux
+          path: dist/Caster
