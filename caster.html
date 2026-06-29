@@ -265,16 +265,9 @@ body { background: var(--bg); color: var(--text); font-family: 'IBM Plex Mono', 
 
 .doc-field-value input::placeholder { color:var(--muted); }
 
-.doc-field-row:hover 
+.doc-field-value input::placeholder { color:var(--muted); }
 
 .field-action-btn:hover { background:var(--surface2); color:var(--text); }
-
-.add-field-row input:focus { border-color:var(--accent); border-style:solid; }
-
-.btn-copy:hover,.btn-copy.copied { background:var(--accent); color:white; border-color:var(--accent); }
-
-.cost-item { display:flex; align-items:center; gap:8px; padding:8px 0; border-bottom:1px solid var(--border); }
-.cost-item:last-child { border-bottom:none; }
 
 .mobile-nav {
   display: none;
@@ -427,9 +420,7 @@ body { background: var(--bg); color: var(--text); font-family: 'IBM Plex Mono', 
 
 .doc-field-value input::placeholder { color: var(--muted); }
 
-.doc-field-row:hover 
-
-.field-action-btn:hover { background: var(--surface2); color: var(--text); }
+.doc-field-row:hover .doc-field-actions { opacity: 1; }
 
 .add-field-row input:focus { border-color: var(--accent); border-style: solid; }
 .copy-preview { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 14px; font-size: 11px; line-height: 1.9; white-space: pre-wrap; font-family: 'IBM Plex Mono', monospace; color: var(--text); margin-top: 12px; }
@@ -551,9 +542,9 @@ body { background: var(--bg); color: var(--text); font-family: 'IBM Plex Mono', 
 }
 .mob-sheet-link:hover { background: var(--surface2); }
 
-   === CSS: CASES MODULE ===
+   /* === CSS: CASES MODULE ===
    Скопіювати цей блок в <style> основного файлу
-   ============================================================ */
+   ============================================================
 
 /* --- Список справ --- */
 .cases-list { display: flex; flex-direction: column; gap: 0; }
@@ -780,9 +771,9 @@ body { background: var(--bg); color: var(--text); font-family: 'IBM Plex Mono', 
   .case-card-right { display: none; }
 }
 
-   === CSS: SYNC MODULE ===
+   /* === CSS: SYNC MODULE ===
    Скопіювати цей блок в <style> основного файлу
-   ============================================================ */
+   ============================================================
 
 /* --- Блок сканування в налаштуваннях --- */
 .sync-settings-block {
@@ -1047,7 +1038,6 @@ let team = [
 ];
 let nextMemberId = 4;
 
-// Instances — user-defined
 // Instances — user-defined
 let instTypes = [
   { id:1, key:'gov',    label:'Держоргани',   icon:'🏛️' },
@@ -2011,7 +2001,7 @@ function openDocForm(id){
       </div>
       <div class="form-row">
         <div class="form-group"><label class="form-label">Дедлайн (необов'язково)</label><input type="date" class="form-input" id="fd-deadline"></div>
-        <div class="form-group"><label class="form-label">Відповідальний <span style="color:var(--danger)">*</span></label><select class="form-select" id="fd-assignee">${team.map(m=>`<option value="${m.id}" ${doc&&doc.assignees&&doc.assignees[0]===m.id?'selected':''}>${m.name}</option>`).join('')}</select></div>
+        <div class="form-group"><label class="form-label">Відповідальний <span style="color:var(--danger)">*</span></label><select class="form-select" id="fd-assignee">${team.map(m=>`<option value="${m.id}">${m.name}</option>`).join('')}</select></div>
       </div>
       <div class="form-group"><label class="form-label">Організація</label>
         <datalist id="inst-list-doc">${instances.map(i=>`<option value="${i.name}">`).join('')}</datalist>
@@ -2428,7 +2418,13 @@ function togglePermanent(cb){
 }
 
 function saveDoc(){
-  const title=document.getElementById('fd-title').value.trim();
+  if (window._savingDoc) return;
+  window._savingDoc = true;
+  setTimeout(() => { window._savingDoc = false; }, 1000);
+
+  const titleEl=document.getElementById('fd-title');
+  if(!titleEl)return;
+  const title=titleEl.value.trim();
   if(!title){alert('Введіть назву документа');return;}
 
   const permanent=document.getElementById('fd-permanent')?.checked||false;
@@ -2436,8 +2432,10 @@ function saveDoc(){
   const issuedDate=document.getElementById('fd-issueddate')?.value||null;
   const issuedBy=document.getElementById('fd-issuedby')?.value.trim()||'';
   const docNumber=document.getElementById('fd-docnum')?.value.trim()||'';
-  const assigneeIdx=parseInt(document.getElementById('fd-assignee').value);
-  const type=document.getElementById('fd-type').value;
+  const assigneeEl=document.getElementById('fd-assignee');
+  const assigneeIdx=assigneeEl?parseInt(assigneeEl.value):0;
+  const typeEl=document.getElementById('fd-type');
+  const type=typeEl?typeEl.value:'passport';
   const country=document.getElementById('fd-country')?.value||'🇺🇦 Україна';
   const inst=document.getElementById('fd-inst')?.value.trim()||'';
   const deadline=document.getElementById('fd-deadline').value||null;
@@ -2550,20 +2548,35 @@ function selStatus(s, el){
 }
 
 function saveTask(){
-  const title=document.getElementById('ft-title').value.trim();
+  const titleEl=document.getElementById('ft-title');
+  if(!titleEl){alert('Введіть назву');return;}
+  const title=titleEl.value.trim();
   if(!title){alert('Введіть назву');return;}
   if(editId){
     const tk=tasks.find(t=>t.id===editId);
-    tk.title=title; tk.desc=document.getElementById('ft-desc').value;
-    tk.status=selectedStatus; tk.assignee=parseInt(document.getElementById('ft-assignee').value);
-    tk.priority=document.getElementById('ft-priority').value;
-    tk.deadline=document.getElementById('ft-deadline').value;
-    tk.docId=document.getElementById('ft-doc').value;
+    if(!tk)return;
+    tk.title=title; 
+    const descEl=document.getElementById('ft-desc');
+    tk.desc=descEl?descEl.value:'';
+    tk.status=selectedStatus; 
+    const assigneeEl=document.getElementById('ft-assignee');
+    tk.assignee=assigneeEl?parseInt(assigneeEl.value):0;
+    const priorityEl=document.getElementById('ft-priority');
+    tk.priority=priorityEl?priorityEl.value:'medium';
+    const deadlineEl=document.getElementById('ft-deadline');
+    tk.deadline=deadlineEl?deadlineEl.value:'';
+    const docEl=document.getElementById('ft-doc');
+    tk.docId=docEl?docEl.value:'';
     showToast('💾 Збережено');
   } else {
-    const deadline=document.getElementById('ft-deadline').value;
-    const assigneeIdx=parseInt(document.getElementById('ft-assignee').value);
-    const newTask={id:nextTaskId++,title,desc:document.getElementById('ft-desc').value,status:selectedStatus,assignee:assigneeIdx,priority:document.getElementById('ft-priority').value,deadline,docId:document.getElementById('ft-doc').value,comments:[]};
+    const deadlineEl=document.getElementById('ft-deadline');
+    const deadline=deadlineEl?deadlineEl.value:'';
+    const assigneeEl=document.getElementById('ft-assignee');
+    const assigneeIdx=assigneeEl?parseInt(assigneeEl.value):0;
+    const descEl=document.getElementById('ft-desc');
+    const priorityEl=document.getElementById('ft-priority');
+    const docEl=document.getElementById('ft-doc');
+    const newTask={id:nextTaskId++,title,desc:descEl?descEl.value:'',status:selectedStatus,assignee:assigneeIdx,priority:priorityEl?priorityEl.value:'medium',deadline,docId:docEl?docEl.value:'',comments:[]};
     tasks.unshift(newTask);
 
     // Create reminders
@@ -2571,10 +2584,12 @@ function saveTask(){
       const type=row.querySelector('select').value;
       let remDate=null;
       if(type==='date'){
-        remDate=row.querySelector('.fd-rem-date').value;
+        const dateEl=row.querySelector('.fd-rem-date');
+        remDate=dateEl?dateEl.value:null;
         if(remDate && deadline && remDate>=deadline){ alert('Дата нагадування має бути раніше дедлайну!'); return; }
       } else if(deadline){
-        const days=parseInt(row.querySelector('.fd-rem-days').value)||0;
+        const daysEl=row.querySelector('.fd-rem-days');
+        const days=daysEl?parseInt(daysEl.value)||0:0;
         if(days>0){ const dt=new Date(deadline); dt.setDate(dt.getDate()-days); remDate=dt.toISOString().split('T')[0]; }
       }
       if(remDate){
@@ -2652,20 +2667,26 @@ function openRemForm(id){
 }
 
 function setRemDays(n, el){
-  document.getElementById('fr-days').value=n;
+  const daysEl=document.getElementById('fr-days');
+  if(daysEl)daysEl.value=n;
   document.querySelectorAll('.day-preset').forEach(b=>b.classList.remove('active'));
   el.classList.add('active');
   calcRemDate();
 }
 
 function calcRemDate(){
-  const dl=document.getElementById('fr-deadline').value;
-  const days=parseInt(document.getElementById('fr-days').value)||0;
-  if(!dl){document.getElementById('fr-date-result').textContent='';return;}
+  const dlEl=document.getElementById('fr-deadline');
+  const daysEl=document.getElementById('fr-days');
+  if(!dlEl||!daysEl)return;
+  const dl=dlEl.value;
+  const days=parseInt(daysEl.value)||0;
+  const resultEl=document.getElementById('fr-date-result');
+  if(!dl){if(resultEl)resultEl.textContent='';return;}
   const dt=new Date(dl); dt.setDate(dt.getDate()-days);
   const ds=dt.toISOString().split('T')[0];
-  document.getElementById('fr-date').value=ds;
-  document.getElementById('fr-date-result').textContent=`→ Нагадування: ${fmtDate(ds)}`;
+  const dateEl=document.getElementById('fr-date');
+  if(dateEl)dateEl.value=ds;
+  if(resultEl)resultEl.textContent=`→ Нагадування: ${fmtDate(ds)}`;
 }
 
 function toggleNotifyOpt(cb, optId){
@@ -3086,6 +3107,15 @@ function renderSettings(){
           <div style="font-size:10px;color:var(--muted);margin-top:3px">${t('inst_desc')}</div>
         </div>
       </div>
+
+      <!-- Прогрес сканування -->
+      <div id="sync-progress-area" style="display:none;margin-top:16px"></div>
+
+      <!-- Заблоковані файли -->
+      <div id="sync-blocked-area"></div>
+
+      <!-- Результати сканування (неприв'язані файли) -->
+      <div id="sync-results-area" style="margin-top:16px"></div>
     </div>`;
   if(typeof syncFormatLastScan==='function'){
     setTimeout(()=>{
@@ -3105,9 +3135,12 @@ function openAddCat(){
 function openEditCat(key){
   const cat=DOC_CATEGORIES[key];
   if(!cat)return;
-  document.getElementById('modal-title').textContent='Редагувати категорію';
-  document.getElementById('modal-body').innerHTML=catForm(key, cat);
-  document.getElementById('overlay').style.display='flex';
+  const titleEl=document.getElementById('modal-title');
+  const bodyEl=document.getElementById('modal-body');
+  const overlayEl=document.getElementById('overlay');
+  if(titleEl)titleEl.textContent='Редагувати категорію';
+  if(bodyEl)bodyEl.innerHTML=catForm(key, cat);
+  if(overlayEl)overlayEl.style.display='flex';
   window._selCatIcon=cat.icon;
 }
 
@@ -3860,6 +3893,7 @@ async function fsPickFolder(){
     msg.style.color='var(--muted)';
     msg.textContent='Вибираємо папку...';
     fsFolder = await window.showDirectoryPicker({ mode:'readwrite' });
+    window._casesRootHandle = fsFolder;
     msg.textContent='📂 Зчитуємо дані...';
     fsFilesFolder = await fsFolder.getDirectoryHandle(FILES_DIR, { create:true });
     await fsReadData();
@@ -5733,25 +5767,35 @@ async function syncStartScan() {
 
   if (_syncAborted) {
     // Ручне скасування — прибрати прогрес, нічого не зберігати
-    syncHideProgress();
     showSyncToast('Сканування скасовано');
+    syncShowFinishStatus('Сканування скасовано', 'neutral');
     return;
   }
 
-  syncSetLastScan();
+  try {
+    syncSetLastScan();
 
-  // Відфільтрувати вже прив'язані і пропущені
-  syncFilterResults();
+    // Відфільтрувати вже прив'язані і пропущені
+    syncFilterResults();
 
-  syncSaveUnlinked(syncCurrentUnlinked());
-  syncUpdateBadge();
+    syncSaveUnlinked(syncCurrentUnlinked());
+    syncUpdateBadge();
 
-  // Показати результати
-  syncRenderResults();
+    var unlinkedCount = syncCurrentUnlinked().length;
+    showSyncToast(`Сканування завершено. Файлів без прив'язки: ${unlinkedCount}`, 'success');
+    syncShowFinishStatus(`Сканування завершено. Файлів без прив'язки: ${unlinkedCount}`, 'success');
 
-  // Показати заблоковані якщо є
-  if (_syncBlocked.length > 0) {
-    syncRenderBlockedWarning();
+    // Показати результати
+    syncRenderResults();
+
+    // Показати заблоковані якщо є
+    if (_syncBlocked.length > 0) {
+      syncRenderBlockedWarning();
+    }
+  } catch(e) {
+    console.error('Sync: помилка після завершення сканування:', e);
+    showSyncToast('Сталася помилка. Перевір консоль (F12)', 'error');
+    syncShowFinishStatus('Сталася помилка. Перевір консоль (F12)', 'error');
   }
 }
 
@@ -5883,6 +5927,19 @@ function syncHideProgress() {
   if (el) el.style.display = 'none';
 }
 
+// Показати постійний текст про результат сканування (замість прогрес-бару)
+function syncShowFinishStatus(msg, kind) {
+  var el = document.getElementById('sync-progress-area');
+  if (!el) return;
+  var color = kind === 'success' ? 'var(--accent)' : kind === 'error' ? 'var(--danger)' : 'var(--muted)';
+  var icon  = kind === 'success' ? '✅' : kind === 'error' ? '⚠️' : '⏹';
+  el.style.display = 'block';
+  el.innerHTML = `
+    <div class="sync-progress sync-desktop-only" style="color:${color}">
+      <span style="font-size:12px;font-weight:500">${icon} ${_syncEscHtml(msg)}</span>
+    </div>`;
+}
+
 function syncAbort() {
   _syncAborted = true;
   _syncPermLost = false;
@@ -5993,9 +6050,10 @@ function syncRenderGroups() {
       <div class="sync-group">
         <div class="sync-group-head">
           <span>📁</span>
-          <span class="sync-group-title" title="${_syncEscHtml(g.folderPath)}">${_syncEscHtml(g.caseTitle)}</span>
+          <span class="sync-group-title">${_syncEscHtml(g.caseTitle)}</span>
           <span class="sync-group-count">${files.length}</span>
         </div>
+        <div style="font-size:12px;color:var(--text);user-select:all;cursor:text;margin:2px 0 8px 22px;word-break:break-all">${_syncEscHtml(g.folderPath)}</div>
         <div class="sync-group-body">
           ${files.map(f => syncRenderFileRow(f, g.caseId)).join('')}
         </div>
@@ -6191,9 +6249,15 @@ function syncLinkToDoc(docId, fileKey) {
 
 // Відкрити форму створення нового документа
 function syncOpenCreateDoc(fileKey) {
-  // Зберегти fileKey щоб після створення прив'язати файл
-  window._syncPendingFileKey = fileKey;
   syncCloseModal();
+  // Зберегти fileKey ПІСЛЯ закриття модалки — інакше syncCloseModal скине його в null
+  window._syncPendingFileKey = fileKey;
+
+  // Знайти справу, з якої прийшов файл, щоб новий документ автоматично потрапив у цю справу
+  var group = _syncResults.find(g => g.files.some(f => f.key === fileKey));
+  if (group && group.caseId) {
+    window._casesPendingCaseId = group.caseId;
+  }
 
   if (typeof openDocForm === 'function') {
     openDocForm(null);
@@ -6227,7 +6291,10 @@ function syncOnDocSaved(docId) {
   };
 
   if (!syncAttachFileToDoc(doc, file, fileKey)) return;
-  if (typeof saveDoc === 'function') saveDoc();
+  // Зберегти дані напряму (без повторного виклику saveDoc, який створив би ще один документ)
+  if (typeof megaSaveData === 'function') megaSaveData();
+  else if (typeof lsSave === 'function') lsSave();
+  if (typeof renderDocDetail === 'function') renderDocDetail(doc.id);
 
   syncRemoveFileFromResults(fileKey);
   showSyncToast('Файл прив\'язано до нового документа', 'success');
